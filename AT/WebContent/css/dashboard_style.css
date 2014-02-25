@@ -1,0 +1,13 @@
+#hypervisors-infopanel {
+	margin: auto;
+	text-align: center;
+	width: 500px;
+	padding: 10px;
+	border: 2px solid gray;
+};
+
+#hypervisormenu {
+	float: center;
+	text-align: left;
+	width: 230px;
+};

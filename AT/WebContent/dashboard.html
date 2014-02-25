@@ -1,0 +1,32 @@
+<script>
+$.getJSON("HypervisorInfo", function(hypervisorList){
+
+	html = "<p>Hypervisors disponibili</p>\
+		<br><br><div id=\"hypervisormenu\">";
+	
+	for(i=0; i<hypervisorList.length; i++) {
+		hypervisor = hypervisorList[i];
+		html += "<h3 >"+hypervisor.ip+"</h3><div><p>";
+		
+		for(j in hypervisor.machines){
+			vmachine = hypervisor.machines[j];
+			html += "<button><b>"+vmachine.name+"</b> (<i>"+vmachine.status+"</i>)"+"</button><br>";
+		}
+		html += "</p></div><br><br>";
+	}
+	
+	$("#hypervisors-infopanel").html(html);
+	
+	$("#hypervisormenu").accordion({
+		heightStyle: "content",
+		collapsible: true,
+		active: false 
+	});
+	
+	$("button").button();
+	
+});
+</script>
+
+<link href="css/dashboard_style.css" rel="stylesheet"/>
+<div id="hypervisors-infopanel"></div>

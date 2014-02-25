@@ -1,0 +1,58 @@
+
+/*
+	Alignment
+------------------------------------------------------------------- */
+
+/* Floats */
+
+.left {float: left;}
+.right {float: right;}
+
+.clear,.clearer {clear: both;}
+.clearer {
+	display: block;
+	font-size: 0;
+	height: 0;
+	line-height: 0;
+}
+
+
+/* Columns */
+
+.column {
+	margin-left: 2%;
+	width: 32%;
+	padding: 5px;
+}
+.column.first {margin-left: 2%;}
+
+
+/* Sortable items */
+
+.sortable-list {
+	background-color: #F93;
+	list-style: none;
+	margin: 0;
+	min-height: 60px;
+	padding: 10px;
+}
+.sortable-item {
+	background-color: #FFF;
+	border: 1px solid #000;
+	cursor: move;
+	display: block;
+	font-weight: bold;
+	margin-bottom: 5px;
+	padding: 20px 0;
+	text-align: center;
+}
+.unsortable {
+	background-color: #DDD;
+	border: 1px solid #000;
+	cursor: move;
+	display: block;
+	font-weight: bold;
+	margin-bottom: 5px;
+	padding: 20px 0;
+	text-align: center;
+}

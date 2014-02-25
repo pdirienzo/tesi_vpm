@@ -1,0 +1,37 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Live migration</title>
+		<link href="css/smoothness/jquery-ui-1.10.4.css" rel="stylesheet"/>
+		<link href="css/tabs_style.css" rel="stylesheet"/>
+		<script src="js/jquery-1.11.0.js"></script>
+		<script src="js/jquery-ui-1.10.4.js"></script>
+
+		<script>
+			$(function() {
+				$("#tabs").tabs();
+				$.ajaxSetup ({
+		    		// Disable caching of AJAX responses
+		    		cache: false
+				});
+			});
+		</script>
+	</head>
+	
+
+	<body>
+		<div id="wrapper">
+			<div id="header">
+				<div id="tabs" class="centered">
+					<ul>
+						<li><a href="dashboard.html">Dashboard</a></li>
+						<li><a href="migration.html">Migration</a></li>
+						<li><a href="networking.html">Networking</a></li>
+						<li><a href="settings.html">Settings</a></li>
+						<li><a href="Prova.html">Prova</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

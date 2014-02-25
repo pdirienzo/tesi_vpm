@@ -1,0 +1,128 @@
+<script>
+/*
+function networking() {
+	$.getJSON("NetworkInfo", function(network){
+
+	html = "<p>Reti virtuali disponibili</p><button id=\"addnet\">Aggiungi nuova VLAN</button>\
+		<br><br><div id=\"vlanmenu\">";
+
+	for(i=0; i<network.vlan.length; i++) {
+		vlan = network.vlan[i];
+		html += "<h3 onclick=\"vlaninfo(event);\" id=\""+vlan.name+"\">"+vlan.name+"</h3><div><p>";
+		html += "<p><b>Gateway: "+ vlan.gateway+"</b></p>";
+		for(j in vlan.vmachine){
+			vmachine = vlan.vmachine[j];
+			html += "<button>"+vmachine.name+"</button><br>";
+		}
+		
+		html += "</p></div><br><br>";
+	}
+
+	$("#network-infopanel").html(html);
+	$("#vlanmenu").accordion({
+		heightStyle: "content",
+		collapsible: true,
+		active: false 
+	});
+
+	$("button").button();
+
+	$("#addnet").click(function(){
+		
+		html = "<br><br><br><div id=\"addbox\" style=\"border: 2px solid gray\">\
+			<p>Aggiungi una nuova rete:</p> \
+			<label for=\"newnetname\"> Nome vLAN</label>\
+			<input id=\"newnetname\" type=\"text\" value=\"Nome della nuova VLAN\" /><br>\
+			<label for=\"newgateway\"> Ip Gateway </label>\
+			<input id=\"newgateway\" type=\"text\" value=\" 0.0.0.0\" />\
+			<button id=\"addnewnet\">Aggiungi</button>";
+			
+		$("#network-panel").html(html);
+		$("#network-panel").css("margin: auto; \
+			text-align: center; \
+			width:500px; \
+			heigth: 450px; \
+			padding: 10px; \
+			border: 2px solid gray;");
+		
+		
+		$("#addnewnet").button();
+		$("#addnewnet").click(function(){
+			newnetname = document.getElementById("newnetname").value;
+			newgateway = document.getElementById("newgateway").value;
+			$.getJSON("AddNetwork?netname="+newnetname+"&gateway="+newgateway,function(response){				
+				networking();
+			});
+			
+		});
+	});
+
+	});
+}
+
+function vlaninfo(event){
+	vlan = event.target.id;
+
+	$.getJSON("VLanInfo", function(vmachines){
+		
+		html = "<br><br><br><div id=\"infobox\" style=\"border: 2px solid gray\"> \
+			<h3>"+vlan+"</h3><br><label>VM disponibili:</label>\n<select id=\"combobox\">";
+		
+		for(i=0; i<vmachines.machine.length; i++){
+			html += "<option value=\""+ vmachines.machine[i].name + "\">"
+				+vmachines.machine[i].name+"</option>\n";
+		}
+		
+		html += "</select>\
+			<button id=\"addvm\">Associa</button>\n<hr>\
+			<button id=\"delvlan\" name=\""+vlan+"\">Elimina rete</button><br>";
+		
+		$("#network-panel").html(html);
+		
+		$("#addvm").button().click(function(){
+			vm = document.getElementById("combobox").value;
+			$.getJSON("AttachMachine?vlan="+vlan+"&machine="+vm,function(response){
+				if(response.status=="ok")
+					alert(vm+ " associata correttamente alla rete "+vlan);
+				else
+					alert("Impossibile associare la macchina alla rete "+vlan);
+				networking();
+			});
+		});
+		
+		$("#delvlan").button().click(function(event){
+			$.getJSON("DeleteNetwork?netname="+event.target.name,function(response){
+				$("#network-panel").html("");
+				networking();
+			});
+			
+		});
+	});
+}
+
+
+networking();
+*/
+</script>
+<style>
+	#network-infopanel {
+		margin: auto;
+		text-align: center;
+		width:500px;
+		padding: 10px;
+		border: 2px solid gray;
+	};
+	#vlanmenu {
+		float: center;
+		text-align: left;
+		width: 230px;
+	};
+	#network-panel {
+		width: 500px;
+		margin: auto;
+		padding: 10px;
+	};
+
+</style>
+<div id="network-infopanel"><div id="msgbox"></div></div>
+<div id="network-panel"></div>

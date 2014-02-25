@@ -1,0 +1,22 @@
+#box {
+	margin: auto;
+	text-align: center;
+	width: 500px;
+	padding: 10px;
+	border: 2px solid gray;
+};
+
+div.cent {
+	text-align: center;
+};
+
+div.cent table 
+{
+    margin: 0 auto; 
+    text-align: left;
+}
+
+#hyper-table {
+	 margin: 1em 0; border-collapse: collapse; width: 100%;
+	 border: 1px solid #eee; padding: .6em 10px; text-align: left;
+};

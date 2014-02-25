@@ -1,0 +1,23 @@
+.centered .ui-tabs-nav {
+	    height: 2.35em;
+	    text-align: center;
+	}
+
+.centered .ui-tabs-nav li {
+	    display: inline-block;
+	    float: none;
+	    margin: 0em;
+	}
+
+#tabs{
+		width:100%; 
+		height:100%
+	};
+	
+#wrapper {
+	text-align: center;
+	width: 800px;
+	margin: 0 auto;
+	min-height: 100%;
+	height: 100%;
+}

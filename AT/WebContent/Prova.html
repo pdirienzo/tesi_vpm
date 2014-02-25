@@ -1,0 +1,102 @@
+<link href="css/drop.css" rel="stylesheet"/>
+
+
+<!-- Scripting -->
+<script type="text/javascript">
+$(document).ready(function(){
+	 $.getJSON("HypervisorInfo", function(hypervisorList){
+		html="<p><input type='submit' class='input-button' id='btn-get' value='Get items' /></p>";
+		var i;
+		for(i=0; i<hypervisorList.length; i++) {
+			if (i==0){
+				
+				html += "<div class='column left'> ";
+			}
+			else html += "<div class='column left first '>";
+			hypervisor = hypervisorList[i];
+			html += "<h3 >"+hypervisor.ip+"</h3>";
+			html += "<ul class='sortable-list'>";
+			for(j in hypervisor.machines){
+				vmachine = hypervisor.machines[j];
+				if (vmachine.status=="running"){
+					html += "<li class='sortable-item' id="+vmachine.name+">"+vmachine.name+" ("+
+							vmachine.status+")</li>";
+				}
+				else if (vmachine.status=="stopped"){
+					html += "<li class='unsortable' id="+vmachine.name+">"+vmachine.name+" ("+
+					vmachine.status+")</li>";
+				}
+			}
+			
+			html += "</ul></div>";
+		}
+	
+		$("#infopanel").html(html);
+		 
+		 
+		$("#infopanel ul.sortable-list").sortable({
+		    items: "li:not(.unsortable)"
+		    //connectWith: "#infopanel ul.sortable-list"
+		});
+		$("#infopanel ul.sortable-list").disableSelection();
+		$('#infopanel ul.sortable-list').sortable({
+			connectWith: '#infopanel ul.sortable-list'
+		});
+		$('#btn-get').click(function(){
+			alert(getItems('#infopanel'));
+		});
+		
+		
+	});
+	
+	function getItems(exampleNr)
+	{
+		var columns = [];
+
+		$(exampleNr + ' ul.sortable-list').each(function(){
+			columns.push($(this).sortable('toArray').join(','));				
+		});
+
+		return columns.join('|');
+	}; 	
+	$("#infopanel").hide();
+	setTimeout(function(){ 
+	    $("#loadingMask").fadeOut("slow");
+	    
+	  }, 2200 );
+	setTimeout(function(){ 
+	    $("#infopanel").fadeIn("slow");
+	    
+	  }, 2700 );
+	
+});
+</script>
+<!-- End scripting section -->
+<style type="text/css">
+.content {
+	margin: auto;
+text-align: center;
+padding: 10px;
+border: 2px solid #808080;
+height: auto;
+width: 100%;
+};
+
+</style>
+<div class="content">
+<!-- Pre Loading... -->
+	<div style="background: none repeat scroll 0% 0% rgb(255, 255, 255); 
+margin-top: 0px; width: inherit; height: inherit;" id="loadingMask">
+		<img src="images/loading.gif" width="300px">
+	</div>
+			<!-- BEGIN: HTML for Hypervisor -->
+
+			<div id="infopanel">
+					
+			</div> 
+
+			<div class="clearer">&nbsp;</div>
+
+			<!-- END: HTML for Hypervisor -->
+
+</div>
