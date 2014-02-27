@@ -35,11 +35,12 @@ public class HypervisorInfo extends HttpServlet {
 		
 		for(Hypervisor hyp : hypervisors){
 			HypervisorConnection c;
+			JSONObject hypervisor = new JSONObject()
+			.put("ip",hyp.getName()+"@"+hyp.getHostAddress());
+			
 			try {
 				c = new HypervisorConnection(hyp);
-				JSONObject hypervisor = new JSONObject()
-				.put("ip",hyp.getName()+"@"+hyp.getHostAddress());
-				
+				hypervisor.put("status", "online");
 				JSONArray machines = new JSONArray();
 				for(Domain d : c.getAllDomains()){
 					JSONObject vm = new JSONObject();
@@ -58,10 +59,12 @@ public class HypervisorInfo extends HttpServlet {
 			
 				c.close();
 				hypervisor.put("machines", machines);
-				hypervisorsJsonList.put(hypervisor);
 				
 			} catch (LibvirtException e) {
-				e.printStackTrace();
+				System.out.println(e.getMessage());
+				hypervisor.put("status", "offline");
+			}finally{
+				hypervisorsJsonList.put(hypervisor);
 			}
 		}
 		

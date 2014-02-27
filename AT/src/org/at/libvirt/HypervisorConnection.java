@@ -9,40 +9,55 @@ import org.libvirt.Domain;
 import org.libvirt.LibvirtException;
 
 public class HypervisorConnection extends Connect{
-	
+
+	private static final String DEFAULT_CONN_METHOD = "qemu";
+
 	public HypervisorConnection(Hypervisor h, String method, boolean readOnly) throws LibvirtException{
+		/*super(method+"://"+h.getName()+"@"+h.getHostAddress()+
+				"/system?no_tty=1", readOnly);*/
 		super(method+"://"+h.getName()+"@"+h.getHostAddress()+
-				"/system?no_tty=1", readOnly);
+				"/system", readOnly);
 	}
-	
+
 	public HypervisorConnection(Hypervisor h) throws LibvirtException{
-		this(h,"qemu+ssh");
+		this(h,DEFAULT_CONN_METHOD);
 	}
-	
+
 	public HypervisorConnection(Hypervisor h,boolean readOnly) throws LibvirtException{
-		this(h,"qemu+ssh",readOnly);
+		this(h,DEFAULT_CONN_METHOD,readOnly);
 	}
-	
+
 	public HypervisorConnection(Hypervisor h, String method) throws LibvirtException{
 		this(h,method,false);
 	}
-	
+
 	public List<Domain> getAllDomains() throws LibvirtException{
-		List<Domain> domains = new ArrayList<Domain>();
+		List<Domain> domains = getRunningDomains();
+		domains.addAll(getShuttedDownDomains());
 		
+		return domains;
+	}
+	
+	public List<Domain> getShuttedDownDomains() throws LibvirtException{
+		List<Domain> domains = new ArrayList<Domain>();
+		String[] names = super.listDefinedDomains();
+		for(int i=0; i<names.length;i++)
+			domains.add(super.domainLookupByName(names[i]));
+		
+		return domains;
+	}
+
+	public List<Domain> getRunningDomains() throws LibvirtException{
+		List<Domain> domains = new ArrayList<Domain>();
+
 		//getting running domains...
 		int[] ids = super.listDomains();
 		for(int i = 0;i<ids.length;i++)
 			domains.add(super.domainLookupByID(ids[i]));
-		
-		//getting shutted down domains
-		String[] names = super.listDefinedDomains();
-		for(int i=0; i<names.length;i++)
-			domains.add(super.domainLookupByName(names[i]));
-			
+
 		return domains;
 	}
-	
+
 	/**
 	 * Migreates a domain belonging to this hypervisor to selected hypervisor
 	 * 
@@ -58,5 +73,5 @@ public class HypervisorConnection extends Connect{
 		destConn.close();
 		return (newDomain != null);
 	}
-	
+
 }

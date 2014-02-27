@@ -140,27 +140,12 @@ public class FloodlightController {
 		return result;
 	}
 	
-	public JSONObject deleteAllFlows(String dpid) throws IOException{
-		JSONObject json = null;
-
+	public void deleteAllFlows(String dpid) throws IOException{
 		HttpClient client = HttpClients.createDefault();
 		HttpGet getRequest = new HttpGet(
 				baseURL+"/wm/staticflowentrypusher/clear/"+
 						dpid+"/json");
-
-		HttpResponse resp = client.execute(getRequest);
-		BufferedReader rd = new BufferedReader(new InputStreamReader(
-				resp.getEntity().getContent()));
-		String s = null;
-		StringBuilder sb = new StringBuilder();
-		while((s=rd.readLine())!= null)
-			sb.append(s);
-
-		json = new JSONObject(sb.toString());
-
-		rd.close();
-		
-		return json;
+		client.execute(getRequest);
 	}
 
 	
@@ -168,22 +153,24 @@ public class FloodlightController {
 		FloodlightController f = new FloodlightController(
 				new Controller("127.0.0.1", 8080));
 		
-		/*JSONObject data = new JSONObject()
+		 JSONObject data = new JSONObject()
+		 .put("name", "flow-mod-vm-br")
 		.put("switch", "00:00:00:24:be:c1:a9:5c")
-		.put("name", "pleaseWork_in")
-		.put("ingress-port", "1")
-		.put("ether-type", "2048")
+		.put("cookie", "0")
+		.put("priority", "32768")
+		.put("ingress-port", "2")
+		//.put("ether-type", "0x0800")
 		.put("active", "true")
-		.put("vlan-id", "0xffff")
-		.put("src-ip", "192.168.1.1")
-		.put("dst-ip", "192.168.1.3")
-		.put("actions", "output=0");
+		//.put("src-ip", "192.168.2.3")
+		//.put("dst-ip", "192.168.2.1")
+		.put("actions", "output=65534");
 		
-		JSONObject obj = f.addFlow(data);*/
+		//JSONObject obj = f.addFlow(data);
+		f.deleteAllFlows("00:00:00:24:be:c1:a9:5c");
 		
 		//JSONObject obj = f.getFlows("00:00:00:24:be:c1:a9:5c");
-		JSONObject obj = f.deleteFlow("00:00:00:24:be:c1:a9:5c","pleaseWork_out");
-		System.out.println(obj);
+		//JSONObject obj = f.deleteFlow("00:00:00:24:be:c1:a9:5c","pleaseWork_out");
+		//System.out.println(obj);
 
 	}
 

@@ -1,12 +1,13 @@
 package org.at.libvirt;
 
 import org.at.db.Hypervisor;
+import org.libvirt.Domain;
 import org.libvirt.DomainJobInfo;
 import org.libvirt.LibvirtException;
 
 public class MigrationThread extends Thread {
 	
-	public static final int NO_MIGRATION = 0;
+	public static final int MIGRATION_IDLE = 0;
 	public static final int MIGRATION_PROGRESS = 1;
 	public static final int MIGRATION_SUCCESS = 2;
 	public static final int MIGRATION_FAIL = -1;
@@ -17,12 +18,13 @@ public class MigrationThread extends Thread {
 	HypervisorConnection conn;
 	private Hypervisor dstH;
 	private String domainName;
+	private Domain inMigrationDomain;
 	
 	private long startTime;
 	private long elapsedTime;
 	
 	public MigrationThread(Hypervisor src,Hypervisor dst,String domainName){
-		setMigrationStatus(NO_MIGRATION);
+		setMigrationStatus(MIGRATION_IDLE);
 		this.srcH = src;
 		this.dstH = dst;
 		this.domainName = domainName;
@@ -33,8 +35,8 @@ public class MigrationThread extends Thread {
 		try {
 			conn = new HypervisorConnection(srcH);
 			setMigrationStatus(MIGRATION_PROGRESS);
-			
 			startTime = System.currentTimeMillis();//setting start time
+			inMigrationDomain = conn.domainLookupByName(domainName);
 			if(conn.migrate(domainName, dstH))
 				setMigrationStatus(MIGRATION_SUCCESS);
 			else
@@ -70,11 +72,16 @@ public class MigrationThread extends Thread {
 	 * @return
 	 * @throws LibvirtException
 	 */
-	public synchronized DomainJobInfo getJobStats() throws LibvirtException{
+	public synchronized DomainJobInfo getJobStats(){
+		DomainJobInfo infos = null;
+		
 		if(getMigrationStatus() == MIGRATION_PROGRESS)
-			return conn.domainLookupByName(domainName).getJobInfo();
-		else 
-			return null;
+			try {
+				infos = inMigrationDomain.getJobInfo();//conn.domainLookupByName(domainName).getJobInfo();
+			} catch (LibvirtException e) {
+			}
+		
+		return infos;
 	}
 	
 	/**

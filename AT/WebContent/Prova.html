@@ -1,9 +1,26 @@
-<link href="css/drop.css" rel="stylesheet"/>
+<link href="css/drop.css" rel="stylesheet" />
 
 
 <!-- Scripting -->
 <script type="text/javascript">
+
+function getItems(exampleNr)
+{
+	var columns = [];
+
+	$(exampleNr + ' ul.sortable-list').each(function(){
+		columns.push($(this).sortable('toArray').join(','));				
+	});
+
+	return columns.join('|');
+} 	
+
+
+
 $(document).ready(function(){
+	
+	$("#infopanel").hide(); //nascondiamo il pannello info
+	
 	 $.getJSON("HypervisorInfo", function(hypervisorList){
 		html="<p><input type='submit' class='input-button' id='btn-get' value='Get items' /></p>";
 		var i;
@@ -11,8 +28,9 @@ $(document).ready(function(){
 			if (i==0){
 				
 				html += "<div class='column left'> ";
-			}
-			else html += "<div class='column left first '>";
+			}else 
+				html += "<div class='column left first '>";
+			
 			hypervisor = hypervisorList[i];
 			html += "<h3 >"+hypervisor.ip+"</h3>";
 			html += "<ul class='sortable-list'>";
@@ -46,57 +64,44 @@ $(document).ready(function(){
 			alert(getItems('#infopanel'));
 		});
 		
+		$("#loadingMask").fadeOut("slow",function(){
+			$("#infopanel").fadeIn("slow");
+		});
 		
+		//$("#loadingMask").hide();
+		//$("#infopanel").show();
 	});
 	
-	function getItems(exampleNr)
-	{
-		var columns = [];
-
-		$(exampleNr + ' ul.sortable-list').each(function(){
-			columns.push($(this).sortable('toArray').join(','));				
-		});
-
-		return columns.join('|');
-	}; 	
-	$("#infopanel").hide();
-	setTimeout(function(){ 
-	    $("#loadingMask").fadeOut("slow");
-	    
-	  }, 2200 );
-	setTimeout(function(){ 
-	    $("#infopanel").fadeIn("slow");
-	    
-	  }, 2700 );
+	
+	
 	
 });
 </script>
 <!-- End scripting section -->
+
+
 <style type="text/css">
 .content {
 	margin: auto;
-text-align: center;
-padding: 10px;
-border: 2px solid #808080;
-height: auto;
-width: 100%;
-};
-
+	text-align: center;
+	padding: 10px;
+	border: 2px solid #808080;
+	height: auto;
+	width: 100%;
+}
+;
 </style>
 <div class="content">
-<!-- Pre Loading... -->
-	<div style="background: none repeat scroll 0% 0% rgb(255, 255, 255); 
-margin-top: 0px; width: inherit; height: inherit;" id="loadingMask">
+	<!-- Pre Loading... -->
+	<div id="loadingMask" style="background: none repeat scroll 0% 0% rgb(255, 255, 255); 
+		margin-top: 0px; width: inherit; height: inherit;">
 		<img src="images/loading.gif" width="300px">
 	</div>
-			<!-- BEGIN: HTML for Hypervisor -->
+	
+	<!-- BEGIN: HTML for Hypervisor -->
 
-			<div id="infopanel">
-					
-			</div> 
+	<div id="infopanel"></div>
+	<div class="clearer">&nbsp;</div>
 
-			<div class="clearer">&nbsp;</div>
-
-			<!-- END: HTML for Hypervisor -->
-
+	<!-- END: HTML for Hypervisor -->
 </div>

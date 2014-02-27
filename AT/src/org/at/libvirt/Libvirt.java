@@ -1,22 +1,12 @@
 package org.at.libvirt;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.List;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.at.db.Database;
 import org.at.db.Hypervisor;
 import org.libvirt.Connect;
 import org.libvirt.Domain;
 import org.libvirt.DomainJobInfo;
 import org.libvirt.LibvirtException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
 
 public class Libvirt {
 	

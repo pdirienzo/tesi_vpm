@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Database {
-	public static final String DEFAULT_DBPATH = "data/lime.db";
+	public static final String DEFAULT_DBPATH = "./data/lime.db";
 	private String dbPath;
 
 	private Connection connection = null;
