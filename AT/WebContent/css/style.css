@@ -50,6 +50,42 @@ input {
 	padding: 0 0 30px;
 }
 
+/* Layout */
+
+#center-wrapper {
+	margin: 0 auto;
+	width: 920px;
+}
+
+
+/* Columns */
+
+.column {
+	margin-left: 2%;
+	width: 32%;
+}
+.column.first {margin-left: 0;}
+
+
+/* Sortable items */
+
+.sortable-list {
+	background-color: #F93;
+	list-style: none;
+	margin: 0;
+	min-height: 60px;
+	padding: 10px;
+}
+.sortable-item {
+	background-color: #FFF;
+	border: 1px solid #000;
+	cursor: move;
+	display: block;
+	font-weight: bold;
+	margin-bottom: 5px;
+	padding: 20px 0;
+	text-align: center;
+}
 
 
 

@@ -63,7 +63,6 @@ public class HypervisorInfo extends HttpServlet {
 			} catch (LibvirtException e) {
 				System.out.println(e.getMessage());
 				hypervisor.put("status", "offline");
-				//commento
 			}finally{
 				hypervisorsJsonList.put(hypervisor);
 			}
