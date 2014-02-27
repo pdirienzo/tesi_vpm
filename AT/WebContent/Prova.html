@@ -1,4 +1,5 @@
 <link href="css/drop.css" rel="stylesheet" />
+<LINK href="css/bootstrap.css" rel="stylesheet" type="text/css" />
 
 
 <!-- Scripting -->
@@ -20,34 +21,39 @@ function getItems(exampleNr)
 $(document).ready(function(){
 	
 	$("#infopanel").hide(); //nascondiamo il pannello info
-	
-	 $.getJSON("HypervisorInfo", function(hypervisorList){
-		html="<p><input type='submit' class='input-button' id='btn-get' value='Get items' /></p>";
+	$.getJSON("HypervisorInfo", function(hypervisorList){
+		
+		html="<p><button>Migrate</button></p>";
 		var i;
+		html+="<div class='row'>";
 		for(i=0; i<hypervisorList.length; i++) {
-			if (i==0){
-				
-				html += "<div class='column left'> ";
-			}else 
-				html += "<div class='column left first '>";
+			
+			html += "<div class='left span3 '>";
 			
 			hypervisor = hypervisorList[i];
-			html += "<h3 >"+hypervisor.ip+"</h3>";
-			html += "<ul class='sortable-list'>";
-			for(j in hypervisor.machines){
-				vmachine = hypervisor.machines[j];
-				if (vmachine.status=="running"){
-					html += "<li class='sortable-item' id="+vmachine.name+">"+vmachine.name+" ("+
+			if (hypervisor.status == "online"){
+				html += "<label >"+hypervisor.ip+" ("+hipervisor.status+")</label>";
+				html += "<ul class='sortable-list'>";
+				for(j in hypervisor.machines){
+					vmachine = hypervisor.machines[j];
+					if (vmachine.status=="running"){
+						html += "<li class='sortable-item' id="+vmachine.name+">"+vmachine.name+" ("+
 							vmachine.status+")</li>";
+					}
+					else if (vmachine.status=="stopped"){
+						html += "<li class='unsortable' id="+vmachine.name+">"+vmachine.name+" ("+
+						vmachine.status+")</li>";
+					}
 				}
-				else if (vmachine.status=="stopped"){
-					html += "<li class='unsortable' id="+vmachine.name+">"+vmachine.name+" ("+
-					vmachine.status+")</li>";
-				}
-			}
 			
-			html += "</ul></div>";
+				html += "</ul></div>";
+			}else {
+				html += "<h3 >"+hypervisor.ip+" ("+hypervisor.status+")</h3>";
+				html += "<ul class='unsortable-list'>";
+				html +="</ul></div>";
+			}
 		}
+		html+="</div>";
 	
 		$("#infopanel").html(html);
 		 
@@ -72,6 +78,63 @@ $(document).ready(function(){
 		//$("#infopanel").show();
 	});
 	
+	/*function setMigration(hvList) {
+		html="<p>Are you sure that you wanna migrate? <p>";
+		
+		var arrayOfIDs=[];
+		$('#infopanel label.ipaddress').each(function(){
+			arrayOfIDs.push($(this).text());
+		});
+		alert(hvList[0].ip);
+		html+="<div id='currentmachine'>"+arrayOfIDs+"</div>"
+		$("#migration-box").html(html);
+		$("#migration-box").dialog("open");
+	}*/
+
+
+	function migrate(){
+		vmachine = document.getElementById("currentmachine").innerHTML;
+		ipsrc = document.getElementById("currentip").innerHTML;
+		ipdst = document.getElementById("dstbox").value;
+		
+		$.getJSON("Migration?vmname="+vmachine+"&srcip="+ipsrc+"&dstip="+ipdst, function(response){
+			$("#migration-box").dialog("close");
+			
+			$("#progress-bar").progressbar("value", false);
+			$("#progress-box").dialog("open");
+			refreshProgress();
+		});
+	}
+
+	function refreshProgress(){
+		$.getJSON("MigrationStatus", function(response){
+			if(response.state=="2") {
+				$("#progress-bar").progressbar("value", 100);
+				$.getJSON("GetElapsedTime", function(response){
+					text = "Tempo trascorso " + response.elapsed/1000 + " s";
+					$("#memory-progress").html(text);
+					showMachines();
+				});
+			} else if (response.state == "1") {
+				val  = response.processed*100/response.total;
+				$("#progress-bar").progressbar("value", Math.ceil(val));
+				
+				text = "Trasferimento " + Math.ceil(response.processed/1024/1024) + "/" + 
+					Math.ceil(response.total/1024/1024) + " MB "; 
+				$("#memory-progress").html(text);
+				
+				setTimeout(refreshProgress, 500);
+			} else if (response.state == "0") {
+				alert("state is 0");
+			} else {
+				
+				alert("Impossibile effettuare la migrazione.");
+				$.getJSON("GetElapsedTime", function(response){
+					$("#progress-box").dialog("close");
+				});
+			}
+		});
+	}
 	
 	
 	
@@ -87,7 +150,6 @@ $(document).ready(function(){
 	padding: 10px;
 	border: 2px solid #808080;
 	height: auto;
-	width: 100%;
 }
 ;
 </style>
@@ -103,5 +165,13 @@ $(document).ready(function(){
 	<div id="infopanel"></div>
 	<div class="clearer">&nbsp;</div>
 
-	<!-- END: HTML for Hypervisor -->
+	<!-- END: HTML for Hypervisor 
+	
+	<div id="migration-box"></div>
+			<div id="progress-box">
+				<h3 align="center">Migrazione in corso</h3>
+				<div id="progress-bar"><div id="progress-text"></div></div>
+				<div id="memory-progress"></div>
+	</div>
+	-->
 </div>
