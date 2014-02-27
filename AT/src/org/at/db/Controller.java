@@ -2,6 +2,7 @@ package org.at.db;
 
 public class Controller {
 
+	//dummy comment
 	private String hostAddress;
 	private long port;
 	
