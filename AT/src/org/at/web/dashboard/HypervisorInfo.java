@@ -39,7 +39,8 @@ public class HypervisorInfo extends HttpServlet {
 			.put("ip",hyp.getName()+"@"+hyp.getHostAddress());
 			
 			try {
-				c = new HypervisorConnection(hyp);
+				c = HypervisorConnection.getConnectionWithTimeout(hyp, true, 
+						HypervisorConnection.DEFAULT_TIMEOUT);
 				hypervisor.put("status", "online");
 				JSONArray machines = new JSONArray();
 				for(Domain d : c.getAllDomains()){
@@ -60,7 +61,7 @@ public class HypervisorInfo extends HttpServlet {
 				c.close();
 				hypervisor.put("machines", machines);
 				
-			} catch (LibvirtException e) {
+			} catch (LibvirtException | IOException e) {
 				System.out.println(e.getMessage());
 				hypervisor.put("status", "offline");
 			}finally{

@@ -1,5 +1,9 @@
 package org.at.libvirt;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,26 +15,102 @@ import org.libvirt.LibvirtException;
 public class HypervisorConnection extends Connect{
 
 	private static final String DEFAULT_CONN_METHOD = "qemu";
-
-	public HypervisorConnection(Hypervisor h, String method, boolean readOnly) throws LibvirtException{
-		/*super(method+"://"+h.getName()+"@"+h.getHostAddress()+
-				"/system?no_tty=1", readOnly);*/
+	public static final int DEFAULT_TIMEOUT = 3000;
+	
+	/**
+	 * The most complete call as it allows to specify everything
+	 * @param h
+	 * @param method
+	 * @param readOnly
+	 * @throws LibvirtException
+	 */
+	private HypervisorConnection(Hypervisor h, String method, boolean readOnly) throws LibvirtException{
 		super(method+"://"+h.getName()+"@"+h.getHostAddress()+
 				"/system", readOnly);
 	}
 
-	public HypervisorConnection(Hypervisor h) throws LibvirtException{
-		this(h,DEFAULT_CONN_METHOD);
-	}
-
-	public HypervisorConnection(Hypervisor h,boolean readOnly) throws LibvirtException{
+	/**
+	 * Creates an hypervisor with default connection method (tls)
+	 * @param h
+	 * @param readOnly
+	 * @throws LibvirtException
+	 */
+	private HypervisorConnection(Hypervisor h,boolean readOnly) throws LibvirtException{
 		this(h,DEFAULT_CONN_METHOD,readOnly);
 	}
-
-	public HypervisorConnection(Hypervisor h, String method) throws LibvirtException{
-		this(h,method,false);
+	
+	/***************************** Timed functions ****************************
+	 * This is just a workaround in order to prevent the libvirt Connect class
+	 * to try to connect forever to a shutted down hypervisor. This class has
+	 * not an embedded timeout function and the default timeout is really 
+	 * loooooooooooooooooooooooooooooooooooooooooooooooooooooooong.
+	 * 
+	 * So, in order to solve this and allow the user to specify a custom timeout,
+	 * we do this:
+	 * 1-we create a simple java socket and try to connect it to the hypervisor in 
+	 * order to check if it is online. Java is nice and allows to set a custom timeout.
+	 * 2-if the hypervisor answers back it means it is online. We immediately close the
+	 * socket and connect to the hypervisor with the Connect class. 
+	 * 
+	 * It is just a workaround as it opens one more connection just for checking,
+	 * but real problem is in the native api calls so for an integrated timeout
+	 * handling we can just wait for a new version.
+	 * @author pasquale
+	 *
+	 */
+	
+	/**
+	 * the dummy, additional connection
+	 * @param h
+	 * @param timeout timeout in millis
+	 * @throws IOException when times out
+	 */
+	private static void checkConnection(Hypervisor h, int timeout) throws IOException{
+		Socket s = new Socket();
+		InetSocketAddress addr = new InetSocketAddress(
+				InetAddress.getByName(h.getHostAddress()), (int)h.getPort());
+		
+		s.connect(addr, timeout);
+		s.close();
 	}
 
+	/**
+	 * returns a connection or throws ioexception if timeout expires
+	 * @param h
+	 * @param method
+	 * @param readOnly
+	 * @param timeout in millis
+	 * @return
+	 * @throws IOException
+	 * @throws LibvirtException
+	 */
+	public static HypervisorConnection getConnectionWithTimeout(
+			Hypervisor h, String method, boolean readOnly, int timeout) throws IOException, LibvirtException{
+		
+		checkConnection(h, timeout);
+		return new HypervisorConnection(h,method,readOnly);
+	}
+	
+	/**
+	 * returns a connection or throws ioexception if timeout expires
+	 * @param h
+	 * @param readOnly
+	 * @param timeout in millis
+	 * @return
+	 * @throws IOException
+	 * @throws LibvirtException
+	 */
+	public static HypervisorConnection getConnectionWithTimeout(Hypervisor h,
+			boolean readOnly,int timeout) throws IOException, LibvirtException{
+		
+		checkConnection(h, timeout);
+		return new HypervisorConnection(h,readOnly);
+	}
+
+	
+	//********************************* END TIMED ********************************
+	
+	
 	public List<Domain> getAllDomains() throws LibvirtException{
 		List<Domain> domains = getRunningDomains();
 		domains.addAll(getShuttedDownDomains());
@@ -64,14 +144,18 @@ public class HypervisorConnection extends Connect{
 	 * @param domainName
 	 * @param destConn
 	 * @throws LibvirtException 
+	 * @throws IOException 
 	 */
-	public boolean migrate(String domainName,Hypervisor destination) throws LibvirtException{
-		HypervisorConnection destConn = new HypervisorConnection(destination);
+	public boolean migrate(String domainName,Hypervisor destination) throws LibvirtException, IOException{
+		HypervisorConnection destConn = 
+				HypervisorConnection.getConnectionWithTimeout(destination, false,
+						HypervisorConnection.DEFAULT_TIMEOUT);
 		Domain domain = super.domainLookupByName(domainName);
 		Domain newDomain = null;
 		newDomain = domain.migrate(destConn, 1, null, null, 0);
 		destConn.close();
 		return (newDomain != null);
 	}
+	
 
 }

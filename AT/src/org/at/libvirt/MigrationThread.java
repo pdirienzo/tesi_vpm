@@ -1,5 +1,7 @@
 package org.at.libvirt;
 
+import java.io.IOException;
+
 import org.at.db.Hypervisor;
 import org.libvirt.Domain;
 import org.libvirt.DomainJobInfo;
@@ -33,7 +35,9 @@ public class MigrationThread extends Thread {
 	
 	public void run(){
 		try {
-			conn = new HypervisorConnection(srcH);
+			conn = HypervisorConnection.getConnectionWithTimeout(srcH, false,
+					HypervisorConnection.DEFAULT_TIMEOUT);
+			
 			setMigrationStatus(MIGRATION_PROGRESS);
 			startTime = System.currentTimeMillis();//setting start time
 			inMigrationDomain = conn.domainLookupByName(domainName);
@@ -46,6 +50,9 @@ public class MigrationThread extends Thread {
 			
 			conn.close();
 		} catch (LibvirtException e) {
+			e.printStackTrace();
+			setMigrationStatus(MIGRATION_FAIL);
+		} catch(IOException e){
 			e.printStackTrace();
 			setMigrationStatus(MIGRATION_FAIL);
 		}
@@ -77,7 +84,7 @@ public class MigrationThread extends Thread {
 		
 		if(getMigrationStatus() == MIGRATION_PROGRESS)
 			try {
-				infos = inMigrationDomain.getJobInfo();//conn.domainLookupByName(domainName).getJobInfo();
+				infos = inMigrationDomain.getJobInfo();
 			} catch (LibvirtException e) {
 			}
 		
