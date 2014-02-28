@@ -2,8 +2,14 @@ package org.at.web.dashboard;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -11,11 +17,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.at.db.Database;
 import org.at.db.Hypervisor;
-import org.at.libvirt.HypervisorConnection;
+import org.at.libvirt.GetHypervisorStatsThread;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.libvirt.Domain;
-import org.libvirt.LibvirtException;
 
 /**
  * Servlet implementation class HypervisorInfo
@@ -23,6 +27,20 @@ import org.libvirt.LibvirtException;
 @WebServlet("/HypervisorInfo")
 public class HypervisorInfo extends HttpServlet {
 	private static final long serialVersionUID = 1L;
+	
+	private ExecutorService executor;
+	
+	@Override
+	public void init() throws ServletException {
+		super.init();
+		executor = Executors.newCachedThreadPool();
+	}
+	
+	@Override
+	public void destroy() {
+		super.destroy();
+		executor.shutdown();
+	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) 
 			throws IOException {
@@ -33,39 +51,18 @@ public class HypervisorInfo extends HttpServlet {
 		Database database = (Database)getServletContext().getAttribute("database");
 		List<Hypervisor> hypervisors = database.getAllHypervisors();
 		
-		for(Hypervisor hyp : hypervisors){
-			HypervisorConnection c;
-			JSONObject hypervisor = new JSONObject()
-			.put("ip",hyp.getName()+"@"+hyp.getHostAddress());
-			
+		GetHypervisorStatsThread[] threads = new GetHypervisorStatsThread[hypervisors.size()];
+		List<Future<?>> futures = new ArrayList<Future<?>>();
+		for(int i=0;i<threads.length;i++){
+			threads[i] = new GetHypervisorStatsThread(hypervisors.get(i));
+			futures.add(executor.submit(threads[i]));
+		}
+		for(Future<?> f : futures){
 			try {
-				c = HypervisorConnection.getConnectionWithTimeout(hyp, true, 
-						HypervisorConnection.DEFAULT_TIMEOUT);
-				hypervisor.put("status", "online");
-				JSONArray machines = new JSONArray();
-				for(Domain d : c.getAllDomains()){
-					JSONObject vm = new JSONObject();
-					vm.put("name", d.getName());
-					int active = d.isActive();
-
-					if(active == 1)
-						vm.put("status", "running");
-					else if(active == 0)
-						vm.put("status", "stopped");
-					else
-						vm.put("status", "unknown");
-					
-					machines.put(vm);
-				}
-			
-				c.close();
-				hypervisor.put("machines", machines);
-				
-			} catch (LibvirtException | IOException e) {
-				System.out.println(e.getMessage());
-				hypervisor.put("status", "offline");
-			}finally{
-				hypervisorsJsonList.put(hypervisor);
+				JSONObject j = (JSONObject) f.get();
+				hypervisorsJsonList.put(j);
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
 			}
 		}
 		

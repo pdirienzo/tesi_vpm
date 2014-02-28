@@ -16,6 +16,9 @@ public class HypervisorConnection extends Connect{
 
 	private static final String DEFAULT_CONN_METHOD = "qemu";
 	public static final int DEFAULT_TIMEOUT = 3000;
+	public static final String TLS = "qemu";
+	public static final String SSH = "qemu+ssh";
+	public static final String TCP = "qemu+tcp";
 	
 	/**
 	 * The most complete call as it allows to specify everything
