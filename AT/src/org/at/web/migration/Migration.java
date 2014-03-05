@@ -37,7 +37,7 @@ public class Migration extends HttpServlet {
 		MigrationThread mt = new MigrationThread(srcHyp, dstHyp, vname);
 		mt.start();
 		
-		String id = "lm-"+vname+"-"+srcip+"-"+dstip; 
+		String id = "lm-"+vname+"-"+srcip.split(".")[3]+"-"+dstip.split(".")[3]; 
 		//saving an handle to the thread to keep trace of the status
 		getServletContext().setAttribute(id, mt);
 		

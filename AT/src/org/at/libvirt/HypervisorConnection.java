@@ -29,7 +29,7 @@ public class HypervisorConnection extends Connect{
 	 * @throws LibvirtException
 	 */
 	private HypervisorConnection(Hypervisor h, String method, boolean readOnly) throws LibvirtException{
-		super(method+"://"+h.getName()+"@"+h.getHostAddress()+
+			super(method+"://"+h.getName()+"@"+h.getHostAddress()+":"+h.getPort()+
 				"/system", readOnly);
 	}
 
