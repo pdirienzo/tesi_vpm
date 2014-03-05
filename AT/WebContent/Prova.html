@@ -293,7 +293,7 @@
         
            for (i = 0; i < name.length; i++) {
             var res = name[i].split("|");
-            //$.getJSON("Migration?vmname="+res[2]+"&srcip="+res[0]+"&dstip="+res[1], function(response){
+            $.getJSON("Migration?vmname="+res[2]+"&srcip="+res[0]+"&dstip="+res[1], function(response){
             var dialogo = "<div id='"+i+"_Migra' class='dialogo'>" + "<p>Da: <strong>"
                     + res[0] + "</strong><br /> a: <strong>" + res[1] + "</strong><br /> "+
                     "di: <strong>" + res[2] + "</strong></p>"
@@ -340,13 +340,13 @@
             var id = "lm-" + res[2] + "-" + idsd;
             //alert(id);
             refreshProgress(id);
-            //}); //endJSON
+            }); //endJSON
             }
     }
     //Prova
 
     function refreshProgress(id) {
-        $.getJSON("MigrationStatus?id="+id, function(response) {
+        $.getJSON("MigrationStatus?lmid="+id, function(response) {
             if (response.state == "2") {
                 $(".progress-bar2").progressbar("value", 100);
                 $.getJSON("GetElapsedTime", function(response) {
