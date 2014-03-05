@@ -23,12 +23,13 @@ public class GetElapsedTime extends HttpServlet {
 		PrintWriter out = new PrintWriter(response.getOutputStream());
 		response.setContentType("application/json");
 
-		MigrationThread mt = (MigrationThread)getServletContext().getAttribute("liveMigration");
+		String lmid = request.getParameter("lmid");
+		MigrationThread mt = (MigrationThread)getServletContext().getAttribute(lmid);
 		long time = mt.getElapsedTime();
 		JSONObject json = new JSONObject().put("elapsed",String.valueOf(time));
 		
 		//TODO removes the thread handle
-		getServletContext().removeAttribute("liveMigration");
+		getServletContext().removeAttribute(lmid);
 		out.println(json.toString());
 		out.close();
 	}

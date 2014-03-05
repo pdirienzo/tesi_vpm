@@ -28,7 +28,8 @@ public class MigrationStatus extends HttpServlet {
 		PrintWriter out = new PrintWriter(response.getOutputStream());
 		response.setContentType("application/json");
 
-		MigrationThread mt = (MigrationThread)getServletContext().getAttribute("liveMigration");
+		MigrationThread mt = (MigrationThread)getServletContext().getAttribute(
+				request.getParameter("lmid"));
 
 		JSONObject state = new JSONObject();
 		DomainJobInfo dj = mt.getJobStats();
