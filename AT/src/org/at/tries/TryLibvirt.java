@@ -4,23 +4,19 @@ import java.io.IOException;
 
 import org.at.db.Hypervisor;
 import org.at.libvirt.HypervisorConnection;
+import org.libvirt.Connect;
+import org.libvirt.ConnectAuth;
+import org.libvirt.ConnectAuthDefault;
 import org.libvirt.LibvirtException;
 
-public class TryLibvirt {
+public class TryLibvirt{
 
-	public static void main(String[] args) throws LibvirtException {
-		Hypervisor h = new Hypervisor("pasquale", "127.0.0.1", 22);
-		try {
-			HypervisorConnection c = HypervisorConnection.getConnectionWithTimeout(
-					h,true,
-					3000);
-			System.out.println("everything is ok");
-			c.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
+	public static void main(String[] args) throws LibvirtException, IOException {
+		Hypervisor h = new Hypervisor("pasquale", "143.225.229.197", 16509);
+		HypervisorConnection c = HypervisorConnection.getConnectionWithTimeout(h, false,
+				3000);
+		
+		c.close();
 	}
 
 }

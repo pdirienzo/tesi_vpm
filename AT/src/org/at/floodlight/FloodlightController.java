@@ -154,19 +154,20 @@ public class FloodlightController {
 				new Controller("127.0.0.1", 8080));
 		
 		 JSONObject data = new JSONObject()
-		 .put("name", "flow-mod-vm-br")
+		 .put("name", "flow-mod-vm1-swl")
 		.put("switch", "00:00:00:24:be:c1:a9:5c")
-		.put("cookie", "0")
-		.put("priority", "32768")
-		.put("ingress-port", "2")
-		//.put("ether-type", "0x0800")
+		.put("cookie", "5")
+		.put("priority", "200")
+		.put("idle_timeout","5")
+		.put("vlan-id", "1")
+		.put("ingress-port", "3")
+		.put("ether-type", "0x0800")
 		.put("active", "true")
-		//.put("src-ip", "192.168.2.3")
-		//.put("dst-ip", "192.168.2.1")
-		.put("actions", "output=65534");
+		.put("dst-ip", "192.168.1.1")
+		.put("actions", "output=1");
 		
-		//JSONObject obj = f.addFlow(data);
-		f.deleteAllFlows("00:00:00:24:be:c1:a9:5c");
+		System.out.println(f.addFlow(data));
+		//f.deleteAllFlows("00:00:00:24:be:c1:a9:5c");
 		
 		//JSONObject obj = f.getFlows("00:00:00:24:be:c1:a9:5c");
 		//JSONObject obj = f.deleteFlow("00:00:00:24:be:c1:a9:5c","pleaseWork_out");
