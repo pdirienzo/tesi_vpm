@@ -1,0 +1,158 @@
+<style>
+#active-vm-infopanel {
+	margin: auto;
+	text-align: center;
+	width: 500px;
+	padding: 10px;
+	border: 2px solid gray;
+};
+
+#active-vm-menu {
+	float: center;
+	text-align: left;
+	width: 230px;
+};
+</style>
+
+<div id="extern-vm-infopanel">
+</div>
+
+<div id="migration-box"></div>
+<div id="progress-box">
+	<h3 align="center">Migrazione in corso</h3>
+	<div id="progress-bar"><div id="progress-text"></div></div>
+	<div id="memory-progress"></div>
+</div>
+<script>
+
+$("#migration-box").dialog({
+	title    : "Migrazione",
+	buttons  : [{text: "Migra", click: function() {migrate();}},
+		    {text: "Annulla", click: function() {$(this).dialog("close");}}],
+	autoOpen : false,
+	hide     : "explode",
+	modal    : true
+});
+
+$("#progress-box").dialog({
+	title    : "Migrazione in corso",
+	buttons  : [{text: "Chiudi", click: function() {$(this).dialog("close");}}],
+	autoOpen : false,
+	hide     : "explode",
+	modal    : true
+});
+
+$("#progress-bar").progressbar({
+	value : false,
+	change: function() {
+		bar = $("#progress-bar");
+		$("#progress-text").text(bar.progressbar("value")+" % ");
+	},
+	complete: function() {
+		$("#progress-text").text("Migrazione completata");
+	}
+});
+
+function showMachines() {
+	$("#extern-vm-infopanel").html("");
+
+	$.getJSON("HypervisorInfo", function(hvList){
+		hypervisorList = hvList;
+	
+		html = "<div id=\"active-vm-infopanel\"><p>VM attive</p>\
+			<br><br><div id=\"active-vm-menu\">";
+		
+		for(i=0; i<hypervisorList.length; i++) {
+			hypervisor = hypervisorList[i];
+			html += "<h3 >"+hypervisor.ip+"</h3><div><p>";
+			
+			for(j in hypervisor.machines){
+				vmachine = hypervisor.machines[j];
+				ip = hypervisor.ip;
+				
+				html += "<button onclick=\"setMigration('"+vmachine.name+"','"+ip+"', hypervisorList);\"><b>"+vmachine.name+"</b> (<i>"+vmachine.status+"</i>)"+"</button><br>";
+			}
+			html += "</p></div><br><br>";
+		}
+		
+		html += "</div>";
+		
+		$("#extern-vm-infopanel").html(html);
+		
+		$("#active-vm-menu").accordion({
+			heightStyle: "content",
+			collapsible: true,
+			active: false 
+		});
+		
+		$("button").button();
+		
+	});
+}
+
+function setMigration(vmachine,ip,hypervisorList) {
+	
+	html = "<p>Migrazione</p><h3 id=\"currentmachine\">"+vmachine+"</h3>";
+	html += "Hypervisor attuale:<div id=\"currentip\">"+ip+"</div>";
+	
+	html += "<br><label>Migra verso:</label><br><select id=\"dstbox\">";
+	for(i=0; i<hypervisorList.length; i++){
+		if(hypervisorList[i].ip != ip) {
+			html += "<option value=\""+ hypervisorList[i].ip+ "\">"
+				+hypervisorList[i].ip+"</option>\n";
+		}
+	}
+	html += "</select>";
+	
+	
+	$("#migration-box").html(html);
+	$("#migration-box").dialog("open");
+}
+
+function migrate(){
+	vmachine = document.getElementById("currentmachine").innerHTML;
+	ipsrc = document.getElementById("currentip").innerHTML;
+	ipdst = document.getElementById("dstbox").value;
+
+	$.getJSON("Migration?vmname="+vmachine+"&srcip="+ipsrc+"&dstip="+ipdst, function(response){
+		$("#migration-box").dialog("close");
+		
+		$("#progress-bar").progressbar("value", false);
+		$("#progress-box").dialog("open");
+		refreshProgress();
+	});
+}
+
+function refreshProgress(){
+	$.getJSON("MigrationStatus", function(response){
+		if(response.state=="2") {
+			$("#progress-bar").progressbar("value", 100);
+			$.getJSON("GetElapsedTime", function(response){
+				text = "Tempo trascorso " + response.elapsed/1000 + " s";
+				$("#memory-progress").html(text);
+				showMachines();
+			});
+		} else if (response.state == "1") {
+			val  = response.processed*100/response.total;
+			$("#progress-bar").progressbar("value", Math.ceil(val));
+			
+			text = "Trasferimento " + Math.ceil(response.processed/1024/1024) + "/" + 
+				Math.ceil(response.total/1024/1024) + " MB "; 
+			$("#memory-progress").html(text);
+			
+			setTimeout(refreshProgress, 500);
+		} else if (response.state == "0") {
+			setTimeout(refreshProgress, 500);
+		} else {
+			
+			alert("Impossibile effettuare la migrazione.");
+			$.getJSON("GetElapsedTime", function(response){
+				$("#progress-box").dialog("close");
+			});
+		}
+	});
+}
+
+showMachines();
+
+</script>

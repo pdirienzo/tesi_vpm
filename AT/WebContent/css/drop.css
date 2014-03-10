@@ -5,7 +5,7 @@
 
 /* Floats */
 
-.left {float: left;}
+.left {float: left; padding:10px;}
 .right {float: right;}
 
 .clear,.clearer {clear: both;}

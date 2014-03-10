@@ -32,19 +32,32 @@ public class MigrationStatus extends HttpServlet {
 				request.getParameter("lmid"));
 
 		JSONObject state = new JSONObject();
-		DomainJobInfo dj = mt.getJobStats();
-		if(dj != null){
-			state.put("state", String.valueOf(MigrationThread.MIGRATION_PROGRESS))
-			.put("processed", String.valueOf(dj.getMemProcessed()))
-			.put("remaining", String.valueOf(dj.getMemRemaining()))
-			.put("total", String.valueOf(dj.getMemTotal()));
-		}else{//TODO this is just dummy to adapt to old client interface
-			state.put("state", String.valueOf(mt.getMigrationStatus()))
-			.put("processed", 100)
-			.put("remaining", 100)
-			.put("total", 100);
-		}
+		if(mt != null){
+			DomainJobInfo dj = mt.getJobStats();
+			if(dj != null){
+				state.put("state", String.valueOf(MigrationThread.MIGRATION_PROGRESS))
+				.put("id", request.getParameter("lmid"))
+				.put("processed", String.valueOf(dj.getMemProcessed()))
+				.put("remaining", String.valueOf(dj.getMemRemaining()))
+				.put("total", String.valueOf(dj.getMemTotal()));
+				if(dj.getMemTotal() != 0){
+					float diff = dj.getMemTotal()- dj.getMemRemaining();
+					float percent = 100* (diff/(float)dj.getMemTotal());
+					state.put("percent", percent);
+				}else
+					state.put("percent", 0);
+				
+			}else{//TODO this is just dummy to adapt to old client interface
+				state.put("state", String.valueOf(mt.getMigrationStatus()))
+				.put("id", request.getParameter("lmid"))
+				.put("processed", 100)
+				.put("remaining", 100)
+				.put("total", 100);
+			}
 
+		}else{
+			state.put("state", "Not Found");
+		}
 		out.println(state.toString());
 		out.close();
 	}

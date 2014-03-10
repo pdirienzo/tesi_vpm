@@ -37,10 +37,11 @@ public class MigrationThread extends Thread {
 		try {
 			conn = HypervisorConnection.getConnectionWithTimeout(srcH, false,
 					HypervisorConnection.DEFAULT_TIMEOUT);
-			
-			setMigrationStatus(MIGRATION_PROGRESS);
-			startTime = System.currentTimeMillis();//setting start time
 			inMigrationDomain = conn.domainLookupByName(domainName);
+			
+			startTime = System.currentTimeMillis();//setting start time
+			setMigrationStatus(MIGRATION_PROGRESS);
+			
 			if(conn.migrate(domainName, dstH))
 				setMigrationStatus(MIGRATION_SUCCESS);
 			else
@@ -81,14 +82,38 @@ public class MigrationThread extends Thread {
 	 */
 	public synchronized DomainJobInfo getJobStats(){
 		DomainJobInfo infos = null;
-		
 		if(getMigrationStatus() == MIGRATION_PROGRESS)
 			try {
 				infos = inMigrationDomain.getJobInfo();
 			} catch (LibvirtException e) {
+				//e.printStackTrace();
 			}
 		
 		return infos;
+	}
+	
+	public synchronized long getRemainingMb(){
+		DomainJobInfo stats = getJobStats();
+		if(stats != null)
+			return stats.getMemRemaining();
+		else
+			return -1;
+	}
+	
+	public synchronized long getTotalMb(){
+		DomainJobInfo stats = getJobStats();
+		if(stats != null)
+			return stats.getMemTotal()/1024/1024;
+		else
+			return -1;
+	}
+	
+	public synchronized long getProcessedMb(){
+		DomainJobInfo stats = getJobStats();
+		if(stats != null)
+			return stats.getMemProcessed()/1024/1024;
+		else
+			return -1;
 	}
 	
 	/**

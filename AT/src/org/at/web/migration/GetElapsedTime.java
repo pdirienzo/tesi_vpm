@@ -8,6 +8,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.at.libvirt.MigrationThread;
 import org.json.JSONObject;
 
@@ -22,12 +23,18 @@ public class GetElapsedTime extends HttpServlet {
 			throws ServletException, IOException {
 		PrintWriter out = new PrintWriter(response.getOutputStream());
 		response.setContentType("application/json");
-
+		
 		String lmid = request.getParameter("lmid");
 		MigrationThread mt = (MigrationThread)getServletContext().getAttribute(lmid);
-		long time = mt.getElapsedTime();
-		JSONObject json = new JSONObject().put("elapsed",String.valueOf(time));
-		
+
+		JSONObject json = new JSONObject();
+		json.put("id", lmid);
+		if(mt != null){
+			long time = mt.getElapsedTime();
+			json.put("elapsed",String.valueOf(time));
+		}else
+			json.put("status", "Not found");
+
 		//TODO removes the thread handle
 		getServletContext().removeAttribute(lmid);
 		out.println(json.toString());

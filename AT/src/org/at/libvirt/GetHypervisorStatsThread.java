@@ -51,6 +51,7 @@ public class GetHypervisorStatsThread implements Callable<JSONObject>{
 			//if hypervisor is not online or there is any generic error
 			//(usually if there is an error it is just cuz the hypervisor
 			//is offline)
+			e.printStackTrace();
 			System.out.println(e.getMessage());
 			hypervisorJ.put("status", "offline");
 		}
