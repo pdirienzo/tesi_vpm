@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.at.db.Hypervisor;
+import org.libvirt.CPUStatistic;
 import org.libvirt.Connect;
 import org.libvirt.Domain;
+import org.libvirt.DomainInfo;
 import org.libvirt.LibvirtException;
 
 public class HypervisorConnection extends Connect{
@@ -130,6 +132,15 @@ public class HypervisorConnection extends Connect{
 		
 		return domains;
 	}
+	
+	public long getMemUsage(String domainName) throws LibvirtException{
+		Domain d = domainLookupByName(domainName);
+		DomainInfo infos = d.getInfo();
+		System.out.println(infos.memory+"/"+infos.maxMem);
+		float perc = 100* ((float)infos.memory/(float)infos.maxMem);
+		
+		return (long)perc;
+	}
 
 	public List<Domain> getRunningDomains() throws LibvirtException{
 		List<Domain> domains = new ArrayList<Domain>();
@@ -140,6 +151,10 @@ public class HypervisorConnection extends Connect{
 			domains.add(super.domainLookupByID(ids[i]));
 
 		return domains;
+	}
+	
+	public CPUStatistic[] getCpuStatistics() throws LibvirtException{
+		return super.getCPUStats(-1, 0);
 	}
 
 	/**
