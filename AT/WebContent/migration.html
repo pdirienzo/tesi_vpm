@@ -35,14 +35,47 @@
 </div>
 
 <script type="text/javascript">
-
+var WARNING_THRESHOLD=70;
+var DANGER_THRESHOLD=90;
+function getDummy(){
+    var myJSONObject = [{
+    	"ip": "sprom@dell-Sprom",
+        "status" : "online",
+        "cpuinfo" : 91,
+        "machines" : [{
+            "status" : "running",
+            "name" : "linx2",
+            "cpustats" : 91
+        },
+        {
+            "status" : "running",
+            "name" : "server2",
+            "cpustats" : 75
+         }]
+    },
+    {"ip": "pasquale@pasq-VAIO",
+    	"status" : "online",
+    	"cpuinfo" : 80,
+        "machines" : [{
+            "status" : "running",
+            "name" : "linx2",
+            "cpustats" : 60
+        },
+        {
+            "status" : "running",
+            "name" : "server2",
+            "cpustats" : 30
+        }]
+    }];
+    return myJSONObject;
+}
 
         function getList() {
         $("#infopanel").hide(); //nascondiamo  btn-primaryil pannello info
-        $.getJSON("HypervisorInfo", function(hypervisorList){
-        //hypervisorList = getDummy();
+       // $.getJSON("HypervisorInfo", function(hypervisorList){
+        hypervisorList = getDummy();
         hvList = hypervisorList;
-        html = "<p><button type='button' class='btn' onclick=\"setMigration(hvList);\">Migrate</button></p>";
+        html = "<p><button onclick=\"setMigration(hvList);\">Migrate</button></p>";
         var i;
         html += "<div class='row'>";
         for (i = 0; i < hypervisorList.length; i++) {
@@ -61,11 +94,27 @@
 
                     vmachine = hypervisor.machines[j];
                     if (vmachine.status == "running") {
-                        html += "<li class='sortable-item' id="+vmachine.name+">"
+                    	if (vmachine.cpustats > WARNING_THRESHOLD && vmachine.cpustats < DANGER_THRESHOLD){
+                        html += "<li class='sortable-item-warning' id="+vmachine.name+">"
                                 + vmachine.name
                                 + " ("
                                 + vmachine.status
                                 + ")</li>";
+                    	}
+                    	 else if (vmachine.cpustats >= DANGER_THRESHOLD){
+                    		 html += "<li class='sortable-item-danger' id="+vmachine.name+">"
+                             + vmachine.name
+                             + " ("
+                             + vmachine.status
+                             + ")</li>";
+                    	 }
+                    	 else {
+                    		 html += "<li class='sortable-item-green' id="+vmachine.name+">"
+                             + vmachine.name
+                             + " ("
+                             + vmachine.status
+                             + ")</li>";
+                    	 }
                     } /*else if (vmachine.status == "stopped") {
                         html += "<li class='unsortable' id="+vmachine.name+">"
                                 + vmachine.name + " (" + vmachine.status
@@ -99,7 +148,7 @@
             $("#infopanel").fadeIn("slow");
         });
 
-        });
+       // });
     }
 
     function getItems() {

@@ -1,32 +1,99 @@
-<script>
-$.getJSON("HypervisorInfo", function(hypervisorList){
-
-	html = "<p>Hypervisors disponibili</p>\
-		<br><br><div id=\"hypervisormenu\">";
-	
-	for(i=0; i<hypervisorList.length; i++) {
-		hypervisor = hypervisorList[i];
-		html += "<h3 >"+hypervisor.ip+"</h3><div><p>";
-		
-		for(j in hypervisor.machines){
-			vmachine = hypervisor.machines[j];
-			html += "<button><b>"+vmachine.name+"</b> (<i>"+vmachine.status+"</i>)"+"</button><br>";
-		}
-		html += "</p></div><br><br>";
-	}
-	
-	$("#hypervisors-infopanel").html(html);
-	
-	$("#hypervisormenu").accordion({
-		heightStyle: "content",
-		collapsible: true,
-		active: false 
-	});
-	
-	$("button").button();
-	
-});
-</script>
-
 <link href="css/dashboard_style.css" rel="stylesheet"/>
+
 <div id="hypervisors-infopanel"></div>
+
+<script>
+function getDummy(){
+    var myJSONObject = [{"ip": "sprom@dell-Sprom",
+               "cpuinfo" : 91,
+               "machines" : [{
+                   "status" : "running",
+                   "name" : "linx2",
+                   "cpustats" : 91
+               },
+               {
+                   "status" : "running",
+                   "name" : "server2",
+                   "cpustats" : 75
+               }]
+    },
+    {"ip": "pasquale@pasq-VAIO",
+        "cpuinfo" : 80,
+        "machines" : [{
+            "status" : "running",
+            "name" : "linx2",
+            "cpustats" : 60
+        },
+        {
+            "status" : "running",
+            "name" : "server2",
+            "cpustats" : 30
+        }]
+    }];
+    return myJSONObject;
+}
+
+
+var WARNING_THRESHOLD=70;
+var DANGER_THRESHOLD=90;
+
+function getHypervisor(){     
+    var hypervisorList = getDummy();
+    
+    html = "<p>Hypervisors disponibili</p>\
+        <br><br><div id=\"hypervisormenu\" >";
+    for(i=0; i<hypervisorList.length; i++) {
+        hypervisor = hypervisorList[i];
+        if(hypervisor.cpuinfo > WARNING_THRESHOLD && hypervisor.cpuinfo < DANGER_THRESHOLD){
+        	html += "<label style=\"color:black; background:#f89406 !important \">"
+                +hypervisor.ip+" ("+hypervisor.cpuinfo+"%)</label><div><p>";
+                	
+        }
+        else if (hypervisor.cpuinfo >=DANGER_THRESHOLD){
+        	html += "<label style=\"color:black; background:#d2322d !important \">"
+                +hypervisor.ip+" ("+hypervisor.cpuinfo+"%)</label><div><p>";
+            
+        }
+        else {
+        	html += "<label style=\"color:black; background:#47a447 !important \">"
+                +hypervisor.ip+" ("+hypervisor.cpuinfo+"%)</label><div><p>";
+            
+        }
+        
+        for(j in hypervisor.machines){
+            vmachine = hypervisor.machines[j];
+            if (vmachine.status=="running"){
+            	if (vmachine.cpustats > WARNING_THRESHOLD && vmachine.cpustats < DANGER_THRESHOLD){
+                html += "<button style=\"background:rgba(248, 148, 6, 0.58) !important\"><b>"+vmachine.name+"</b>"+
+                " (<i>"+vmachine.status+"</i> <i>"
+                		+vmachine.cpustats+"%</i>)"+"</button><br>";  }
+                else if (vmachine.cpustats >= DANGER_THRESHOLD){
+                	html += "<button style=\"background: rgba(255, 0, 0, 0.58) !important\"><b>"+vmachine.name+"</b>"+
+                    " (<i>"+vmachine.status+"</i> <i>"
+                            +vmachine.cpustats+"%</i>)"+"</button><br>";
+                }
+                else html += "<button style=\"background: rgba(28, 229, 28, 0.58) !important\"><b>"+vmachine.name+"</b>"+
+                " (<i>"+vmachine.status+"</i> <i>"
+                +vmachine.cpustats+"%</i>)"+"</button><br>";
+            
+            }
+            else html += "<button><b>"+vmachine.name+"</b> (<i>"+vmachine.status+
+            +"</i>)"+"</button><br>";
+        }
+        html += "</p></div><br><br>";
+    }
+    
+    $("#hypervisors-infopanel").html(html);
+    
+    $("#hypervisormenu").accordion({
+        heightStyle: "content",
+        collapsible: true,
+        active: false 
+    });
+    
+    $("button").button();
+    
+}; 
+
+getHypervisor();
+</script>
