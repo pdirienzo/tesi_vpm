@@ -1,6 +1,7 @@
 package org.at.libvirt;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 
 import org.at.db.Hypervisor;
@@ -28,7 +29,7 @@ public class GetHypervisorStatsThread implements Callable<JSONObject>{
 					HypervisorConnection.DEFAULT_TIMEOUT);
 			
 			hypervisorJ.put("status", "online");
-			hypervisorJ.put("cpuUsage", String.format("%.2f", 
+			hypervisorJ.put("cpuUsage", String.format(Locale.US,"%.2f", 
 					c.getCPUOverallUsage(500)));
 			JSONArray machines = new JSONArray();
 			for(Domain d : c.getAllDomains()){
@@ -38,7 +39,7 @@ public class GetHypervisorStatsThread implements Callable<JSONObject>{
 				
 				if(active == 1) {
 					vm.put("status", "running");
-					vm.put("cpuUsage", String.format("%.2f", 
+					vm.put("cpuUsage", String.format(Locale.US,"%.2f", 
 							d.getCPUOverallUsage(500)));
 				}
 				else if(active == 0)

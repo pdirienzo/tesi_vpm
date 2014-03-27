@@ -19,4 +19,8 @@
 		<load-on-startup>10</load-on-startup>
 	</servlet>
 	
+	<listener>
+		<listener-class>org.at.connections.LimeContextServerListener</listener-class>
+	</listener>
+	
 </web-app>

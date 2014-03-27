@@ -34,9 +34,6 @@
 }
  */
 
-var WARNING_THRESHOLD=70;
-var DANGER_THRESHOLD=90;
-
 function getHypervisor(){ 
 $.getJSON("HypervisorInfo", function(hvList){
     var hypervisorList = hvList;
@@ -62,7 +59,8 @@ $.getJSON("HypervisorInfo", function(hvList){
 	            
 	        }
         }
-        else html += "<label>"+hypervisor.ip+" ("+hypervisor.status+")</label><div><p>";
+        else 
+        	html += "<label>"+hypervisor.ip+" ("+hypervisor.status+")</label><div><p>";
         
         for(j in hypervisor.machines){
             vmachine = hypervisor.machines[j];
@@ -81,8 +79,7 @@ $.getJSON("HypervisorInfo", function(hvList){
                 +vmachine.cpuUsage+"%</i>)"+"</button><br>";
             
             }
-            else html += "<button><b>"+vmachine.name+"</b> (<i>"+vmachine.status+
-            +"</i>)"+"</button><br>";
+            else html += "<button><b>"+vmachine.name+"</b> (<i>"+vmachine.status+"</i>)"+"</button><br>";
         }
         html += "</p></div><br><br>";
     }
