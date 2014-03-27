@@ -28,7 +28,8 @@ public class GetHypervisorStatsThread implements Callable<JSONObject>{
 					HypervisorConnection.DEFAULT_TIMEOUT);
 			
 			hypervisorJ.put("status", "online");
-			hypervisorJ.put("cpuinfo", c.getCPUOverallUsage(500));
+			hypervisorJ.put("cpuUsage", String.format("%.2f", 
+					c.getCPUOverallUsage(500)));
 			JSONArray machines = new JSONArray();
 			for(Domain d : c.getAllDomains()){
 				JSONObject vm = new JSONObject();
@@ -37,7 +38,8 @@ public class GetHypervisorStatsThread implements Callable<JSONObject>{
 				
 				if(active == 1) {
 					vm.put("status", "running");
-					vm.put("cpustat", d.getCPUOverallUsage(500));
+					vm.put("cpuUsage", String.format("%.2f", 
+							d.getCPUOverallUsage(500)));
 				}
 				else if(active == 0)
 					vm.put("status", "stopped");

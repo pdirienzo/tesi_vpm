@@ -45,37 +45,37 @@ $.getJSON("HypervisorInfo", function(hvList){
         <br><br><div id=\"hypervisormenu\" >";
     for(i=0; i<hypervisorList.length; i++) {
         hypervisor = hypervisorList[i];
-        if(hypervisor.cpuinfo > WARNING_THRESHOLD && hypervisor.cpuinfo < DANGER_THRESHOLD){
+        if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){
         	html += "<label style=\"color:black; background:#f89406 !important \">"
-                +hypervisor.ip+" ("+hypervisor.cpuinfo+"%)</label><div><p>";
+                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
                 	
         }
-        else if (hypervisor.cpuinfo >=DANGER_THRESHOLD){
+        else if (hypervisor.cpuUsage >=DANGER_THRESHOLD){
         	html += "<label style=\"color:black; background:#d2322d !important \">"
-                +hypervisor.ip+" ("+hypervisor.cpuinfo+"%)</label><div><p>";
+                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
             
         }
         else {
         	html += "<label style=\"color:black; background:#47a447 !important \">"
-                +hypervisor.ip+" ("+hypervisor.cpuinfo+"%)</label><div><p>";
+                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
             
         }
         
         for(j in hypervisor.machines){
             vmachine = hypervisor.machines[j];
             if (vmachine.status=="running"){
-            	if (vmachine.cpustats > WARNING_THRESHOLD && vmachine.cpustats < DANGER_THRESHOLD){
+            	if (vmachine.cpuUsage > WARNING_THRESHOLD && vmachine.cpuUsage < DANGER_THRESHOLD){
                 html += "<button style=\"background:rgba(248, 148, 6, 0.58) !important\"><b>"+vmachine.name+"</b>"+
                 " (<i>"+vmachine.status+"</i> <i>"
-                		+vmachine.cpustats+"%</i>)"+"</button><br>";  }
-                else if (vmachine.cpustats >= DANGER_THRESHOLD){
+                		+vmachine.cpuUsage+"%</i>)"+"</button><br>";  }
+                else if (vmachine.cpuUsage >= DANGER_THRESHOLD){
                 	html += "<button style=\"background: rgba(255, 0, 0, 0.58) !important\"><b>"+vmachine.name+"</b>"+
                     " (<i>"+vmachine.status+"</i> <i>"
-                            +vmachine.cpustats+"%</i>)"+"</button><br>";
+                            +vmachine.cpuUsage+"%</i>)"+"</button><br>";
                 }
                 else html += "<button style=\"background: rgba(28, 229, 28, 0.58) !important\"><b>"+vmachine.name+"</b>"+
                 " (<i>"+vmachine.status+"</i> <i>"
-                +vmachine.cpustats+"%</i>)"+"</button><br>";
+                +vmachine.cpuUsage+"%</i>)"+"</button><br>";
             
             }
             else html += "<button><b>"+vmachine.name+"</b> (<i>"+vmachine.status+

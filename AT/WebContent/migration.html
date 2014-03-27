@@ -94,14 +94,14 @@ var DANGER_THRESHOLD=90;
 
                     vmachine = hypervisor.machines[j];
                     if (vmachine.status == "running") {
-                    	if (vmachine.cpustats > WARNING_THRESHOLD && vmachine.cpustats < DANGER_THRESHOLD){
+                    	if (vmachine.cpuUsage > WARNING_THRESHOLD && vmachine.cpuUsage < DANGER_THRESHOLD){
                         html += "<li class='sortable-item-warning' id="+vmachine.name+">"
                                 + vmachine.name
                                 + " ("
                                 + vmachine.status
                                 + ")</li>";
                     	}
-                    	 else if (vmachine.cpustats >= DANGER_THRESHOLD){
+                    	 else if (vmachine.cpuUsage >= DANGER_THRESHOLD){
                     		 html += "<li class='sortable-item-danger' id="+vmachine.name+">"
                              + vmachine.name
                              + " ("
