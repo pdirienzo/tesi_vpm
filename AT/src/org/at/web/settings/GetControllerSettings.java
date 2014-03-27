@@ -24,8 +24,10 @@ public class GetControllerSettings extends HttpServlet {
 		PrintWriter out = response.getWriter();
 		response.setContentType("application/json");
 		
-		Database d = (Database)getServletContext().getAttribute("database");
+		Database d = new Database();
+		d.connect();
 		Controller c = d.getController();
+		d.close();
 		
 		JSONObject json;
 		if(c !=null) //a controller exists

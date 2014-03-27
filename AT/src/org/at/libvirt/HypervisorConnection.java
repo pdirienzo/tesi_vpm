@@ -23,6 +23,8 @@ public class HypervisorConnection extends Connect{
 
 	private static final String DEFAULT_CONN_METHOD = TLS;
 	
+	private Hypervisor hypervisor;
+	
 	/**
 	 * The most complete call as it allows to specify everything
 	 * @param h
@@ -33,6 +35,7 @@ public class HypervisorConnection extends Connect{
 	private HypervisorConnection(Hypervisor h, String method, boolean readOnly) throws LibvirtException{
 			super(method+"://"+h.getName()+"@"+h.getHostAddress()+":"+h.getPort()+
 				"/system", readOnly);
+			this.hypervisor = h;
 	}
 
 	/**
@@ -43,6 +46,10 @@ public class HypervisorConnection extends Connect{
 	 */
 	private HypervisorConnection(Hypervisor h,boolean readOnly) throws LibvirtException{
 		this(h,DEFAULT_CONN_METHOD,readOnly);
+	}
+	
+	public Hypervisor getHypervisor(){
+		return hypervisor;
 	}
 	
 	/***************************** Timed functions ****************************

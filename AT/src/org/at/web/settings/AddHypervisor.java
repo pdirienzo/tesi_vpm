@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.at.connections.HypervisorConnectionManager;
 import org.at.db.Database;
 import org.at.db.Hypervisor;
 import org.json.JSONObject;
@@ -28,14 +29,19 @@ public class AddHypervisor extends HttpServlet {
 		JSONObject message=new JSONObject();
 		
 		try{
-			Database d = (Database)getServletContext().getAttribute("database");
-			
+			Database d = new Database();
+			d.connect();
 			if(d.hypervisorExists(host2add.getHostAddress())){
 				message.put("status", "hypervisor gia' presente nella lista");
 			}else{
 				d.insertHypervisor(host2add);
 				message.put("status", "hypervisor aggiunto alla lista");
+				HypervisorConnectionManager manager = (HypervisorConnectionManager)getServletContext().
+						getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
+				manager.addHypervisor(host2add);
 			}
+			
+			d.close();
 			
 		}catch(IOException ex){
 			message.put("status", "fallito inserimento host: "+ex.getMessage());

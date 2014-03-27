@@ -16,8 +16,7 @@ public class MigrationThread extends Thread {
 	
 	private int status;
 	
-	private Hypervisor srcH;
-	HypervisorConnection conn;
+	private HypervisorConnection src;
 	private Hypervisor dstH;
 	private String domainName;
 	private Domain inMigrationDomain;
@@ -25,9 +24,9 @@ public class MigrationThread extends Thread {
 	private long startTime;
 	private long elapsedTime;
 	
-	public MigrationThread(Hypervisor src,Hypervisor dst,String domainName){
+	public MigrationThread(HypervisorConnection src,Hypervisor dst,String domainName){
 		setMigrationStatus(MIGRATION_IDLE);
-		this.srcH = src;
+		this.src = src;
 		this.dstH = dst;
 		this.domainName = domainName;
 		this.elapsedTime = -1; //value to say that migration is still in progress
@@ -35,21 +34,19 @@ public class MigrationThread extends Thread {
 	
 	public void run(){
 		try {
-			conn = HypervisorConnection.getConnectionWithTimeout(srcH, false,
-					HypervisorConnection.DEFAULT_TIMEOUT);
-			inMigrationDomain = conn.domainLookupByName(domainName);
+
+			inMigrationDomain = src.domainLookupByName(domainName);
 			
 			startTime = System.currentTimeMillis();//setting start time
 			setMigrationStatus(MIGRATION_PROGRESS);
 			
-			if(conn.migrate(domainName, dstH))
+			if(src.migrate(domainName, dstH))
 				setMigrationStatus(MIGRATION_SUCCESS);
 			else
 				setMigrationStatus(MIGRATION_FAIL);
 			
 			elapsedTime = System.currentTimeMillis() - startTime;
 			
-			conn.close();
 		} catch (LibvirtException e) {
 			e.printStackTrace();
 			setMigrationStatus(MIGRATION_FAIL);

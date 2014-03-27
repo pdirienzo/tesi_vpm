@@ -5,6 +5,9 @@ public class Hypervisor {
 	private String ipAddress;
 	private long port;
 	
+	public final static String STATUS_ONLINE = "online";
+	public final static String STATUS_OFFLINE = "offline";
+	
 	public Hypervisor(String name, String ipAddress, long port) {
 		this.name = name;
 		this.ipAddress = ipAddress;
@@ -33,6 +36,17 @@ public class Hypervisor {
 
 	public void setPort(long port) {
 		this.port = port;
+	}
+	
+	@Override
+	public boolean equals(Object h1){
+		Hypervisor h = (Hypervisor)h1;
+		return (h.getName().equals(name) && h.getHostAddress().equals(ipAddress) && (h.getPort() == port));
+	}
+	
+	@Override
+	public String toString(){
+		return name+"@"+ipAddress+":"+port;
 	}
 
 }

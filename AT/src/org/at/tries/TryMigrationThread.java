@@ -12,7 +12,7 @@ import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
 public class TryMigrationThread{
 
 	public static void main(String[] args) throws LibvirtException, IOException {
-		Hypervisor h1 = new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514);
+		/*Hypervisor h1 = new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514);
 		Hypervisor h2 = new Hypervisor("sprom", "sprom-Dell", 16514);
 		
 		MigrationThread mt = new MigrationThread(h1, h2, "linx2");

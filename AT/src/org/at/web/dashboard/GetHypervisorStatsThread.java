@@ -1,34 +1,34 @@
-package org.at.libvirt;
+package org.at.web.dashboard;
 
-import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
 import org.at.db.Hypervisor;
+import org.at.libvirt.HypervisorConnection;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.libvirt.Domain;
 import org.libvirt.LibvirtException;
 
 public class GetHypervisorStatsThread implements Callable<JSONObject>{
-	private Hypervisor h;
+	private HypervisorConnection c;
 	
-	public GetHypervisorStatsThread(Hypervisor h){
-		this.h = h;
+	public HypervisorConnection getHypervisorConnection(){
+		return c;
+	}
+	
+	public GetHypervisorStatsThread(HypervisorConnection c){
+		this.c = c;
 	}
 	
 	@Override
 	public JSONObject call() {
-		HypervisorConnection c;
+		Hypervisor h = c.getHypervisor();
 		JSONObject hypervisorJ = new JSONObject()
-		.put("ip",h.getName()+"@"+h.getHostAddress());
+		.put("ip",h.toString());
 		
 		try {
-			c = HypervisorConnection.getConnectionWithTimeout(h,
-					true, 
-					HypervisorConnection.DEFAULT_TIMEOUT);
-			
-			hypervisorJ.put("status", "online");
+			hypervisorJ.put("status", Hypervisor.STATUS_ONLINE);
 			hypervisorJ.put("cpuUsage", String.format(Locale.US,"%.2f", 
 					c.getCPUOverallUsage(500)));
 			JSONArray machines = new JSONArray();
@@ -49,17 +49,16 @@ public class GetHypervisorStatsThread implements Callable<JSONObject>{
 				
 				machines.put(vm);
 			}
-		
-			c.close();
+			
 			hypervisorJ.put("machines", machines);
 			
-		} catch (LibvirtException | IOException e) {
+		} catch (LibvirtException e) {
 			//if hypervisor is not online or there is any generic error
 			//(usually if there is an error it is just cuz the hypervisor
 			//is offline)
 			e.printStackTrace();
 			System.out.println(e.getMessage());
-			hypervisorJ.put("status", "offline");
+			hypervisorJ.put("status", Hypervisor.STATUS_OFFLINE);
 		}
 		
 		return hypervisorJ;

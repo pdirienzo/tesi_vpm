@@ -13,12 +13,6 @@
 		<welcome-file>default.jsp</welcome-file>
 	</welcome-file-list>
 	
-	<servlet>
-		<servlet-name>DbServlet</servlet-name>
-		<servlet-class>org.at.db.DbServlet</servlet-class>
-		<load-on-startup>10</load-on-startup>
-	</servlet>
-	
 	<listener>
 		<listener-class>org.at.connections.LimeContextServerListener</listener-class>
 	</listener>

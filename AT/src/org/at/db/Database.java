@@ -16,25 +16,39 @@ public class Database {
 
 	private Connection connection = null;
 
-	protected Database(){
+	public Database(){
 		this(DEFAULT_DBPATH);
 	}
 
-	protected Database(String dbPath){
+	public Database(String dbPath){
 		this.dbPath = dbPath;
 	}
 
-	protected void connect() throws IOException{	
+	public synchronized static void initialize(String dbPath) throws IOException{
 		boolean newDb = !((new File(dbPath)).exists());
+		if(newDb){
+			Database d = new Database();
+			d.connect();
+			try {
+				d.createTables();
+			} catch (SQLException e) {
+				throw new IOException();
+			}
+			d.close();
+		}
+	}
+	
+	public void connect() throws IOException{	
+		//boolean newDb = !((new File(dbPath)).exists());
 
 		try {
 			Class.forName("org.sqlite.JDBC");
 			connection = DriverManager.getConnection("jdbc:sqlite:"+dbPath);  
 			connection.setAutoCommit(true);
 
-			if(newDb) {
+			/*if(newDb) {
 				createTables();
-			}
+			}*/
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -46,10 +60,12 @@ public class Database {
 		}
 	}
 
-	protected void close() {
+	public void close() {
 		try {
-			if(connection != null)
+			if(connection != null){
 				connection.close();
+				connection = null;
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

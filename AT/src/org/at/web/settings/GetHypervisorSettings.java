@@ -28,7 +28,9 @@ public class GetHypervisorSettings extends HttpServlet {
 		JSONArray hypervisorList = new JSONArray();
 
 		try{
-			Database d = (Database)getServletContext().getAttribute("database");
+			Database d = new Database();
+			d.connect();
+			
 			List<Hypervisor> hosts = d.getAllHypervisors();	
 
 			for (Hypervisor h: hosts)
@@ -40,6 +42,8 @@ public class GetHypervisorSettings extends HttpServlet {
 
 				hypervisorList.put(hypervisor);
 			}
+			
+			d.close();
 
 		}catch(IOException e){
 			JSONObject error = new JSONObject();

@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.at.connections.HypervisorConnectionManager;
 import org.at.db.Database;
 import org.at.db.Hypervisor;
 import org.at.libvirt.MigrationThread;
@@ -33,11 +34,15 @@ public class Migration extends HttpServlet {
 		String srcip = request.getParameter("srcip").split("@")[1];
 		String dstip = (request.getParameter("dstip")).split("@")[1];
 		
-		Database d = (Database)getServletContext().getAttribute("database");
+		Database d = new Database();
+		d.connect();
 		Hypervisor srcHyp = d.getHypervisorByIp(srcip);
 		Hypervisor dstHyp = d.getHypervisorByIp(dstip);
+		d.close();
 		
-		MigrationThread mt = new MigrationThread(srcHyp, dstHyp, vname);
+		HypervisorConnectionManager manager =(HypervisorConnectionManager)getServletContext().getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
+		
+		MigrationThread mt = new MigrationThread(manager.getActiveConnection(srcHyp), dstHyp, vname);
 		mt.start();
 		
 		//String id = "lm-"+vname+"-"+srcip.split("\\.")[3]+"-"+dstip.split("\\.")[3]; 

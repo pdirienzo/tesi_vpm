@@ -8,7 +8,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.at.connections.HypervisorConnectionManager;
 import org.at.db.Database;
+import org.at.db.Hypervisor;
 import org.json.JSONObject;
 
 
@@ -16,16 +18,24 @@ import org.json.JSONObject;
 public class DeleteHypervisor extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
-    
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		PrintWriter out = response.getWriter();
 		JSONObject message = new JSONObject();
 		
 		String hostname=request.getParameter("hostname");
 		try{
-			Database d = (Database)getServletContext().getAttribute("database");
+			Database d = new Database();
+			d.connect();
+			Hypervisor h = d.getHypervisorByIp(hostname);
+			
+			//removing the hypervisor from the manager
+			HypervisorConnectionManager manager = (HypervisorConnectionManager)getServletContext()
+					.getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
+			manager.removeHypervisor(h);
+			
 			d.deleteHypervisor(hostname);
 			
+			d.close();
 			message.put("status","hypervisor eliminato con successo" );
 		}catch(IOException ex){
 			message.put("status", "fallita eliminazione hypervisor: "+ex.getMessage());

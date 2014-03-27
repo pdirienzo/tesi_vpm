@@ -24,9 +24,10 @@ public class AddController extends HttpServlet {
 		PrintWriter out = response.getWriter();
 		
 		try{
-			Database d = (Database)getServletContext().getAttribute("database");
+			Database d = new Database();
+			d.connect();
 			d.insertController(c);
-			
+			d.close();
 			message.put("status", "controller modificato");
 		}catch(IOException ex){
 			message.put("status", "fallito inserimento controller: "+ex.getMessage());

@@ -15,9 +15,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.at.db.Database;
+import org.at.connections.HypervisorConnectionManager;
 import org.at.db.Hypervisor;
-import org.at.libvirt.GetHypervisorStatsThread;
+import org.at.libvirt.HypervisorConnection;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -47,9 +47,10 @@ public class HypervisorInfo extends HttpServlet {
 		PrintWriter out = response.getWriter();
 		response.setContentType("application/json");
 		JSONArray hypervisorsJsonList = new JSONArray();  //the list we will send
+		HypervisorConnectionManager manager = (HypervisorConnectionManager)getServletContext()
+				.getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		
-		Database database = (Database)getServletContext().getAttribute("database");
-		List<Hypervisor> hypervisors = database.getAllHypervisors();
+		List<HypervisorConnection> hypervisors = manager.getActiveConnections();
 		
 		GetHypervisorStatsThread[] threads = new GetHypervisorStatsThread[hypervisors.size()];
 		List<Future<?>> futures = new ArrayList<Future<?>>();
@@ -57,14 +58,37 @@ public class HypervisorInfo extends HttpServlet {
 			threads[i] = new GetHypervisorStatsThread(hypervisors.get(i));
 			futures.add(executor.submit(threads[i]));
 		}
+		
+		List<JSONObject> offlineHypervisorList = new ArrayList<JSONObject>();
+		
+		for(Hypervisor h : manager.getOfflineHypervisors()){
+			JSONObject j = new JSONObject();
+			j.put("ip",h.toString())
+			.put("status", Hypervisor.STATUS_OFFLINE);
+			offlineHypervisorList.add(j);
+		}
+		
+		//these should be JUST online hypervisors
+		int i = 0;
 		for(Future<?> f : futures){
 			try {
 				JSONObject j = (JSONObject) f.get();
-				hypervisorsJsonList.put(j);
+				if(j.getString("status").equals(Hypervisor.STATUS_OFFLINE)){//if one of these have status offline it can just mean
+																			//that it is not online anymore, let's remove it
+					manager.setInactive(threads[i].getHypervisorConnection());
+					offlineHypervisorList.add(j);
+				}else
+					hypervisorsJsonList.put(j);
+				
 			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 			}
+			
+			i++;
 		}
+		
+		for(JSONObject jj : offlineHypervisorList)
+			hypervisorsJsonList.put(jj);//this way offline hypervisors will be after
 		
 		out.println(hypervisorsJsonList);
 		out.close();
