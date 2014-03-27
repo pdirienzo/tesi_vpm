@@ -3,7 +3,7 @@
 <div id="hypervisors-infopanel"></div>
 
 <script>
-function getDummy(){
+/* function getDummy(){
     var myJSONObject = [{"ip": "sprom@dell-Sprom",
                "cpuinfo" : 91,
                "machines" : [{
@@ -32,13 +32,14 @@ function getDummy(){
     }];
     return myJSONObject;
 }
-
+ */
 
 var WARNING_THRESHOLD=70;
 var DANGER_THRESHOLD=90;
 
-function getHypervisor(){     
-    var hypervisorList = getDummy();
+function getHypervisor(){ 
+$.getJSON("HypervisorInfo", function(hvList){
+    var hypervisorList = hvList;
     
     html = "<p>Hypervisors disponibili</p>\
         <br><br><div id=\"hypervisormenu\" >";
@@ -92,7 +93,7 @@ function getHypervisor(){
     });
     
     $("button").button();
-    
+	});
 }; 
 
 getHypervisor();

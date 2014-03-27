@@ -37,7 +37,7 @@
 <script type="text/javascript">
 var WARNING_THRESHOLD=70;
 var DANGER_THRESHOLD=90;
-function getDummy(){
+/* function getDummy(){
     var myJSONObject = [{
     	"ip": "sprom@dell-Sprom",
         "status" : "online",
@@ -68,12 +68,12 @@ function getDummy(){
         }]
     }];
     return myJSONObject;
-}
+} */
 
-        function getList() {
+    function getList() {
         $("#infopanel").hide(); //nascondiamo  btn-primaryil pannello info
-       // $.getJSON("HypervisorInfo", function(hypervisorList){
-        hypervisorList = getDummy();
+        $.getJSON("HypervisorInfo", function(hypervisorList){
+        //hypervisorList = getDummy();
         hvList = hypervisorList;
         html = "<p><button onclick=\"setMigration(hvList);\">Migrate</button></p>";
         var i;
@@ -148,7 +148,7 @@ function getDummy(){
             $("#infopanel").fadeIn("slow");
         });
 
-       // });
+        });
     }
 
     function getItems() {
@@ -197,7 +197,6 @@ function getDummy(){
         }
         var name = [];
         var k = 0;
-        //var hyp_after=getItems();
         for (i = 0; i < hyp.length; i++) {
             for (j = 0; j < hyp[i].Vm.length; j++) {
                 var ip = $(
@@ -263,7 +262,7 @@ function getDummy(){
     });
     
     //**************************************************************************************************************************************
-    
+    // USED IN MIGRATION BOX
     function migrate2(name){
         $("#migration-box").dialog("close");
         $("#wrapper").append("<div class='ui-widget-overlay ui-front'></div>");
@@ -301,7 +300,7 @@ function getDummy(){
     }
     
     //********************************************************************************************************************************
-    
+    // OLD NOT USED
     function migrate(name){
         $("#migration-box").dialog("close");
         $("#wrapper").append("<div class='ui-widget-overlay ui-front'></div>");
@@ -343,7 +342,9 @@ function getDummy(){
         }//end for  */
         $("#vmboxes").dialog("open");
     }
-    //Prova
+    
+    //***************************************************************************************************************
+    //WORKING REFRESH PROGRESS
 
     function refreshProgress(id) {
        $.getJSON("MigrationStatus?lmid="+id, function(response) {
