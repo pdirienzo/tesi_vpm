@@ -45,21 +45,24 @@ $.getJSON("HypervisorInfo", function(hvList){
         <br><br><div id=\"hypervisormenu\" >";
     for(i=0; i<hypervisorList.length; i++) {
         hypervisor = hypervisorList[i];
-        if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){
-        	html += "<label style=\"color:black; background:#f89406 !important \">"
-                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
-                	
+        if (hypervisor.status=="online"){
+	        if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){
+	        	html += "<label style=\"color:black; background:#f89406 !important \">"
+	                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
+	                	
+	        }
+	        else if (hypervisor.cpuUsage >=DANGER_THRESHOLD){
+	        	html += "<label style=\"color:black; background:#d2322d !important \">"
+	                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
+	            
+	        }
+	        else {
+	        	html += "<label style=\"color:black; background:#47a447 !important \">"
+	                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
+	            
+	        }
         }
-        else if (hypervisor.cpuUsage >=DANGER_THRESHOLD){
-        	html += "<label style=\"color:black; background:#d2322d !important \">"
-                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
-            
-        }
-        else {
-        	html += "<label style=\"color:black; background:#47a447 !important \">"
-                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
-            
-        }
+        else html += "<label>"+hypervisor.ip+" ("+hypervisor.status+")</label><div><p>";
         
         for(j in hypervisor.machines){
             vmachine = hypervisor.machines[j];
