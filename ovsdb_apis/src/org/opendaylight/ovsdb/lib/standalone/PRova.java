@@ -26,36 +26,42 @@ public class PRova {
 		OvsdbOptions opts = new OvsdbOptions();
 		opts.put(OvsdbOptions.REMOTE_IP, "143.225.229.197");
 		
+		OvsDBSet<Integer> trunks = new OvsDBSet<Integer>();
+		trunks.add(1);
+		trunks.add(2);
+		trunks.add(3);
+		
 		//client.deleteBridge(names[0], "br1");
 		//client.addBridge(names[0], "br1");
-		//client.addPort(names[0], "br0", "cool0", Interface.Type.gre.name(),opts);
-		//client.deletePort(names[0],"br0","cool0");
+		//client.addPort(names[0], "br0", "cool0", Interface.Type.gre.name(),2,trunks,opts);
+		client.deletePort(names[0],"br0","cool0");
 		
 		//System.out.println(client.getUUIDFromName(names[0], names[0], names[0]));
 		
+		/*
 		 //select demo
 		
 		List<Condition> where = new ArrayList<Condition>();
-		where.add(new Condition(Bridge.Column.name.name(), Function.EQUALS, "br0"));
+		where.add(new Condition(Port.Column.name.name(), Function.EQUALS, "prova0"));
 		//where.add(new Condition(Bridge.Column.ports.name(),FUNCTION.))
 		
 		List<String> columns = new ArrayList<>();
-		columns.add(Bridge.Column.ports.name());
+		columns.add(Port.Column.name.name());
 		//columns.add(Bridge.Column.ports.name());
-		//columns.add(Port.Column.tag.name());
+		columns.add(Port.Column.tag.name());
+		columns.add(Port.Column.trunks.name());
 		//columns.add(Interface.Column.options.name());
 		
 		
 		
 		List<HashMap<String,Object>> rs = 
-				client.select(names[0], Bridge.NAME.getName()
+				client.select(names[0], Port.NAME.getName()
 				, columns, where);
-		
 		
 		for(HashMap<String,Object> r : rs){
 			//OvsDBSet<UUID> sets = (OvsDBSet<UUID>) r.get(columns.get(0));
-			System.out.println(r.get(columns.get(0)));
-		}
+			System.out.println(r.get(columns.get(2)));
+		}*/
 		
 		
 		

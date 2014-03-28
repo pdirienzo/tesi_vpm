@@ -16,12 +16,11 @@ import com.google.common.collect.Sets;
 
 import org.opendaylight.ovsdb.lib.notation.json.Converter;
 import org.opendaylight.ovsdb.lib.notation.json.OvsDBSetSerializer;
-import org.opendaylight.ovsdb.lib.notation.json.OvsdbSetDeserializer;
 
 import java.util.Set;
 
-//@JsonDeserialize(converter = Converter.SetConverter.class)
-@JsonDeserialize(using = OvsdbSetDeserializer.class)
+@JsonDeserialize(converter = Converter.SetConverter.class)
+//@JsonDeserialize(using = OvsdbSetDeserializer.class)
 @JsonSerialize(using = OvsDBSetSerializer.class)
 public class OvsDBSet<T> extends ForwardingSet<T> {
 

@@ -120,7 +120,8 @@ public class Interface extends Table<Interface> {
     
     public enum Type {
     	gre,
-    	internal
+    	internal,
+    	vlanx
     }
     
     public enum Column implements org.opendaylight.ovsdb.lib.table.internal.Column<Interface> {

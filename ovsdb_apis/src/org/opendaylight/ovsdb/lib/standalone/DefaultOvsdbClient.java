@@ -21,6 +21,7 @@ import org.opendaylight.ovsdb.lib.notation.Condition;
 import org.opendaylight.ovsdb.lib.notation.Function;
 import org.opendaylight.ovsdb.lib.notation.Mutation;
 import org.opendaylight.ovsdb.lib.notation.Mutator;
+import org.opendaylight.ovsdb.lib.notation.OvsDBSet;
 import org.opendaylight.ovsdb.lib.notation.OvsdbOptions;
 import org.opendaylight.ovsdb.lib.notation.UUID;
 import org.opendaylight.ovsdb.lib.table.Bridge;
@@ -194,7 +195,7 @@ public class DefaultOvsdbClient /*implements OvsdbClient*/ {
 		
 		//1. we do a mutation on the bridge 
 		List<Condition> where = new ArrayList<Condition>();
-		where.add(new Condition(Bridge.NAME.getName(), Function.EQUALS, bridgeName));
+		where.add(new Condition(Bridge.Column.name.name(), Function.EQUALS, bridgeName));
 		//mutation!
 		List<Mutation> mutations = new ArrayList<Mutation>();
 		mutations.add(new Mutation(Bridge.Column.ports.name(),Mutator.DELETE,portUUID.toJsonArray()));
@@ -254,7 +255,7 @@ public class DefaultOvsdbClient /*implements OvsdbClient*/ {
 		TransactResponse resp = sendRequest("transact", params, TransactResponse.class);
 		checkTransactionErrors(resp);
 		
-		this.addPort(ovs, bridgeName, bridgeName, Interface.Type.internal.name(), null);
+		this.addPort(ovs, bridgeName, bridgeName, Interface.Type.internal.name());
 	}
 	
 	public void deleteBridge(String ovs,String bridgeName) throws OvsdbException, IOException{
@@ -288,7 +289,11 @@ public class DefaultOvsdbClient /*implements OvsdbClient*/ {
 		
 	}
 	
-	public void addPort(String ovs,String bridgeName,String portName,String portType,OvsdbOptions options) throws IOException, OvsdbException{
+	public void addPort(String ovs,String bridgeName,String portName,String portType) throws IOException, OvsdbException{
+		addPort(ovs,bridgeName,portName,portType,0,null,null);
+	}
+	
+	public void addPort(String ovs,String bridgeName,String portName,String portType,int tag,OvsDBSet<Integer> trunks,OvsdbOptions options) throws IOException, OvsdbException{
 		List<Object> params = new ArrayList<Object>();
 		params.add(ovs);
 		
@@ -325,6 +330,15 @@ public class DefaultOvsdbClient /*implements OvsdbClient*/ {
 		Map<String,Object> m = new HashMap<String,Object>();
 		m.put("name",portName);
 		m.put("interfaces", interfaceUUID.toNamedJsonArray());
+		
+		if(tag != 0){
+			m.put("tag", tag);
+		}
+		
+		if(trunks != null){
+			m.put("trunks", trunks);
+		}
+		
 		InsertOperationNew insertPort = new InsertOperationNew(Port.NAME.getName(),
 				m,"myPort");
 		params.add(insertPort);
