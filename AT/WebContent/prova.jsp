@@ -204,6 +204,7 @@
 					<td><%=h.getName()%></td>
 					<td><%=h.getHostAddress()%></td>
 					<td><%=h.getPort()%></td>
+					<td><button id="<%=h.getHostAddress()%>" onclick="removeHypervisor(event);">Elimina</button></td>
 				</tr>
 			<% } %>
 			</tbody>
