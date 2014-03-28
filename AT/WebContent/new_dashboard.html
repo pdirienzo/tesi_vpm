@@ -35,6 +35,8 @@
 }
  */
  
+ var started = 0;
+ 
  $(document).ready(function(){
 	 getHypervisor();
  });
@@ -95,9 +97,13 @@
 	     });
 	     
 	     $("button").button();
-	     
-	     setInterval(getHypervisor,5000);
 	 	});
+	 
+	 if(started == 0){
+		 started = 1;
+		 setInterval(getHypervisor,3000);
+	 }
+	 
 	 }
 </script>
 
