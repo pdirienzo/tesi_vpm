@@ -28,15 +28,21 @@ public class LimeContextServerListener implements ServletContextListener {
 			c.getServletContext().setAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER, manager);
 			preCompileSettingsJsp();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println("Failed to initialize db: "+e.getLocalizedMessage());
 		}
 	}
 	
-	private void preCompileSettingsJsp() throws IOException{
-		URL url = new URL(JSP_URL);
-		HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-		conn.setRequestMethod("GET");
-		conn.connect();
+	private void preCompileSettingsJsp(){
+		URL url;
+		try {
+			url = new URL(JSP_URL);
+			HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+			conn.setRequestMethod("GET");
+			conn.connect();
+		} catch (IOException e) {
+			System.err.println("Failed to preload the jsp: "+e.getLocalizedMessage());
+		}
+		
 		System.out.println("Jsp compiled");
 	} 
 	

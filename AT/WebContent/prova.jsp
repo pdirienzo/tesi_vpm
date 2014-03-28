@@ -28,7 +28,8 @@
 		buttons : [ {
 			text : "Aggiungi",
 			click : function() {
-				addNewHypervisor();
+				//addNewHypervisor();
+				$('#hypervisorform').submit();
 			}
 		}, {
 			text : "Annulla",
@@ -45,37 +46,7 @@
 		$("#add-host-dialog").dialog("open");
 	});
 
-	function getHypervisorSettings() {
-		$
-				.getJSON(
-						"GetHypervisorSettings",
-						function(response) {
-							html = "";
-							for (i = 0; i < response.length; i++) {
-								html += "<tr>";
-								html += "<td>" + response[i].username + "</td>";
-								html += "<td>" + response[i].hostname + "</td>";
-								html += "<td>" + response[i].port + "</td>";
-								html += "<td><button id=\""
-										+ response[i].hostname
-										+ "\" onclick=\"removeHypervisor(event);\">Elimina</button></td>";
-								html += "</tr>";
-							}
-
-							$("#Hypervisor-list").html(html);
-
-						});
-	}
-
-	function getControllerSettings() {
-		$.getJSON("GetControllerSettings", function(response) {
-			$("#current-controller-hostname").html(response.hostname);
-			$("#current-controller-port").html(response.port);
-			$("#current-controller-webui").html(
-					"<a  target=\"_blank\" href=\""+response.ui_url+"\">"
-							+ response.ui_url + "</a>");
-		});
-	}
+	
 	function applyControllerSettings() {
 		ip = document.getElementById("set-hostname").value;
 		port = document.getElementById("set-port").value;
@@ -105,17 +76,13 @@
 
 		hypervisor = event.target.id;
 
-		$.getJSON("DeleteHypervisor?hostname=" + hypervisor,
+		/*$.getJSON("DeleteHypervisor?hostname=" + hypervisor,
 				function(response) {
 					getHypervisorSettings();
 
-				});
+				});*/
+		
 	}
-
-	//chiamate quando il doc è pronto
-	
-	//getControllerSettings();
-	//getHypervisorSettings();
 	
 </script>
 
@@ -132,6 +99,7 @@
 	<% 
 	Database d = new Database();
 	d.connect();
+	
 	Controller c = d.getController();
 	List<Hypervisor> hypervisors = d.getAllHypervisors();
 	d.close();
@@ -215,12 +183,16 @@
 		<!--  Message Box (Hidden by default) -->
 		<div id="add-host-dialog" title="Aggiunta Hypervisor" style="">
 			<h3>Aggiunta Hypervisor</h3>
+			<form id="hypervisorform" action="/AT/prova.jsp" method="POST">
+			
 			<label for="addhost-username">Username</label><br> <input
 				id="addhost-username" type="text" value="user" /><br> <label
 				for="addhost-hostname">Host</label><br> <input
 				id="addhost-hostname" type="text" value="localhost" /> <label
 				for="addhost-port">Port</label><br> <input id="addhost-port"
 				type="text" value="16514" />
+			
+			</form>
 		</div>
 
 	</div>
