@@ -59,13 +59,13 @@ public class HypervisorInfo extends HttpServlet {
 			futures.add(executor.submit(threads[i]));
 		}
 		
-		List<JSONObject> offlineHypervisorList = new ArrayList<JSONObject>();
+		JSONArray offlines = new JSONArray();
 		
 		for(Hypervisor h : manager.getOfflineHypervisors()){
 			JSONObject j = new JSONObject();
 			j.put("ip",h.toString())
 			.put("status", Hypervisor.STATUS_OFFLINE);
-			offlineHypervisorList.add(j);
+			offlines.put(j);
 		}
 		
 		//these should be JUST online hypervisors
@@ -76,7 +76,7 @@ public class HypervisorInfo extends HttpServlet {
 				if(j.getString("status").equals(Hypervisor.STATUS_OFFLINE)){//if one of these have status offline it can just mean
 																			//that it is not online anymore, let's remove it
 					manager.setInactive(threads[i].getHypervisorConnection());
-					offlineHypervisorList.add(j);
+					offlines.put(j);
 				}else
 					hypervisorsJsonList.put(j);
 				
@@ -87,8 +87,7 @@ public class HypervisorInfo extends HttpServlet {
 			i++;
 		}
 		
-		for(JSONObject jj : offlineHypervisorList)
-			hypervisorsJsonList.put(jj);//this way offline hypervisors will be after
+		hypervisorsJsonList.concat(offlines);
 		
 		out.println(hypervisorsJsonList);
 		out.close();

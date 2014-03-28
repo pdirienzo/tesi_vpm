@@ -10,6 +10,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.at.db.DatabaseEventDispatcher.DBEvent;
+
 public class Database {
 	public static final String DEFAULT_DBPATH = "./data/lime.db";
 	private String dbPath;
@@ -92,6 +94,7 @@ public class Database {
 			s.execute("insert into host values(\""+ 
 					h.getName() + "\" ,\"" + h.getHostAddress() +"\" , \"" + h.getPort() +"\");"); 
 			s.close();
+			DatabaseEventDispatcher.dispatchEvent(DBEvent.hypervisor_insert, h);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new IOException(e.getMessage());
@@ -126,9 +129,12 @@ public class Database {
 
 	public void deleteHypervisor(String hostAddress) throws IOException{
 		try {
+			Hypervisor h = getHypervisorByIp(hostAddress);
+			
 			Statement s = connection.createStatement();
 			s.execute("delete from host where ip = \""+hostAddress+"\";");
 			s.close();
+			DatabaseEventDispatcher.dispatchEvent(DBEvent.hypervisor_delete, h);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new IOException(e.getMessage());

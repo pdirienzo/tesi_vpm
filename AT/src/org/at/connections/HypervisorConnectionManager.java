@@ -7,11 +7,12 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 import org.at.db.Database;
+import org.at.db.DatabaseListener;
 import org.at.db.Hypervisor;
 import org.at.libvirt.HypervisorConnection;
 import org.libvirt.LibvirtException;
 
-public class HypervisorConnectionManager {
+public class HypervisorConnectionManager implements DatabaseListener{
 	
 	private static final int CONNECTION_TIMEOUT = 500;
 	public static final String HYPERVISOR_CONNECTION_MANAGER = "hmanager";
@@ -19,12 +20,31 @@ public class HypervisorConnectionManager {
 	private int retryTimout;
 	private Timer timer; //this timer is used by the polling thread
 	
+	private boolean active;
+	private synchronized boolean isActive(){
+		return active;
+	}
+	private synchronized void setActive(boolean v){
+		active = v;
+	}
+	
+	
 	private Vector<HypervisorConnection> activeConnections;
 	private Vector<Hypervisor> offlineConnections;
 	
 	private Database d;
 	
+	@Override
+	public void hypervisorInserted(Hypervisor h) {
+		addHypervisor(h);
+		
+	}
 	
+	@Override
+	public void hypervisorDeleted(Hypervisor h) {
+		removeHypervisor(h);
+		
+	}
 	/**
 	 * Creates a connection manager with a specified timeout in order to
 	 * check if any hypervisor has returned on. 
@@ -56,14 +76,18 @@ public class HypervisorConnectionManager {
 		}	
 		d.close();
 		
-		if(retryTimout != 0) //a zero value means user wants to recover connections
-			timer.schedule(new ConnectionCheckerThread(), retryTimout,retryTimout);
+		if(retryTimout != 0){ //a zero value means user wants to recover connections
+			setActive(true);
+			timer.schedule(new ConnectionCheckerThread(),0);
+		}
 	}
 	
 	public synchronized void stop() throws IOException{
 		
-		if(retryTimout != 0)//polling thread was active
+		if(retryTimout != 0){//polling thread was active
+			setActive(false);
 			timer.cancel();
+		}
 		
 		//closing every active connection
 		for(HypervisorConnection hc : activeConnections)
@@ -182,6 +206,10 @@ public class HypervisorConnectionManager {
 				} catch (IOException | LibvirtException e) {
 					//System.err.println(h+" is still offline");
 				}
+			}
+		
+			if(retryTimout!= 0 && isActive()){
+				timer.schedule(new ConnectionCheckerThread(), retryTimout);
 			}
 		}
 		

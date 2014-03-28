@@ -36,9 +36,9 @@ public class AddHypervisor extends HttpServlet {
 			}else{
 				d.insertHypervisor(host2add);
 				message.put("status", "hypervisor aggiunto alla lista");
-				HypervisorConnectionManager manager = (HypervisorConnectionManager)getServletContext().
+				/*HypervisorConnectionManager manager = (HypervisorConnectionManager)getServletContext().
 						getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
-				manager.addHypervisor(host2add);
+				manager.addHypervisor(host2add);*/
 			}
 			
 			d.close();

@@ -26,13 +26,13 @@ public class DeleteHypervisor extends HttpServlet {
 		try{
 			Database d = new Database();
 			d.connect();
-			Hypervisor h = d.getHypervisorByIp(hostname);
+			//Hypervisor h = d.getHypervisorByIp(hostname);
 			
 			//removing the hypervisor from the manager
-			HypervisorConnectionManager manager = (HypervisorConnectionManager)getServletContext()
+			/*HypervisorConnectionManager manager = (HypervisorConnectionManager)getServletContext()
 					.getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 			manager.removeHypervisor(h);
-			
+			*/
 			d.deleteHypervisor(hostname);
 			
 			d.close();

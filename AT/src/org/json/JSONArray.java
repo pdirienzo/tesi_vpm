@@ -132,6 +132,16 @@ public class JSONArray {
             }
         }
     }
+    
+    /**
+     * Concats a json array to this one
+     * @param a
+     * @return
+     */
+    public void concat(JSONArray a){
+    	for(int i=0;i<a.length();i++)
+    		put(a.get(i));
+    }
 
     /**
      * Construct a JSONArray from a source JSON text.

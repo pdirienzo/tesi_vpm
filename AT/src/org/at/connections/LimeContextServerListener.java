@@ -6,6 +6,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import org.at.db.Database;
+import org.at.db.DatabaseEventDispatcher;
 
 public class LimeContextServerListener implements ServletContextListener {
 
@@ -19,6 +20,7 @@ public class LimeContextServerListener implements ServletContextListener {
 		try {
 			Database.initialize(Database.DEFAULT_DBPATH);
 			HypervisorConnectionManager manager = new HypervisorConnectionManager(MANAGER_RETRY_TIME);
+			DatabaseEventDispatcher.addListener(manager);
 			manager.start();
 			c.getServletContext().setAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER, manager);
 		} catch (IOException e) {
