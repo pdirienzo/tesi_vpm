@@ -87,21 +87,26 @@
 	         }
 	         html += "</p></div><br><br>";
 	     }
-	     
-	     $("#hypervisormenu").html(html);
+
+         $("#hypervisormenu").empty();
+         
+	     $("#hypervisormenu").append(html);
 	     
 	     $("#hypervisormenu").accordion({
 	         heightStyle: "content",
 	         collapsible: true,
 	         active: false 
 	     });
+	     if (started==1){
+	    	 $('#hypervisormenu').accordion('refresh');
+	     }
 	     
 	     $("button").button();
 	 	});
 	 
 	 if(started == 0){
 		 started = 1;
-		 setInterval(getHypervisor,3000);
+		 setInterval(getHypervisor,10000);
 	 }
 	 
 	 }
