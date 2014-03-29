@@ -160,6 +160,16 @@ public class HypervisorConnection extends Connect{
 		return domains;
 	}
 	
+	public void bootDomain(String name) throws LibvirtException{
+		Domain d = domainLookupByName(name);
+		d.create();
+	}
+	
+	public void shutdownDomain(String name) throws LibvirtException{
+		Domain d = domainLookupByName(name);
+		d.shutdown();
+	}
+	
 	public CPUStatistic[] getCpuStatistics() throws LibvirtException{
 		return super.getCPUStats(-1, 0);
 	}

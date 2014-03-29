@@ -246,6 +246,7 @@ public interface Libvirt extends Library {
     int virDomainSetSchedulerParameters(DomainPointer virDomainPtr, virSchedParameter[] params, int nparams);
     int virDomainSetVcpus(DomainPointer virDomainPtr, int nvcpus);
     int virDomainShutdown(DomainPointer virDomainPtr);
+    int virDomainShutdownFlags(DomainPointer virDomainPtr,long flags);
     int virDomainSuspend(DomainPointer virDomainPtr);
     int virDomainUpdateDeviceFlags(DomainPointer virDomainPtr, String xml, int flags);
     int virDomainUndefine(DomainPointer virDomainPtr);

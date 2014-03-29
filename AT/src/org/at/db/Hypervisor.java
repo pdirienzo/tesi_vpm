@@ -1,6 +1,7 @@
 package org.at.db;
 
 public class Hypervisor {
+	private String id;
 	private String name;
 	private String ipAddress;
 	private long port;
@@ -8,10 +9,22 @@ public class Hypervisor {
 	public final static String STATUS_ONLINE = "online";
 	public final static String STATUS_OFFLINE = "offline";
 	
-	public Hypervisor(String name, String ipAddress, long port) {
+	public Hypervisor(int id, String name, String ipAddress, long port) {
+		this.id = "H"+id;
 		this.name = name;
 		this.ipAddress = ipAddress;
 		this.port = port;
+	}
+	
+	public Hypervisor(String name, String ipAddress, long port) {
+		this.id = null;
+		this.name = name;
+		this.ipAddress = ipAddress;
+		this.port = port;
+	}
+	
+	public String getId(){
+		return id;
 	}
 
 	public String getName() {

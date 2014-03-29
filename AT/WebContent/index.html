@@ -1,42 +1,53 @@
 <!DOCTYPE HTML>
 <html>
-	<head>
-		<title>Live migration</title>
-		<link href="css/smoothness/jquery-ui-1.10.4.css" rel="stylesheet"/>
-		<link href="css/tabs_style.css" rel="stylesheet"/>
-		<script src="js/jquery-1.11.0.js"></script>
-		<script src="js/jquery-ui-1.10.4.js"></script>
+<head>
+<title>Live migration</title>
+<link href="css/smoothness/jquery-ui-1.10.4.css" rel="stylesheet" />
+<link href="css/tabs_style.css" rel="stylesheet" />
+<script src="js/jquery-1.11.0.js"></script>
+<script src="js/jquery-ui-1.10.4.js"></script>
 
-		<script type="text/javascript">
+	<script type="text/javascript">
+	
 			//global variables
-			var WARNING_THRESHOLD=15.0;
-			var DANGER_THRESHOLD=90;
-		</script>
-		
-		<script>
+			var WARNING_THRESHOLD=60.0;
+			var DANGER_THRESHOLD=90.0;
+			var REFRESH_INTERVAL = 5000; //time in ms of info refreshing
+			var timedFunction; //this contains the timed function for the
+			                   //dashboard refreshing logic
+
 			$(function() {
-				$("#tabs").tabs();
+				$("#tabs").tabs({
+					beforeActivate:function( event, ui ) {
+						 if(ui.oldTab.index() == 0) //if we are leaving from dashboard
+							 clearInterval(timedFunction); //we cancel the refresh operation
+					}
+				});
+				
+				 
+				
 				$.ajaxSetup ({
 		    		// Disable caching of AJAX responses
 		    		cache: false
 				});
 			});
+			 
 		</script>
-	</head>
-	
+</head>
 
-	<body>
-		<div id="wrapper">
-			<div id="header">
-				<div id="tabs" class="centered">
-					<ul>
-						<li><a href="new_dashboard.html">Dashboard</a></li>
-						<li><a href="migration.html">Migration</a></li>
-						<li><a href="networking.html">Networking</a></li>
-						<li><a href="settings.html">Settings</a></li>
-					</ul>
-				</div>
+
+<body>
+	<div id="wrapper">
+		<div id="header">
+			<div id="tabs" class="centered">
+				<ul>
+					<li><a href="new_dashboard.html">Dashboard</a></li>
+					<li><a href="migration.html">Migration</a></li>
+					<li><a href="networking.html">Networking</a></li>
+					<li><a href="settings.html">Settings</a></li>
+				</ul>
 			</div>
 		</div>
-	</body>
+	</div>
+</body>
 </html>

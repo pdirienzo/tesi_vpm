@@ -71,6 +71,14 @@ public class Domain {
                                                                     * when supported */
         static final int VIR_MIGRATE_UNSAFE            = (1 << 9); /* force migration even if it is considered unsafe */
     }
+    
+    public static final class ShutdownFlags{
+    	static final long SHUTDOWN_DEFAULT = 0; //hypervisor choice
+    	static final long SHUTDOWN_ACPI_POWER_BTN =	1;	 //send acpi api event
+    	static final long SHUTDOWN_GUEST_AGENT = 2;	//use guest agent
+    	static final long SHUTDOWN_INITCTL = 4;	//use init ctl
+    	static final long DOMAIN_SHUTDOWN_SIGNAL = 8;	//send a signal
+    }
 
     static final class XMLFlags {
         /**
@@ -1238,6 +1246,17 @@ public class Domain {
     public void shutdown() throws LibvirtException {
         libvirt.virDomainShutdown(VDP);
         processError();
+    }
+    
+    /**
+     * Shuts down this domain with selected shutdown flag.
+     * Please use Domain static flags under the inner class SHUTDOWNFlags
+     * @param flag
+     * @throws LibvirtException
+     */
+    public void shutdown(long flag) throws LibvirtException{
+    	libvirt.virDomainShutdownFlags(VDP, flag);
+    	processError();
     }
 
     /**

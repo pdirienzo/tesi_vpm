@@ -62,8 +62,9 @@ public class HypervisorInfo extends HttpServlet {
 		JSONArray offlines = new JSONArray();
 		
 		for(Hypervisor h : manager.getOfflineHypervisors()){
-			JSONObject j = new JSONObject();
-			j.put("ip",h.toString())
+			JSONObject j = new JSONObject()
+			.put("id", h.getId())
+			.put("ip",h.toString())
 			.put("status", Hypervisor.STATUS_OFFLINE);
 			offlines.put(j);
 		}

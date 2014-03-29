@@ -76,8 +76,8 @@ public class Database {
 	private void createTables() throws SQLException{
 		Statement s1 = connection.createStatement();
 		s1.execute(
-				"create table host(nome varchar not null," +
-				"ip varchar , port varchar, primary key (ip) );");
+				"create table host(id integer primary key autoincrement, nome varchar not null," +
+				"ip varchar , port varchar );");
 
 		Statement s2 = connection.createStatement();
 		s2.execute("create table controller(ip varchar, port varchar);");
@@ -91,7 +91,7 @@ public class Database {
 	public void insertHypervisor(Hypervisor h) throws IOException{
 		try {
 			Statement s = connection.createStatement();
-			s.execute("insert into host values(\""+ 
+			s.execute("insert into host (nome,ip,port) values(\""+ 
 					h.getName() + "\" ,\"" + h.getHostAddress() +"\" , \"" + h.getPort() +"\");"); 
 			s.close();
 			DatabaseEventDispatcher.dispatchEvent(DBEvent.hypervisor_insert, h);
@@ -99,6 +99,36 @@ public class Database {
 			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
+	}
+	
+	
+	/**
+	 * Gets an hypervisor object using the id
+	 * @param hostName
+	 * @return
+	 */
+	public Hypervisor getHypervisorById(String stringId) throws IOException{
+		//removing the "H"
+		int id = Integer.parseInt(stringId.substring(1, stringId.length()));
+		
+		Hypervisor h = null;
+		Statement s;
+		try {
+			s = connection.createStatement();
+			ResultSet rs = s.executeQuery(
+					"select* from host where id=\""+id+ "\";");
+			while(rs.next()){ //is just one
+				h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4));
+			}
+			
+			rs.close();
+			s.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+
+		return h;
 	}
 
 	/**
@@ -114,7 +144,7 @@ public class Database {
 			ResultSet rs = s.executeQuery(
 					"select* from host where ip=\""+hostName+ "\";");
 			while(rs.next()){ //is just one
-				h = new Hypervisor(rs.getString(1), rs.getString(2), rs.getLong(3));
+				h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4));
 			}
 			
 			rs.close();
@@ -153,9 +183,7 @@ public class Database {
 					"select * from host;");
 			l = new ArrayList<Hypervisor>();
 			while(rs.next()){
-				Hypervisor h = new Hypervisor(rs.getString(1),
-						rs.getString(2),
-						rs.getLong(3));
+				Hypervisor h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4));
 				l.add(h);
 			}
 			rs.close();

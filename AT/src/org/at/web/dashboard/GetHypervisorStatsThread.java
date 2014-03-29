@@ -25,7 +25,7 @@ public class GetHypervisorStatsThread implements Callable<JSONObject>{
 	public JSONObject call() {
 		Hypervisor h = c.getHypervisor();
 		JSONObject hypervisorJ = new JSONObject()
-		.put("ip",h.toString());
+		.put("id", h.getId()).put("ip",h.toString());
 		
 		try {
 			hypervisorJ.put("status", Hypervisor.STATUS_ONLINE);

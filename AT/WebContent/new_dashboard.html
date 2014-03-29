@@ -1,6 +1,56 @@
-<link href="css/dashboard_style.css" rel="stylesheet"/>
+<link href="css/dashboard_style.css" rel="stylesheet" />
 
+<style>
+.danger {
+	color: black !important;
+	/*background: #d2322d !important;*/
+	background: -webkit-linear-gradient(#d2322d, #d23277) !important; /* For Safari 5.1 to 6.0 */
+	background: -o-linear-gradient(#d2322d, #d23277) !important; /* For Opera 11.1 to 12.0 */
+	background: -moz-linear-gradient(#d2322d, #d23277) !important; /* For Firefox 3.6 to 15 */
+	background: linear-gradient(#d2322d, #d23277) !important; /* Standard syntax (must be last) */
+}
 
+.vm_danger {
+	color: black !important;
+	background: rgba(255, 0, 0, 0.58) !important;
+}
+
+.warning {
+	color: black !important;
+	/*background: #f89406 !important;*/
+	background: -webkit-linear-gradient(#f89406, #f89450) !important; /* For Safari 5.1 to 6.0 */
+	background: -o-linear-gradient(#f89406, #f89450) !important; /* For Opera 11.1 to 12.0 */
+	background: -moz-linear-gradient(#f89406, #f89450) !important; /* For Firefox 3.6 to 15 */
+	background: linear-gradient(#f89406, #f89450) !important; /* Standard syntax (must be last) */
+}
+
+.vm_warning {
+	color: black !important;
+	background: rgba(248, 148, 6, 0.58) !important;
+}
+
+.normal {
+	color: black !important;
+	/*background: #47a447 !important;*/
+	background: -webkit-linear-gradient(#47a447, #47a491) !important; /* For Safari 5.1 to 6.0 */
+	background: -o-linear-gradient(#47a447, #47a491) !important; /* For Opera 11.1 to 12.0 */
+	background: -moz-linear-gradient(#47a447, #47a491) !important; /* For Firefox 3.6 to 15 */
+	background: linear-gradient(#47a447, #47a491) !important; /* Standard syntax (must be last) */
+}
+
+.vm_normal {
+	color: black !important;
+	background: rgba(28, 229, 28, 0.58) !important;
+}
+
+.vm_box {
+	background: -webkit-linear-gradient(gray, black); /* For Safari 5.1 to 6.0 */
+	background: -o-linear-gradient(gray, black); /* For Opera 11.1 to 12.0 */
+	background: -moz-linear-gradient(gray, black); /* For Firefox 3.6 to 15 */
+	background: linear-gradient(gray, black); /* Standard syntax */
+}
+
+</style>
 
 <script>
 
@@ -35,86 +85,130 @@
 }
  */
  
- var started = 0;
- 
  $(document).ready(function(){
-	 getHypervisor();
- });
+	 getHypervisor(true);
+ }); 
  
- function getHypervisor(){ 
+ 
+
+ function getHypervisor(firstRun){
 	 $.getJSON("HypervisorInfo", function(hvList){
 	     var hypervisorList = hvList;
-	     html = "";
-	     for(i=0; i<hypervisorList.length; i++) {
-	         hypervisor = hypervisorList[i];
-	         if (hypervisor.status=="online"){
-	 	        if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){
-	 	        	html += "<label style=\"color:black; background:#f89406 !important \">"
-	 	                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
-	 	                	
-	 	        }else if (hypervisor.cpuUsage >=DANGER_THRESHOLD){
-	 	        	html += "<label style=\"color:black; background:#d2322d !important \">"
-	 	                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";
-	 	            
-	 	        }else {
-	 	        	html += "<label style=\"color:black; background:#47a447 !important \">"
-	 	                +hypervisor.ip+" ("+hypervisor.cpuUsage+"%)</label><div><p>";   
-	 	        }
-	         
-	         }else 
-	         	html += "<label>"+hypervisor.ip+" ("+hypervisor.status+")</label><div><p>";
-	         
-	         for(j in hypervisor.machines){
-	             vmachine = hypervisor.machines[j];
-	             if (vmachine.status=="running"){
-	             	if (vmachine.cpuUsage > WARNING_THRESHOLD && vmachine.cpuUsage < DANGER_THRESHOLD){
-	                 html += "<button style=\"background:rgba(248, 148, 6, 0.58) !important\"><b>"+vmachine.name+"</b>"+
-	                 " (<i>"+vmachine.status+"</i> <i>"
-	                 		+vmachine.cpuUsage+"%</i>)"+"</button><br>";  
-	                 
-	             	}else if (vmachine.cpuUsage >= DANGER_THRESHOLD){
-	                 	html += "<button style=\"background: rgba(255, 0, 0, 0.58) !important\"><b>"+vmachine.name+"</b>"+
-	                     " (<i>"+vmachine.status+"</i> <i>"
-	                             +vmachine.cpuUsage+"%</i>)"+"</button><br>";
-	                             
-	                 }else{ 
-	                	 html += "<button style=\"background: rgba(28, 229, 28, 0.58) !important\"><b>"+vmachine.name+"</b>"+
-	                	 " (<i>"+vmachine.status+"</i> <i>"
-	                 	+vmachine.cpuUsage+"%</i>)"+"</button><br>";
-	                 }
-	             
-	             }else html += "<button><b>"+vmachine.name+"</b> (<i>"+vmachine.status+"</i>)"+"</button><br>";
-	         }
-	         html += "</p></div><br><br>";
+	     
+	     if(firstRun == true){ //first time we create the labels and the accordion
+	    	 var html="";
+	    	 for(var i=0; i<hypervisorList.length; i++) {
+		         var hypervisor = hypervisorList[i];
+	    	 	 html += "<label id=\""+hypervisor.id+"\"></label><div class=\"vm_box\"><div id=\""+hypervisor.id+"_box\">";
+	   
+	 	       	 for(j in hypervisor.machines){
+	 	       		 vmachine = hypervisor.machines[j];
+	 	       		 html += "<button name='"+vmachine.name+"' class=\"vmbutton\"></button><br>";
+	 	       	 }
+	 	       	 
+	    	 	 html += "</div></div>";
+ 
+	    	 }
+	    	 
+	    	 $("#hypervisormenu").append(html);
+		  
+	    	 $("#hypervisormenu").accordion({
+		         heightStyle: "content",
+		         collapsible: true,
+		         active: false 
+		     });
+	    	 
+	    	 $( ".vmbutton" ).button().click(function( event ) {
+		 	       	event.preventDefault();
+		 	       	var action;
+		 	       	if(this.getAttribute('status') == "offline")
+		 	       		action = "boot";
+		 	       	else if (this.getAttribute('status') == "online")
+		 	       		action = "shutdown";
+		 	       	
+		 	       	var hypervisor = this.parentNode.id.split("_")[0];
+		 	       	var guest = this.name;
+		 	       	
+		 	       	alert("Sending a "+action+" request for "+guest);
+		 	       	
+		 	        $.getJSON("DomainControl?action="+action+"&hypervisorId="+hypervisor+"&guestName="+guest,function(result){
+		 	       		if(result.result == "error"){
+		 	       			alert("Request failed: "+result.details);
+		 	       		}
+		 	       	});
+	    	 });
 	     }
+	     
+	     //updating informations. This is done anyways
+	     for(var i=0; i<hypervisorList.length; i++) {
+	    	 var hypervisor = hypervisorList[i];
+	    	 var labelId = $("#"+hypervisor.id);
+	    	 
+	    		 labelId.removeClass("normal warning danger");
+	    		 if (hypervisor.status=="online"){
+		 	        if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){ //warning zone
+		 	        	labelId.addClass("warning");
+		 	        }else if (hypervisor.cpuUsage >=DANGER_THRESHOLD){ //danger zone
+		 	        	labelId.addClass("danger");
+		 	        }else { //normal
+		 	        	labelId.addClass("normal");
+		 	        }
+		 	        
+		 	       	for(j in hypervisor.machines){
+		 	       		var vmachine = hypervisor.machines[j];
+		 	       		var vmButton = $("#"+hypervisor.id+"_box button[name="+vmachine.name+"]");
+		 	       		if(vmButton != null){ //maybe some vm has been deleted from the hypervisor
+		 	       			
+		 	       			var vmButtonSpan = vmButton.find("span");
+		 	       		
+		 	       	    	$("#"+hypervisor.id+"_box button[name="+vmachine.name+"]").removeClass("vm_normal vm_warning vm_danger");
+		 	       	    	if (vmachine.status=="running"){
+		 	       	    		vmButton.attr("status","online");
+		 	       	    		
+		             			if (vmachine.cpuUsage > WARNING_THRESHOLD && vmachine.cpuUsage < DANGER_THRESHOLD){
+		             				vmButton.addClass("warning");
+		             			}else if (vmachine.cpuUsage >= DANGER_THRESHOLD){
+		             				vmButton.addClass("danger"); 
+		                 		}else{ 
+		                 			vmButton.addClass("vm_normal");
+		                 		}
+		             		
+		             			vmButtonSpan.html("<b>"+vmachine.name+"</b> (<i>"+vmachine.status+" "+vmachine.cpuUsage+"</i>)");
+		             
+		             		}else{ //if the vm is not online we don't need to add any class
+		             			vmButton.attr("status","offline");
+		             			vmButtonSpan.html("<b>"+vmachine.name+"</b> (<i>"+vmachine.status+"</i>)");
+		             		}
+		 	       	    	
+		 	       		}else{//if server sent some unknown vm it means that a new vm was added while the user was still in this page
+		 	       			location.reload(); //so we refresh the page
+		 	       		}
+		 	       	}
 
-         $("#hypervisormenu").empty();
-         
-	     $("#hypervisormenu").append(html);
-	     
-	     $("#hypervisormenu").accordion({
-	         heightStyle: "content",
-	         collapsible: true,
-	         active: false 
-	     });
-	     if (started==1){
-	    	 $('#hypervisormenu').accordion('refresh');
+		 	        labelId.text(hypervisor.ip+" ("+hypervisor.cpuUsage+"%)");
+		 	        
+	    	 	}else{
+	    	 		labelId.text(hypervisor.ip+" (offline)");
+	    	 	}
+	    	 		
+	    	 
 	     }
 	     
-	     $("button").button();
-	 	});
-	 
-	 if(started == 0){
-		 started = 1;
-		 setInterval(getHypervisor,10000);
-	 }
+	     $('#hypervisormenu').accordion('refresh');
+	     
+	    // if($("#tabs").tabs("option", "active") == 0){ //if the user is still viewing this tab
+	 	 if(firstRun == true)
+	    	timedFunction = setInterval(function() { getHypervisor(false); },REFRESH_INTERVAL); //we repeat the call
+	 	 //}
+	     
+	     });
 	 
 	 }
 </script>
 
 <div id="hypervisors-infopanel">
-	<p><strong>Hypervisors disponibili (cool)</strong></p>
-	<br>
-	<div id="hypervisormenu">
-	</div>
+	<p>
+		<strong>Hypervisors disponibili (cool)</strong>
+	</p>
+	<div id="hypervisormenu"></div>
 </div>

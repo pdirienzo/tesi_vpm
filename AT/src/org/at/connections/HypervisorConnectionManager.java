@@ -148,6 +148,20 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		return conn;
 	}
 	
+	public synchronized HypervisorConnection getActiveConnection(String hypervisorId){
+		int i = 0;
+		HypervisorConnection conn = null;
+		
+		while((conn == null) && (i<activeConnections.size())){
+			if(activeConnections.get(i).getHypervisor().getId().equals(hypervisorId)){//found
+				conn = activeConnections.get(i);
+			}else
+				i++;
+		}
+		
+		return conn;
+	}
+	
 	public synchronized void addHypervisor(Hypervisor h){
 		try {
 			activeConnections.add(HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT));
