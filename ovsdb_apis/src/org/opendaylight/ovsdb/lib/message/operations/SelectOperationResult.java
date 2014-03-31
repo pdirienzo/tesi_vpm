@@ -13,6 +13,7 @@ package org.opendaylight.ovsdb.lib.message.operations;
 import java.util.HashMap;
 import java.util.List;
 
+import org.opendaylight.ovsdb.lib.notation.OvsdbRow;
 import org.opendaylight.ovsdb.lib.notation.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,7 +32,8 @@ public class SelectOperationResult {
     private int count;
     @JsonIgnore
     private UUID uuid;
-    private List<HashMap<String,Object>> rows;
+    //private List<HashMap<String,Object>> rows;
+    private List<OvsdbRow> rows;
     private String error;
     private String details;
     private String syntax;
@@ -58,11 +60,20 @@ public class SelectOperationResult {
     public void setUuid(List<String> uuidList) {
         this.uuid = new UUID(uuidList.get(1));
     }
+    /*
     public List<HashMap<String,Object>> getRows() {
         return rows;
     }
     
     public void setRows(List<HashMap<String,Object>> rows) {
+        this.rows = rows;
+    }
+    */
+    public List<OvsdbRow> getRows(){
+    	return rows;
+    }
+    
+    public void setRows(List<OvsdbRow> rows) {
         this.rows = rows;
     }
     

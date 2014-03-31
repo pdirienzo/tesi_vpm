@@ -14,8 +14,8 @@ import org.opendaylight.ovsdb.lib.notation.json.Converter.UpdateNotificationConv
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(converter = UpdateNotificationConverter.class)
-public class UpdateNotification {
-    Object context;
+*/public class UpdateNotification {
+    /*Object context;
     TableUpdates update;
     public Object getContext() {
         return context;
@@ -28,5 +28,5 @@ public class UpdateNotification {
     }
     public void setUpdate(TableUpdates update) {
         this.update = update;
-    }
-}*/
+    }*/
+}

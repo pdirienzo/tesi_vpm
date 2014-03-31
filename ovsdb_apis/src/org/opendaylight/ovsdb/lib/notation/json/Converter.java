@@ -12,8 +12,11 @@ package org.opendaylight.ovsdb.lib.notation.json;
 /*
 import org.opendaylight.ovsdb.lib.message.TableUpdates;
 import org.opendaylight.ovsdb.lib.message.UpdateNotification;*/
+import java.util.Iterator;
+
 import org.opendaylight.ovsdb.lib.notation.OvsDBMap;
 import org.opendaylight.ovsdb.lib.notation.OvsDBSet;
+import org.opendaylight.ovsdb.lib.notation.OvsdbRow;
 import org.opendaylight.ovsdb.lib.notation.UUID;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -26,6 +29,8 @@ public class Converter {
     static AtomDeser atomDeser = new AtomDeser();
     static MapDeser mapDeser = new MapDeser();
     static SetDeser setDeser = new SetDeser();
+    static OvsdbRowDeser ovsdbRowDeser = new OvsdbRowDeser();
+    
     //static UpdateNotificationDeser unDeser = new UpdateNotificationDeser();
 
     public static class MapConverter extends StdConverter<JsonNode, OvsDBMap<Object, Object>> {
@@ -33,6 +38,14 @@ public class Converter {
         public OvsDBMap<Object, Object> convert(JsonNode value) {
             return mapDeser.deserialize(value);
         }
+    }
+    
+    public static class OvsdbRowConverter extends StdConverter<JsonNode, OvsdbRow>{
+    	
+    	@Override
+    	public OvsdbRow convert(JsonNode value){
+    		return ovsdbRowDeser.deserialize(value);
+    	}
     }
 
     public static class SetConverter extends StdConverter<JsonNode, OvsDBSet<Object>> {
@@ -79,7 +92,8 @@ public class Converter {
                 if (node.size() == 2) {
                     if (node.get(0).isTextual() && "set".equals(node.get(0).asText())) {
                         for (JsonNode atomNode : node.get(1)) {
-                            set.add(atomDeser.deserialize(atomNode));
+                        	Object ss = atomDeser.deserialize(atomNode); 
+                        	set.add(ss);
                         }
                         return set;
                     }
@@ -94,6 +108,41 @@ public class Converter {
             }
             return set;
         }
+    }
+    
+    static class OvsdbRowDeser {
+    	public OvsdbRow deserialize(JsonNode node){
+    		OvsdbRow row = new OvsdbRow();
+    		Iterator<String> it = node.fieldNames();
+    		while(it.hasNext()){
+    			String propName = it.next();
+    			JsonNode el = node.get(propName);
+    			if(el.isArray()){
+    				switch(el.get(0).asText()){
+    				case "uuid":
+    					row.put(propName,atomDeser.deserialize(el)); //atom deser covers uuid too..nice
+    					break;
+    				case "set":
+    					row.put(propName, setDeser.deserialize(el));
+    					break;
+    				case "map":
+    					row.put(propName,mapDeser.deserialize(el));
+    				}
+    			}else
+    				row.put(propName,atomDeser.deserialize(el));
+    			
+    			//System.out.println("propName "+propName+"/"+el.getNodeType());
+    			/*
+    			switch(node.get(propName).getNodeType()){
+    			case STRING:
+    				break;
+    				
+    			}*/
+    			//System.out.println(node.get(it.next()).getNodeType());
+    		}
+    		
+    		return row;
+    	}
     }
 
     /*
