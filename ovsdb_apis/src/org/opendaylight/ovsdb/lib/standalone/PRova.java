@@ -9,6 +9,7 @@ import org.opendaylight.ovsdb.lib.notation.Condition;
 import org.opendaylight.ovsdb.lib.notation.Function;
 import org.opendaylight.ovsdb.lib.notation.OvsDBSet;
 import org.opendaylight.ovsdb.lib.notation.OvsdbOptions;
+import org.opendaylight.ovsdb.lib.notation.OvsdbRow;
 import org.opendaylight.ovsdb.lib.notation.UUID;
 import org.opendaylight.ovsdb.lib.table.Bridge;
 import org.opendaylight.ovsdb.lib.table.Interface;
@@ -31,10 +32,14 @@ public class PRova {
 		trunks.add(2);
 		trunks.add(3);
 		
+		for(String s : client.listPorts(names[0],"br0")){
+			System.out.println(s);
+		}
 		//client.deleteBridge(names[0], "br1");
 		//client.addBridge(names[0], "br1");
-		//client.addPort(names[0], "br0", "cool0", Interface.Type.gre.name(),2,trunks,opts);
-		client.deletePort(names[0],"br0","cool0");
+		//client.addPort(names[0], "br1", "cool0", Interface.Type.gre.name(),2,trunks,opts);
+		//client.addPort(names[0], "br1", "cool1", Interface.Type.gre.name(),2,trunks,opts);
+		//client.deletePort(names[0],"br0","cool0");
 		
 		//System.out.println(client.getUUIDFromName(names[0], names[0], names[0]));
 		
@@ -42,28 +47,25 @@ public class PRova {
 		 //select demo
 		
 		List<Condition> where = new ArrayList<Condition>();
-		where.add(new Condition(Port.Column.name.name(), Function.EQUALS, "prova0"));
+		where.add(new Condition(Bridge.Column.name.name(), Function.EQUALS, "br0"));
 		//where.add(new Condition(Bridge.Column.ports.name(),FUNCTION.))
 		
 		List<String> columns = new ArrayList<>();
-		columns.add(Port.Column.name.name());
+		columns.add(Bridge.Column.name.name());
 		//columns.add(Bridge.Column.ports.name());
-		columns.add(Port.Column.tag.name());
-		columns.add(Port.Column.trunks.name());
+		columns.add(Bridge.Column.ports.name());
+		columns.add(Bridge.Column._uuid.name());
 		//columns.add(Interface.Column.options.name());
 		
 		
 		
-		List<HashMap<String,Object>> rs = 
-				client.select(names[0], Port.NAME.getName()
+		List<OvsdbRow> rs = 
+				client.select(names[0], Bridge.NAME.getName()
 				, columns, where);
 		
-		for(HashMap<String,Object> r : rs){
-			//OvsDBSet<UUID> sets = (OvsDBSet<UUID>) r.get(columns.get(0));
-			System.out.println(r.get(columns.get(2)));
+		for(OvsdbRow row : rs){
+			System.out.println(row.getColumn("name"));
 		}*/
-		
-		
 		
 		
 		/*
