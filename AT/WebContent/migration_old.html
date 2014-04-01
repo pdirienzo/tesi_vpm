@@ -1,158 +1,424 @@
-<style>
-#active-vm-infopanel {
+<link href="css/drop.css" rel="stylesheet" />
+
+<script src="js/jquery.dialogextend.js"></script>
+<script src="js/jquery.dialogextend.min.js"></script>
+<style type="text/css">
+.content {
 	margin: auto;
 	text-align: center;
-	width: 500px;
 	padding: 10px;
-	border: 2px solid gray;
-};
-
-#active-vm-menu {
-	float: center;
-	text-align: left;
-	width: 230px;
-};
+	border: 2px solid #808080;
+	height: auto;
+}
+;
 </style>
+<div class="content">
+	<p><button id="migrationButton">Migrate</button></p>
+	<!-- Pre Loading... -->
+	<div id="loadingMask"
+		style="background: none repeat scroll 0% 0% rgb(255, 255, 255); margin-top: 0px; width: inherit; height: inherit;">
+		<img src="images/loading.gif" width="300px">
+	</div>
 
-<div id="extern-vm-infopanel">
+	<!-- BEGIN: HTML for Hypervisor -->
+    
+	<div id="infopanel">
+		
+	</div>
+	
+	<div class="clearer">&nbsp;</div>
+	
+	
+	<!-- END: HTML for Hypervisor -->
+
+	<div id="migration-box">
+		<p>Confermare questa migrazione?<p>
+		<div id="migration-box-details">
+		
+		</div>
+	</div>
+	
+	<div id="vmboxes"></div>
+
 </div>
 
-<div id="migration-box"></div>
-<div id="progress-box">
-	<h3 align="center">Migrazione in corso</h3>
-	<div id="progress-bar"><div id="progress-text"></div></div>
-	<div id="memory-progress"></div>
-</div>
-<script>
+<script type="text/javascript">
 
-$("#migration-box").dialog({
-	title    : "Migrazione",
-	buttons  : [{text: "Migra", click: function() {migrate();}},
-		    {text: "Annulla", click: function() {$(this).dialog("close");}}],
-	autoOpen : false,
-	hide     : "explode",
-	modal    : true
-});
-
-$("#progress-box").dialog({
-	title    : "Migrazione in corso",
-	buttons  : [{text: "Chiudi", click: function() {$(this).dialog("close");}}],
-	autoOpen : false,
-	hide     : "explode",
-	modal    : true
-});
-
-$("#progress-bar").progressbar({
-	value : false,
-	change: function() {
-		bar = $("#progress-bar");
-		$("#progress-text").text(bar.progressbar("value")+" % ");
-	},
-	complete: function() {
-		$("#progress-text").text("Migrazione completata");
-	}
-});
-
-function showMachines() {
-	$("#extern-vm-infopanel").html("");
-
-	$.getJSON("HypervisorInfo", function(hvList){
-		hypervisorList = hvList;
+	$(document).ready(function(){
+	 	getList();
+	 	$( "#migrationButton" ).button().click(function( event ) {
+	 		$("#migration-box").dialog("open");
+	 		//setMigration(hvList);
+	 	});
+	 	
+	 	//setup of dialogs
+	 	
+	 	$("#migration-box").dialog({
+            title : "Migrazione",
+            buttons : [ {
+                text : "Migra",
+                click : function() {
+                    migrate2(name);
+                }
+            }, {
+                text : "Annulla",
+                click : function() {
+                    $(this).dialog("close");
+                }
+            } ],
+            autoOpen : false,
+            hide : "explode",
+            modal : true
+        });
+	}); 
 	
-		html = "<div id=\"active-vm-infopanel\"><p>VM attive</p>\
-			<br><br><div id=\"active-vm-menu\">";
-		
-		for(i=0; i<hypervisorList.length; i++) {
-			hypervisor = hypervisorList[i];
-			html += "<h3 >"+hypervisor.ip+"</h3><div><p>";
-			
-			for(j in hypervisor.machines){
-				vmachine = hypervisor.machines[j];
-				ip = hypervisor.ip;
-				
-				html += "<button onclick=\"setMigration('"+vmachine.name+"','"+ip+"', hypervisorList);\"><b>"+vmachine.name+"</b> (<i>"+vmachine.status+"</i>)"+"</button><br>";
-			}
-			html += "</p></div><br><br>";
-		}
-		
-		html += "</div>";
-		
-		$("#extern-vm-infopanel").html(html);
-		
-		$("#active-vm-menu").accordion({
-			heightStyle: "content",
-			collapsible: true,
-			active: false 
-		});
-		
-		$("button").button();
-		
-	});
-}
+/* function getDummy(){
+    var myJSONObject = [{
+    	"ip": "sprom@dell-Sprom",
+        "status" : "online",
+        "cpuinfo" : 91,
+        "machines" : [{
+            "status" : "running",
+            "name" : "linx2",
+            "cpustats" : 91
+        },
+        {
+            "status" : "running",
+            "name" : "server2",
+            "cpustats" : 75
+         }]
+    },
+    {"ip": "pasquale@pasq-VAIO",
+    	"status" : "online",
+    	"cpuinfo" : 80,
+        "machines" : [{
+            "status" : "running",
+            "name" : "linx2",
+            "cpustats" : 60
+        },
+        {
+            "status" : "running",
+            "name" : "server2",
+            "cpustats" : 30
+        }]
+    }];
+    return myJSONObject;
+} */
 
-function setMigration(vmachine,ip,hypervisorList) {
+	//this function populates the screen with hypervisor boxes and guests inside them
+    function getList() {
+        $("#infopanel").hide(); //nascondiamo  btn-primaryil pannello info
+        $.getJSON("HypervisorInfo", function(hypervisorList){
+        	//hypervisorList = getDummy();
+        //hvList = hypervisorList;
+        //html = "<p><button onclick=\"setMigration(hvList);\">Migrate</button></p>";
+        var i;
+        //html += "<div class='row'>";
+        var html = "<div class='row'>";
+        for (i = 0; i < hypervisorList.length; i++) {
+
+            html += "<div class='left span3 '>";
+
+            hypervisor = hypervisorList[i];
+            
+            if (hypervisor.status == "online") {
+                html += "<label id='"+hypervisor.id+"' class='iphyp-online' >"
+                        + hypervisor.ip + " (" + hypervisor.status
+                        + ")</label>";
+
+                html += "<ul class='sortable-list'>";
+                
+                for (j in hypervisor.machines) {
+
+                    vmachine = hypervisor.machines[j];
+                    if (vmachine.status == "running") {
+                    	if (vmachine.cpuUsage > WARNING_THRESHOLD && vmachine.cpuUsage < DANGER_THRESHOLD){
+                        html += "<li class='sortable-item-warning' id="+vmachine.name+">"
+                                + vmachine.name
+                                + " ("
+                                + vmachine.status
+                                + ")</li>";
+                    	}
+                    	 else if (vmachine.cpuUsage >= DANGER_THRESHOLD){
+                    		 html += "<li class='sortable-item-danger' id="+vmachine.name+">"
+                             + vmachine.name
+                             + " ("
+                             + vmachine.status
+                             + ")</li>";
+                    	 }
+                    	 else {
+                    		 html += "<li class='sortable-item-green' id="+vmachine.name+">"
+                             + vmachine.name
+                             + " ("
+                             + vmachine.status
+                             + ")</li>";
+                    	 }
+                    } /*else if (vmachine.status == "stopped") {
+                        html += "<li class='unsortable' id="+vmachine.name+">"
+                                + vmachine.name + " (" + vmachine.status
+                                + ")</li>";
+                    }*/
+                }
+
+                html += "</ul></div>";
+            } else {
+                html += "<label id='"+hypervisor.ip+"' class='iphyp-offline'>"
+                        + hypervisor.ip + " (" + hypervisor.status
+                        + ")</label>";
+                html += "<ul class='unsortable-list'>";
+                html += "</ul></div>";
+            }
+        }
+        html += "</div>";
+
+        $("#infopanel").html(html);
+
+        $("#infopanel ul.sortable-list").sortable({
+            items : "li:not(.unsortable)"
+        //connectWith: "#infopanel ul.sortable-list"
+        });
+        $("#infopanel ul.sortable-list").disableSelection();
+        $('#infopanel ul.sortable-list').sortable({
+            connectWith : '#infopanel ul.sortable-list'
+        });
+
+        $("#loadingMask").fadeOut("slow", function() {
+            $("#infopanel").fadeIn("slow");
+        });
+
+        });
+    }
+
+    function getItems() {
+
+        var hyp = [];
+        var name;
+        $('div.span3 label.iphyp-online').each(function() {
+            name = $(this).attr("id");
+            hyp.push({
+                Name : name,
+                Vm : []
+            });
+        });
+        var k = 0;
+        $('div.span3 ul.sortable-list').each(function() {
+            hyp[k].Vm = $(this).sortable('toArray');
+            k++;
+        });
+        
+        return hyp;
+    }
+
+    function setMigration(hvList) {
+        //html = "<p>Are you sure that you wanna migrate? <p>";
+        html = "";
+        var hyp = [];
+        k = 0;
+        for (i = 0; i < hvList.length; i++) {
+            hypervisor = hvList[i];
+
+            if (hypervisor.status == "online") {
+                var id = hypervisor.id;
+                var name = hypervisor.ip;
+                var machine = [];
+                hyp.push({
+                    Id : id,
+                    Name: name,
+                    Vm : []
+                });
+                for (j in hypervisor.machines) {
+                    vmachine = hypervisor.machines[j];
+                    if (vmachine.status == "running") {
+                        machine.push(vmachine.name);
+                    }
+                }
+                hyp[k].Vm = machine;
+                k++;
+            }
+        }
+        var name = [];
+        var k = 0;
+        for (i = 0; i < hyp.length; i++) {
+            for (j = 0; j < hyp[i].Vm.length; j++) {
+                var ip = $(
+                        "div.span3 ul.sortable-list li:contains('"
+                                + hyp[i].Vm[j] + "')").parent().parent().find(
+                        "label").attr("id");
+                //if (ip != hyp[i].Name) {
+                	if (ip != hyp[i].Id) {
+                    html += "<p>From: " + hyp[i].Name + " to:" + ip
+                            + " the following machine: " + hyp[i].Vm[j]
+                            + "</p>";
+                    name[k] = hyp[i].Id + "|" + ip + "|" + hyp[i].Vm[j];
+                    k++;
+                }
+            }
+        }
+
+        /*$("#migration-box").dialog({
+            title : "Migrazione",
+            buttons : [ {
+                text : "Migra",
+                click : function() {
+                    migrate2(name);
+                }
+            }, {
+                text : "Annulla",
+                click : function() {
+                    $(this).dialog("close");
+                }
+            } ],
+            autoOpen : false,
+            hide : "explode",
+            modal : true
+        });
 	
-	html = "<p>Migrazione</p><h3 id=\"currentmachine\">"+vmachine+"</h3>";
-	html += "Hypervisor attuale:<div id=\"currentip\">"+ip+"</div>";
-	
-	html += "<br><label>Migra verso:</label><br><select id=\"dstbox\">";
-	for(i=0; i<hypervisorList.length; i++){
-		if(hypervisorList[i].ip != ip) {
-			html += "<option value=\""+ hypervisorList[i].ip+ "\">"
-				+hypervisorList[i].ip+"</option>\n";
-		}
-	}
-	html += "</select>";
-	
-	
-	$("#migration-box").html(html);
-	$("#migration-box").dialog("open");
-}
+        $("#migration-box").empty();
+        $("#migration-box").html(html);*/
 
-function migrate(){
-	vmachine = document.getElementById("currentmachine").innerHTML;
-	ipsrc = document.getElementById("currentip").innerHTML;
-	ipdst = document.getElementById("dstbox").value;
+        $("#migration-box").dialog("open");
 
-	$.getJSON("Migration?vmname="+vmachine+"&srcip="+ipsrc+"&dstip="+ipdst, function(response){
-		$("#migration-box").dialog("close");
-		
-		$("#progress-bar").progressbar("value", false);
-		$("#progress-box").dialog("open");
-		refreshProgress();
-	});
-}
+    }
+    
+    $("#vmboxes").dialog({
+        "title" : "Migrazione in corso",
+        "autoOpen" : false,
+        "resizable" : true,
+        "buttons" : {
+            "Close" : function() {
+                $("#wrapper .ui-widget-overlay").remove();
+                $(this).dialog("close");
+                window.location.refresh("true");
+            }
+        }
+    }).dialogExtend({
+        "closable" : false, // enable/disable close button
+        "minimizable" : true, // enable/disable minimize button
+        "minimizeLocation" : "right", // sets alignment of minimized dialogues
+        "icons" : { // jQuery UI icon class
+            "close" : "ui-icon-circle-close",
+            "maximize" : "ui-icon-circle-plus",
+            "minimize" : "ui-icon-circle-minus",
+            "collapse" : "ui-icon-triangle-1-s",
+            "restore" : "ui-icon-bullet"
+        }
+    });
+    
+    //**************************************************************************************************************************************
+    // USED IN MIGRATION BOX
+    function migrate2(name){
+        $("#migration-box").dialog("close");
+        $("#wrapper").append("<div class='ui-widget-overlay ui-front'></div>");
+        for (i = 0; i < name.length; i++) {
+        	
+        	var res = name[i].split("|");
+            var srcip = res[0];//.split("@")[1];
+            var dstip = res[1];//.split("@")[1];
+ 
+            $.getJSON("Migration?vmname="+res[2]+"&srcip="+res[0]+"&dstip="+res[1], function(response){
+            	
+            	var html = "<div class='ui-dialog-content ui-widget-content ui-dialog-normal'><p>Da: <strong>"
+                    + res[0] + "</strong><br /> a: <strong>" + res[1] + "</strong><br /> "+
+                    "di: <strong>" + res[2] + "</strong></p>"
+                    + "<div id='"+response.id+"'><div id='"+response.id+"-txt' >"
+                    + "</div></div><div id='"+response.id+"-mem' class='memory-progress2'></div></div>";
+                    
+                $("#vmboxes").empty();
+            	$("#vmboxes").html(html);
+            	$("#"+response.id).progressbar({
+                	value : false,
+                	change: function(){	
+                	},
+                	complete:function(){
+                	}
+            	});
+            	
+            	refreshProgress(response.id);
+            }); //endJSON 
+            
+        }//end FOR
+        
+        
+        $("#vmboxes").dialog("open");
+    }
+    
+    //********************************************************************************************************************************
+    // OLD NOT USED
+    /*function migrate(name){
+        $("#migration-box").dialog("close");
+        $("#wrapper").append("<div class='ui-widget-overlay ui-front'></div>");
+        for (i = 0; i < name.length; i++) {
+        	var res = name[i].split("|");
+            var srcip = res[0].split("@")[1];
+            var dstip = res[1].split("@")[1];
+            var idsd = srcip.split(".")[3] + "-" + dstip.split(".")[3];
+            var id = "lm-" + res[2] + "-" + idsd;
+            var html = "<div class='ui-dialog-content ui-widget-content ui-dialog-normal'><p>Da: <strong>"
+                    + res[0] + "</strong><br /> a: <strong>" + res[1] + "</strong><br /> "+
+                    "di: <strong>" + res[2] + "</strong></p>"
+                    + "<div id='"+id+"'><div id='"+id+"-txt' >"
+                    + "</div></div><div id='"+id+"-mem' class='memory-progress2'></div></div>";
+            $("#vmboxes").append(html);
+            $("#"+id).progressbar({
+                value : false,
+                change: function(){
+                	
+                },
+                complete:function(){
+                	
+                }
+            });
+            
+            $("#"+id).progressbar("value",false);
+        }
+        for (j = 0; j < name.length; j++) {
+            var res2 = name[j].split("|");
+            var srcip2 = res2[0].split("@")[1];
+            var dstip2 = res2[1].split("@")[1];
+            var idsd2 = srcip2.split(".")[3] + "-" + dstip2.split(".")[3];
+            var id2 = "lm-" + res2[2] + "-" + idsd2;
 
-function refreshProgress(){
-	$.getJSON("MigrationStatus", function(response){
-		if(response.state=="2") {
-			$("#progress-bar").progressbar("value", 100);
-			$.getJSON("GetElapsedTime", function(response){
-				text = "Tempo trascorso " + response.elapsed/1000 + " s";
-				$("#memory-progress").html(text);
-				showMachines();
-			});
-		} else if (response.state == "1") {
-			val  = response.processed*100/response.total;
-			$("#progress-bar").progressbar("value", Math.ceil(val));
-			
-			text = "Trasferimento " + Math.ceil(response.processed/1024/1024) + "/" + 
-				Math.ceil(response.total/1024/1024) + " MB "; 
-			$("#memory-progress").html(text);
-			
-			setTimeout(refreshProgress, 500);
-		} else if (response.state == "0") {
-			setTimeout(refreshProgress, 500);
-		} else {
-			
-			alert("Impossibile effettuare la migrazione.");
-			$.getJSON("GetElapsedTime", function(response){
-				$("#progress-box").dialog("close");
-			});
-		}
-	});
-}
+            $.getJSON("Migration?vmname="+res2[2]+"&srcip="+res2[0]+"&dstip="+res2[1], function(response){
+            	console.log(j+"--"+response.id);
+            	refreshProgress(response.id);
+            }); //endJSON 
+        }//end for 
+        $("#vmboxes").dialog("open");
+    }*/
+    
+    //***************************************************************************************************************
+    //WORKING REFRESH PROGRESS
 
-showMachines();
+    function refreshProgress(id) {
+       $.getJSON("MigrationStatus?lmid="+id, function(response) {
+            if (response.state == "2") { //completed
+                $("#"+response.id).progressbar("value", 100);
+                $("#"+response.id+"-txt").text("Migrazione completata");
+                $.getJSON("GetElapsedTime?lmid="+response.id, function(response) {
+                    text = "Tempo trascorso " + response.elapsed / 1000 + " s";
+                    console.log(response.id+" "+text);
+                    $("#"+response.id+"-mem").html(text);
+                  //  getList();
+                });
+            } else if (response.state == "1") { // on progress
+            	
+                	$("#"+response.id).progressbar("value", Math.ceil(response.percent));
+                    $("#"+response.id+"-txt").text($("#"+response.id).progressbar("value") + " % ");
+                    text = "Memoria trasferita "
+                        + Math.ceil(response.processed / 1024 / 1024) +" MB ";
+                     
+                	$("#"+response.id+"-mem").html(text);
+               
+                setTimeout(refreshProgress(response.id), 500);
+            } else if(response.state == "-1"){
+                alert("Impossibile effettuare la migrazione.");
+                $.getJSON("GetElapsedTime?lmid="+response.id, function(response) {
+                   //$("#vmboxes").dialog("close");
+                });
+            }else
+            	setTimeout(refreshProgress(response.id), 500);
+        });
+    }
 
+    //getList();
 </script>

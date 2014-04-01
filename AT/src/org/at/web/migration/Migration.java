@@ -12,8 +12,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.at.connections.HypervisorConnectionManager;
-import org.at.db.Database;
-import org.at.db.Hypervisor;
 import org.at.libvirt.MigrationThread;
 import org.json.JSONObject;
 
@@ -31,21 +29,14 @@ public class Migration extends HttpServlet {
 		response.setContentType("application/json");
 		
 		String vname  = request.getParameter("vmname");
-		String srcip = request.getParameter("srcip").split("@")[1];
-		String dstip = (request.getParameter("dstip")).split("@")[1];
-		
-		Database d = new Database();
-		d.connect();
-		Hypervisor srcHyp = d.getHypervisorByIp(srcip);
-		Hypervisor dstHyp = d.getHypervisorByIp(dstip);
-		d.close();
+		String srcip = request.getParameter("srcip");
+		String dstip = (request.getParameter("dstip"));
 		
 		HypervisorConnectionManager manager =(HypervisorConnectionManager)getServletContext().getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		
-		MigrationThread mt = new MigrationThread(manager.getActiveConnection(srcHyp), dstHyp, vname);
+		MigrationThread mt = new MigrationThread(manager.getActiveConnection(srcip), manager.getActiveConnection(dstip).getHypervisor(), vname);
 		mt.start();
 		
-		//String id = "lm-"+vname+"-"+srcip.split("\\.")[3]+"-"+dstip.split("\\.")[3]; 
 		String id = UUID.randomUUID().toString();
 		
 		//saving an handle to the thread to keep trace of the status

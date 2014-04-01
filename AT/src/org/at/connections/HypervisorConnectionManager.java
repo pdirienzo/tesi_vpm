@@ -61,7 +61,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		timer = new Timer();
 	}
 	
-	public void start() throws IOException{
+	void start() throws IOException{
 		d.connect();
 		
 		for(Hypervisor h : d.getAllHypervisors()){
@@ -82,7 +82,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		}
 	}
 	
-	public synchronized void stop() throws IOException{
+	synchronized void stop() throws IOException{
 		
 		if(retryTimout != 0){//polling thread was active
 			setActive(false);
@@ -137,6 +137,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	public synchronized HypervisorConnection getActiveConnection(Hypervisor h){
 		int i = 0;
 		HypervisorConnection conn = null;
+		
 		
 		while((conn == null) && (i<activeConnections.size())){
 			if(activeConnections.get(i).getHypervisor().equals(h)){//found
