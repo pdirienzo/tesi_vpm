@@ -19,17 +19,13 @@ public class GstreamerPipeline{
 	private String id;
 	private Pipeline pipe;
 	private BaseSrc vrtpsrc;
-	private BaseSrc vrtcpsrc;
 	
 	
 	public int getVideoSrcRtpPort(){
 		if (vrtpsrc==null) return 0;
 		return (Integer) vrtpsrc.get("port");
 	}
-	public int getVideoSrcRtcpPort(){
-		if (vrtcpsrc==null) return 0;
-		return (Integer) vrtcpsrc.get("port");
-	}
+	
 	
 	public GstreamerPipeline(String id){
 		this.id=id;
@@ -64,41 +60,35 @@ public class GstreamerPipeline{
 	
 	ArrayList<PipelineDestinationInfo> destinations=new ArrayList<PipelineDestinationInfo>();
 	
-	public boolean removeRtpRtcpSender(String host, int vrtpport, int vrtcpport, String id){
-		PipelineDestinationInfo dest=new PipelineDestinationInfo(host,vrtpport,vrtcpport,id);
+	public boolean removeRtpRtcpSender(String host, int vrtpport, String id){
+		PipelineDestinationInfo dest=new PipelineDestinationInfo(host,vrtpport,id);
 		
 		if (destinations.remove(dest)==false) return false;
 		
 		String nodeID=dest.toString();
 		
 		BaseSink multisinkrtp=(BaseSink) pipe.getElementByName("vrtpmultisink");
-		BaseSink multisinkrtcp=(BaseSink) pipe.getElementByName("vrtcpmultisink");
 		
 		//rimuovo le destinazioni dai multiudpsink
 		multisinkrtp.emit("remove", host, vrtpport, (com.sun.jna.Pointer)null);
-		multisinkrtcp.emit("remove", host, vrtcpport, (com.sun.jna.Pointer)null);
 		
 		
 		Element item1=pipe.getElementByName("vrtcpudpsrc_"+nodeID);
-		pipe.remove(item1);
-		
-		Element item2=pipe.getElementByName("vrtcpappsink_"+nodeID);
-		pipe.remove(item2);
-		
+		pipe.remove(item1);		
 		//savePngSchema();
 		
 		return true;
 	}
 	
-	public int addRtpRtcpSender(String host, int vrtpport, int vrtcpport, String id){
+	public int addRtpSender(String host, int vrtpport, String id){
 		System.out.println("addRtpRtcpSender, Current Thread: "+Thread.currentThread().getName());
-		PipelineDestinationInfo dest=new PipelineDestinationInfo(host,vrtpport,vrtcpport,id);
+		PipelineDestinationInfo dest=new PipelineDestinationInfo(host,vrtpport,id);
 		
 		if (destinations.contains(dest)==true){
 			//la destinazione già esiste, che fare?
 			
 			//proviamo a toglierla
-			removeRtpRtcpSender(host,vrtpport,vrtcpport,id);
+			removeRtpRtcpSender(host,vrtpport,id);
 		}
 		destinations.add(dest);
 		//per la gestione di un client devi aggiungere il destinatario
@@ -106,33 +96,25 @@ public class GstreamerPipeline{
 		//System.out.println("########## addRtpRtcpSender");
 		String nodeID=dest.toString();
 		
-		BaseSink multisinkrtp=(BaseSink) pipe.getElementByName("vrtpmultisink");
-		BaseSink multisinkrtcp=(BaseSink) pipe.getElementByName("vrtcpmultisink");
+		//BaseSink multisinkrtp=(BaseSink) pipe.getElementByName("vrtpmultisink");
 		
-		multisinkrtp.emit("add", host, vrtpport, (com.sun.jna.Pointer)null);
-		multisinkrtcp.emit("add", host, vrtcpport, (com.sun.jna.Pointer)null);
-		/*if (multisinkrtp.getState()!=State.PLAYING)*/ multisinkrtp.play();
-		/*if (multisinkrtcp.getState()!=State.PLAYING)*/ multisinkrtcp.play();
+		//multisinkrtp.emit("add", host, vrtpport, (com.sun.jna.Pointer)null);
+		///*if (multisinkrtp.getState()!=State.PLAYING)*/ multisinkrtp.play();
 		
 		
 		//poi devi configurare un udpsrc e un appsink per la ricezione dei pacchetti RR RTCP
-		BaseSrc vclientrtcpsrc=(BaseSrc) ElementFactory.make("udpsrc", "vrtcpudpsrc_"+nodeID);
-		AppSink vclientrtcpappsink=(AppSink) ElementFactory.make("appsink", "vrtcpappsink_"+nodeID);
-		vclientrtcpappsink.set("emit-signals", true);
-		vclientrtcpappsink.set("sync", false);
-		vclientrtcpappsink.connect(newbufferlistener);
-		vclientrtcpappsink.connect(newprerolllistener);
+		Element tee = pipe.getElementByName("t");
+		Element vclientrtcpsrc= ElementFactory.make("udpsink", "vrtcpudpsink_"+nodeID);
+		System.out.println("pipe: "+pipe.getName());
+		vclientrtcpsrc.set("host",host);
+		vclientrtcpsrc.set("port", vrtpport); //fai generare la porta in automatico
+		//vclientrtcpsrc.pause(); //metti in pausa per creare la porta
 		pipe.add(vclientrtcpsrc);
-		pipe.add(vclientrtcpappsink);
-		vclientrtcpsrc.set("port", 0); //fai generare la porta in automatico
-		vclientrtcpsrc.link(vclientrtcpappsink);
-		vclientrtcpsrc.pause(); //metti in pausa per creare la porta
 		
-		vclientrtcpsrc.play();
-		vclientrtcpappsink.play();
+	//	vclientrtcpsrc.play();
 		
 		int srcport=(Integer) vclientrtcpsrc.get("port");
-		System.out.println("Porta di ascolto RTCP per "+host+":"+vrtpport+":"+vrtcpport+"= "+srcport);
+		System.out.println("Porta di ascolto RTCP per "+host+":"+vrtpport);
 //		savePngSchema();
 		return srcport;
 		
@@ -164,7 +146,7 @@ public class GstreamerPipeline{
                    "v4l2src ! videoscale ! videorate ! video/x-raw-rgb, "
                    + "width=160,height=120,framerate=30/1 ! ffmpegcolorspace ! "
                    + "vp8enc threads=2 bitrate=90000 error-resilient=true ! "
-                   + "rtpvp8pay ! tee name=t ! queue ! udpsink name=vrtcpsink";
+                   + "rtpvp8pay ! tee name=t ! queue ! udpsink name=vrtcpsink ! t. ! queue ! udpsink";
 			
 			pipe=Pipeline.launch(template);
 

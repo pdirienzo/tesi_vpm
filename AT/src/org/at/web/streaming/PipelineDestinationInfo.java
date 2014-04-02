@@ -11,7 +11,7 @@ public class PipelineDestinationInfo {
 	public PipelineDestinationInfo() {
 		
 	}
-	public PipelineDestinationInfo(String host, int vrtpport, int vrtcpport, String nodeID) {
+	public PipelineDestinationInfo(String host, int vrtpport, String nodeID) {
 		this.host=host;
 		this.vrtpport=vrtpport;
 		this.nodeID=nodeID;

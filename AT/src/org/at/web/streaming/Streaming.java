@@ -85,6 +85,11 @@ public class Streaming {
 		gp.rtpport=5000;
 		gstreamer.addPipeline(myId, gp, null);
 		gstreamer.playPipeline(myId);
+		GstreamerPipeline pipe=null;
+		pipe=gstreamer.getPipeline(myId);
+		if (pipe != null){
+			pipe.addRtpSender("143.225.229.190", 5001, "sprom");
+		}
 		Gst.main();
 		
 		
