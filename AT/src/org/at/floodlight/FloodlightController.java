@@ -5,12 +5,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.at.db.Controller;
+import org.at.floodlight.types.LinkConnection;
+import org.at.floodlight.types.OvsSwitch;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class FloodlightController {
@@ -20,6 +24,31 @@ public class FloodlightController {
 	public FloodlightController(Controller c){
 		this.baseURL = "http://"+c.getHostAddress()
 				+":"+c.getPort();
+	}
+	
+	public LinkConnection[] getSwitchConnections() throws IOException{
+		JSONArray result = RestRequest.getJSonArray(baseURL+"/wm/topology/links/json");
+		LinkConnection[] links = new LinkConnection[result.length()];
+		for(int i=0;i<links.length;i++){
+			JSONObject o = result.getJSONObject(i);
+			links[i] = new LinkConnection(o.getString("src-switch"), o.getString("dst-switch"),o.getInt("src-port"), o.getInt("dst-port"));
+		}
+		
+		return links;
+	}
+	
+	public OvsSwitch[] getSwitches() throws IOException{
+		JSONArray result = RestRequest.getJSonArray(baseURL+"/wm/core/controller/switches/json");
+		
+		OvsSwitch[] switches = new OvsSwitch[result.length()];
+		
+		for(int i=0;i<switches.length;i++){
+			JSONObject o = result.getJSONObject(i);
+			String inet = (o.getString("inetAddress").substring(1)).split(":")[0];
+			switches[i] = new OvsSwitch(o.getString("dpid"), inet);
+		}
+		
+		return switches;
 	}
 
 	public JSONObject getStaticFlows(String dpid) throws IOException{
@@ -153,7 +182,9 @@ public class FloodlightController {
 		FloodlightController f = new FloodlightController(
 				new Controller("127.0.0.1", 8080));
 		
-		 JSONObject data = new JSONObject()
+		for(LinkConnection ovs : f.getSwitchConnections())
+			System.out.println(ovs);
+		 /*JSONObject data = new JSONObject()
 		 .put("name", "flow-mod-vm1-swl")
 		.put("switch", "00:00:00:24:be:c1:a9:5c")
 		.put("cookie", "5")
@@ -166,7 +197,7 @@ public class FloodlightController {
 		.put("dst-ip", "192.168.1.1")
 		.put("actions", "output=1");
 		
-		System.out.println(f.addFlow(data));
+		System.out.println(f.addFlow(data));*/
 		//f.deleteAllFlows("00:00:00:24:be:c1:a9:5c");
 		
 		//JSONObject obj = f.getFlows("00:00:00:24:be:c1:a9:5c");

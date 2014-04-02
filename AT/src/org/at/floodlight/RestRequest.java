@@ -1,31 +1,66 @@
 package org.at.floodlight;
 
-import org.apache.http.HttpEntity;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-@SuppressWarnings("deprecation")
+
 public class RestRequest {
 	
-	private final static HttpClient http = new DefaultHttpClient();
+	private final static HttpClient client = HttpClients.createDefault();
 
-	public static String get(String url) {
-		/* GET Method */
-		final HttpGet get = new HttpGet(url);
-		try {
-			HttpEntity entity = http.execute(get).getEntity();
-			if(entity==null)
-				return "";
-			return EntityUtils.toString(entity);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
+	public static JSONObject getJson(String url) throws ClientProtocolException, IOException {
+		HttpGet getRequest = new HttpGet(url);
+		HttpResponse resp = client.execute(getRequest);
+		BufferedReader rd = new BufferedReader(new InputStreamReader(
+				resp.getEntity().getContent()));
+		
+		JSONObject json = null;
+		String s = null;
+		StringBuilder sb = new StringBuilder();
+		while((s=rd.readLine())!= null)
+			sb.append(s);
+
+		s = sb.toString();
+		
+		
+		json = new JSONObject(sb.toString());
+		
+		rd.close();
+		
+		return json;
+	}
+	
+	public static JSONArray getJSonArray(String url) throws IOException {
+		HttpGet getRequest = new HttpGet(url);
+		HttpResponse resp = client.execute(getRequest);
+		BufferedReader rd = new BufferedReader(new InputStreamReader(
+				resp.getEntity().getContent()));
+		
+		JSONArray json = null;
+		String s = null;
+		StringBuilder sb = new StringBuilder();
+		while((s=rd.readLine())!= null){
+			sb.append(s);
 		}
+		
+		json = new JSONArray(sb.toString());
+		
+		rd.close();
+		
+		return json;
 	}
 
 	public static String post(String url, String data) {
@@ -33,7 +68,7 @@ public class RestRequest {
 		final HttpPost post = new HttpPost(url);
 		try {
 			post.setEntity(new StringEntity(data));
-			return EntityUtils.toString(http.execute(post).getEntity());
+			return EntityUtils.toString(client.execute(post).getEntity());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -45,7 +80,7 @@ public class RestRequest {
 		final HttpPut put = new HttpPut(url);
 		try {
 			put.setEntity(new StringEntity(data));
-			return EntityUtils.toString(http.execute(put).getEntity());
+			return EntityUtils.toString(client.execute(put).getEntity());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -57,7 +92,7 @@ public class RestRequest {
 		final HttpDeleteWithBody delete = new HttpDeleteWithBody(url);
 		try {
 			delete.setEntity(new StringEntity(data));
-			return EntityUtils.toString(http.execute(delete).getEntity());
+			return EntityUtils.toString(client.execute(delete).getEntity());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;

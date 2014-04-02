@@ -24,7 +24,7 @@ public class FlowsController {
 		serviceurl = "/wm/staticflowentrypusher";*/
 	}
 
-	public String getFlowTable(String switchId) {
+	/*public String getFlowTable(String switchId) {
 		if(switchId==null)
 			switchId = "all";
 		final String url = baseurl + serviceurl + "/list/"+switchId+"/json";
@@ -147,6 +147,6 @@ public class FlowsController {
 		resp = fl.getFlowTable("00:00:66:3d:61:08:af:44");
 		System.out.println(resp);
 
-	}
+	}*/
 	
 }

@@ -79,7 +79,7 @@ import java.util.Map;
  * @author JSON.org
  * @version 2012-11-13
  */
-public class JSONArray {
+public class JSONArray implements Iterable<JSONObject> {
 
     /**
      * The arrayList where the JSONArray's properties are kept.
@@ -954,4 +954,10 @@ public class JSONArray {
             throw new JSONException(e);
         }
     }
+
+	@Override
+	public Iterator<JSONObject> iterator() {
+		// TODO Auto-generated method stub
+		return myArrayList.iterator();
+	}
 }
