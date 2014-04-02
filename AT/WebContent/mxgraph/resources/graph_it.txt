@@ -1,0 +1,11 @@
+alreadyConnected=Gia connesso
+containsValidationErrors=Contiene errori di validazione
+updatingDocument=Aggiornando documento...
+updatingSelection=Aggiornando selezione...
+collapse-expand=Comprimi/Espandi
+doubleClickOrientation=Orientamento doppio click
+close=Chiudi
+error=Errore
+done=Fatto
+cancel=Cancella
+ok=OK

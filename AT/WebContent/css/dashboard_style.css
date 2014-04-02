@@ -11,3 +11,11 @@
 	text-align: left;
 	width: 230px;
 };
+
+#graph-panel {
+	margin: auto;
+	text-align: center;
+	width: 500px;
+	padding: 10px;
+	border: 2px solid gray;
+};

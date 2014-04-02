@@ -157,12 +157,12 @@
 	
 	//this function populates the screen with hypervisor boxes and guests inside them
     function getList() {
-       $("#infopanel").hide(); //nascondiamo  btn-primaryil pannello info
+       $("#infopanel").hide(); //nascondiamo il pannello info
        $.getJSON("HypervisorInfo", function(hypervisorList){
      
        // hypervisorList = getDummy();
-        var i;
-        for (i = 0; i < hypervisorList.length; i++) {
+ 
+        for (var i = 0; i < hypervisorList.length; i++) {
         	var html = "";
             html += "<div class='left span3 '>";
 
@@ -200,11 +200,11 @@
                              + vmachine.status
                              + ")</li>";
                     	 }
-                    } else if (vmachine.status == "stopped") {
+                    } /*else if (vmachine.status == "stopped") {
                         html += "<li class='unsortable' id="+vmachine.name+">"
                                 + vmachine.name + " (" + vmachine.status
                                 + ")</li>";
-                    }
+                    }*/
                 }
 
                 html += "</ul></div>";

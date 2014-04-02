@@ -8,15 +8,11 @@ public class Test {
 
 	public static void main(String[] args) throws LibvirtException {
 		Connect conn = new Connect("qemu:///system");
-		Domain d = conn.domainLookupByName("linx2");
+		Domain d = conn.domainLookupByName("dhcpM");
 		
-		int i=0;
-		while(i<5){
-			System.out.println(String.format("%.2f", d.getCPUOverallUsage(1000)));
-			i++;
-		}
+		System.out.println(d.getID());
 		//System.out.println(String.format("%.2f",v));
-		//conn.close();
+		conn.close();
 
 	}
 

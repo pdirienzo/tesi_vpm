@@ -1,0 +1,5 @@
+askZoom=Zoom (%)
+properties=Proprieta
+outline=Outline
+tasks=Tasks
+help=Help
