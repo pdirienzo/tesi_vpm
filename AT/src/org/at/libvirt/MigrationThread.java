@@ -16,7 +16,7 @@ public class MigrationThread extends Thread {
 	
 	private int status;
 	
-	private HypervisorConnection src;
+	private Hypervisor src;
 	private Hypervisor dstH;
 	private String domainName;
 	private Domain inMigrationDomain;
@@ -24,23 +24,27 @@ public class MigrationThread extends Thread {
 	private long startTime;
 	private long elapsedTime;
 	
-	public MigrationThread(HypervisorConnection src,Hypervisor dst,String domainName){
+	private String errorMessage;
+	
+	public MigrationThread(Hypervisor src,Hypervisor dst,String domainName){
 		setMigrationStatus(MIGRATION_IDLE);
 		this.src = src;
 		this.dstH = dst;
 		this.domainName = domainName;
 		this.elapsedTime = -1; //value to say that migration is still in progress
+		this.errorMessage = "none";
 	}
 	
 	public void run(){
+		HypervisorConnection srcConn = null;
 		try {
-
-			inMigrationDomain = src.domainLookupByName(domainName);
+			srcConn = HypervisorConnection.getConnectionWithTimeout(src, false, 3000);
+			inMigrationDomain = srcConn.domainLookupByName(domainName);
 			
 			startTime = System.currentTimeMillis();//setting start time
 			setMigrationStatus(MIGRATION_PROGRESS);
 			
-			if(src.migrate(domainName, dstH))
+			if(srcConn.migrate(domainName, dstH))
 				setMigrationStatus(MIGRATION_SUCCESS);
 			else
 				setMigrationStatus(MIGRATION_FAIL);
@@ -49,10 +53,19 @@ public class MigrationThread extends Thread {
 			
 		} catch (LibvirtException e) {
 			e.printStackTrace();
+			errorMessage = e.getMessage();
 			setMigrationStatus(MIGRATION_FAIL);
 		} catch(IOException e){
 			e.printStackTrace();
+			errorMessage = e.getMessage();
 			setMigrationStatus(MIGRATION_FAIL);
+		}finally{
+			if(srcConn != null)
+				try {
+					srcConn.close();
+				} catch (LibvirtException e) {
+					e.printStackTrace();
+				}
 		}
 	}
 	
@@ -123,6 +136,13 @@ public class MigrationThread extends Thread {
 			return elapsedTime;
 		else 
 			return System.currentTimeMillis() - startTime;
+	}
+	
+	public String getErrorMessage(){
+		if(getMigrationStatus() == MigrationThread.MIGRATION_FAIL){
+			return errorMessage;
+		}else
+			return "None";
 	}
 
 }

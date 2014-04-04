@@ -3,7 +3,6 @@
 <style>
 .danger {
 	color: black !important;
-	/*background: #d2322d !important;*/
 	background: -webkit-linear-gradient(#d2322d, #d23277) !important; /* For Safari 5.1 to 6.0 */
 	background: -o-linear-gradient(#d2322d, #d23277) !important; /* For Opera 11.1 to 12.0 */
 	background: -moz-linear-gradient(#d2322d, #d23277) !important; /* For Firefox 3.6 to 15 */
@@ -17,7 +16,6 @@
 
 .warning {
 	color: black !important;
-	/*background: #f89406 !important;*/
 	background: -webkit-linear-gradient(#f89406, #f89450) !important; /* For Safari 5.1 to 6.0 */
 	background: -o-linear-gradient(#f89406, #f89450) !important; /* For Opera 11.1 to 12.0 */
 	background: -moz-linear-gradient(#f89406, #f89450) !important; /* For Firefox 3.6 to 15 */
@@ -31,7 +29,6 @@
 
 .normal {
 	color: black !important;
-	/*background: #47a447 !important;*/
 	background: -webkit-linear-gradient(#47a447, #47a491) !important; /* For Safari 5.1 to 6.0 */
 	background: -o-linear-gradient(#47a447, #47a491) !important; /* For Opera 11.1 to 12.0 */
 	background: -moz-linear-gradient(#47a447, #47a491) !important; /* For Firefox 3.6 to 15 */
@@ -88,8 +85,6 @@
  $(document).ready(function(){
 	 getHypervisor(true);
  }); 
- 
- 
 
  function getHypervisor(firstRun){
 	 $.getJSON("HypervisorInfo", function(hvList){
@@ -111,12 +106,14 @@
 	    	 }
 	    	 
 	    	 $("#hypervisormenu").append(html);
+	    	 
 		  
 	    	 $("#hypervisormenu").accordion({
 		         heightStyle: "content",
 		         collapsible: true,
 		         active: false 
 		     });
+	    	 
 	    	 
 	    	 $( ".vmbutton" ).button().click(function( event ) {
 		 	       	event.preventDefault();
@@ -137,7 +134,10 @@
 		 	       		}
 		 	       	});
 	    	 });
+	    	 
 	     }
+	     
+	     //--------------------------- end first run ------------------------------
 	     
 	     //updating informations. This is done anyways
 	     for(var i=0; i<hypervisorList.length; i++) {
@@ -190,16 +190,13 @@
 	    	 	}else{
 	    	 		labelId.text(hypervisor.ip+" (offline)");
 	    	 	}
-	    	 		
-	    	 
 	     }
 	     
-	     $('#hypervisormenu').accordion('refresh');
+	     //$('#hypervisormenu').accordion('refresh');
 	     
-	    // if($("#tabs").tabs("option", "active") == 0){ //if the user is still viewing this tab
+	     
 	 	 if(firstRun == true)
 	    	timedFunction = setInterval(function() { getHypervisor(false); },REFRESH_INTERVAL); //we repeat the call
-	 	 //}
 	     
 	     });
 	 

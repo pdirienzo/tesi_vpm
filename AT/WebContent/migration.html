@@ -44,7 +44,7 @@
 
 <script type="text/javascript">
 
-	var jobList; //this is an associative array of migration jobs with vm name as key, each element is an object {"src","dst"}
+	var jobList; //this is an associative array of migration jobs with a generated vm id as key, each element is an object {"src","dst","vmname"}
 	
 	$(document).ready(function(){
 	 	getList(); //populates the hypervisor list
@@ -83,7 +83,7 @@
 	            "Close" : function() {
 	                $("#wrapper .ui-widget-overlay").remove();
 	                $(this).dialog("close");
-	                window.location.refresh("true");
+	                //window.location.refresh("true");
 	            }
 	        }
 	    }).dialogExtend({
@@ -180,7 +180,7 @@
                     vmachine = hypervisor.machines[j];
                     if (vmachine.status == "running") {
                     	if (vmachine.cpuUsage > WARNING_THRESHOLD && vmachine.cpuUsage < DANGER_THRESHOLD){
-                        html += "<li class='sortable-item-warning' id="+vmachine.name+">"
+                        html += "<li class='sortable-item-warning' id='"+vmachine.name+"_"+i+"'>"
                                 + vmachine.name
                                 + " ("
                                 + vmachine.status
@@ -229,6 +229,7 @@
       			var obj = new Object();
       			
        			var key = ui.item.attr("id");
+       			obj.vmname = key.split("_")[0]; 
        			obj.src = (ui.sender.attr("id")).split("_")[0]; 
        			obj.dst = (evt.target.getAttribute("id")).split("_")[0];
        			
@@ -260,7 +261,7 @@
         var html = "";
         for(key in jobList){
         	html += "<p>From: " + jobList[key].src + "<br>To:" + jobList[key].dst
-            		+ "<br>The following machine: " + key
+            		+ "<br>The following machine: " + jobList[key].vmname
             		+ "</p>";
         }
 
@@ -269,26 +270,38 @@
 
     }
     
-    //TODO creare l'uuid late client così da facilitare un po le cose
+    
     function migrate(){
-    	var progressingJobs = new Array();
+    
+    	$("#migration-status-box").empty();
         $("#migration-box").dialog("close");
+        
         $("#wrapper").append("<div class='ui-widget-overlay ui-front'></div>");
-        for (key in jobList) {
-        	
+        
+        for (key in jobList) { //first we create a box for each migration
             var srcip = jobList[key].src;
             var dstip = jobList[key].dst;
- 
-            $.getJSON("Migration?vmname="+key+"&srcip="+srcip+"&dstip="+dstip, function(response){
+ 			var vmname = jobList[key].vmname;
+ 			var lmid = srcip+"_"+dstip+"_"+vmname;
+ 			
+ 			var html = "<div class='ui-dialog-content ui-widget-content ui-dialog-normal'><p>Da: <strong>"
+                + srcip + "</strong><br /> a: <strong>" + dstip + "</strong><br /> "+
+                "di: <strong>" + key + "</strong></p>"
+                + "<div id='"+lmid+"'><div id='"+lmid+"-txt' >"
+                + "</div></div><div id='"+lmid+"-mem' class='memory-progress2'></div></div>";
+                
+        	$("#migration-status-box").append(html);	
+        }
         
-            	var html = "<div class='ui-dialog-content ui-widget-content ui-dialog-normal'><p>Da: <strong>"
-                    + srcip + "</strong><br /> a: <strong>" + dstip + "</strong><br /> "+
-                    "di: <strong>" + key + "</strong></p>"
-                    + "<div id='"+response.id+"'><div id='"+response.id+"-txt' >"
-                    + "</div></div><div id='"+response.id+"-mem' class='memory-progress2'></div></div>";
-                    
-                $("#migration-status-box").empty();
-            	$("#migration-status-box").html(html);
+        $("#migration-status-box").dialog("open");
+        for (key in jobList) { //then we make json requests
+        	var srcip = jobList[key].src;
+            var dstip = jobList[key].dst;
+ 			var vmname = jobList[key].vmname;
+ 			var lmid = srcip+"_"+dstip+"_"+vmname;
+ 			
+            $.getJSON("Migration?vmname="+vmname+"&srcip="+srcip+"&dstip="+dstip, function(response){
+        
             	$("#"+response.id).progressbar({
                 	value : false,
                 	change: function(){	
@@ -302,8 +315,6 @@
             
         }//end FOR
         
-        
-        $("#vmboxes").dialog("open");
     }
     
     //********************************************************************************************************************************
@@ -320,20 +331,18 @@
                     text = "Tempo trascorso " + response.elapsed / 1000 + " s";
                     console.log(response.id+" "+text);
                     $("#"+response.id+"-mem").html(text);
-                  //  getList();
+                  
                 });
             } else if (response.state == "1") { // on progress
-            	
                 	$("#"+response.id).progressbar("value", Math.ceil(response.percent));
                     $("#"+response.id+"-txt").text($("#"+response.id).progressbar("value") + " % ");
-                    text = "Memoria trasferita "
-                        + Math.ceil(response.processed / 1024 / 1024) +" MB ";
-                     
+                    text = "Memoria trasferita " + Math.ceil(response.processed / 1024 / 1024) +" MB ";
                 	$("#"+response.id+"-mem").html(text);
                
                 setTimeout(refreshProgress(response.id), 500);
             } else if(response.state == "-1"){
-                alert("Impossibile effettuare la migrazione.");
+                alert("Impossibile effettuare la migrazione: "+response.error);
+                $("#"+response.id+"-mem").html("<p>Failed</p>");
                 $.getJSON("GetElapsedTime?lmid="+response.id, function(response) {
                    //$("#vmboxes").dialog("close");
                 });
@@ -341,6 +350,4 @@
             	setTimeout(refreshProgress(response.id), 500);
         });
     }
-
-    //getList();
 </script>

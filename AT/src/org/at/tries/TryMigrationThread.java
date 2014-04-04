@@ -4,17 +4,16 @@ import java.io.IOException;
 
 import org.at.db.Hypervisor;
 import org.at.libvirt.MigrationThread;
-import org.libvirt.DomainJobInfo;
 import org.libvirt.LibvirtException;
-
-import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
 
 public class TryMigrationThread{
 
 	public static void main(String[] args) throws LibvirtException, IOException {
-		/*Hypervisor h1 = new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514);
+		Hypervisor h1 = new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514);
 		Hypervisor h2 = new Hypervisor("sprom", "sprom-Dell", 16514);
 		
+		
+		System.out.println("we are starting");
 		MigrationThread mt = new MigrationThread(h1, h2, "linx2");
 		mt.start();
 		

@@ -47,12 +47,10 @@ public class MigrationStatus extends HttpServlet {
 				}else
 					state.put("percent", 0);
 				
-			}else{//TODO this is just dummy to adapt to old client interface
+			}else{
 				state.put("state", String.valueOf(mt.getMigrationStatus()))
 				.put("id", request.getParameter("lmid"))
-				.put("processed", 100)
-				.put("remaining", 100)
-				.put("total", 100);
+				.put("error", mt.getErrorMessage());
 			}
 
 		}else{

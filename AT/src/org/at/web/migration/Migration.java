@@ -3,7 +3,6 @@ package org.at.web.migration;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.UUID;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -34,10 +33,10 @@ public class Migration extends HttpServlet {
 		
 		HypervisorConnectionManager manager =(HypervisorConnectionManager)getServletContext().getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		
-		MigrationThread mt = new MigrationThread(manager.getActiveConnection(srcip), manager.getActiveConnection(dstip).getHypervisor(), vname);
+		MigrationThread mt = new MigrationThread(manager.getActiveConnection(srcip).getHypervisor(), manager.getActiveConnection(dstip).getHypervisor(), vname);
 		mt.start();
 		
-		String id = UUID.randomUUID().toString();
+		String id = srcip+"_"+dstip+"_"+vname;
 		
 		//saving an handle to the thread to keep trace of the status
 		getServletContext().setAttribute(id, mt);
