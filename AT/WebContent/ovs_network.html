@@ -22,7 +22,13 @@
 				mxUtils.error('Browser is not supported!', 200, false);
 			}
 			else
-			{
+			{	
+				var xml;
+				$.get("NetworkTopology",function(data){
+					alert(data);
+					xml=data;
+				});
+				
 				// Disables the built-in context menu
 				mxEvent.disableContextMenu(container);
 				
@@ -43,7 +49,7 @@
 								
 				// Adds cells to the model in a single step
 				graph.setConnectable(true);
-				graph.setAllowDanglingEdges(false);
+				graph.setAllowDaciaonglingEdges(false);
 				graph.cellsResizable = false;
 				
 				var style = graph.getStylesheet().getDefaultEdgeStyle();
