@@ -56,7 +56,7 @@
 					var v1 = graph.insertVertex(parent, null, 'Hello,', 20, 20, 100, 50);
 					var v2 = graph.insertVertex(parent, null, 'World!', 200, 150, 100, 50);
 					var v3 = graph.insertVertex(parent, null, 'pasquale!', 150, 200, 100, 50);
-					var e1 = graph.insertEdge(parent, null, '', v1, v2);
+					var e1 = graph.insertEdge(parent, null, '', v1, v2);//"startArrow=none;endArrow=none;strokeWidth=1;strokeColor=#66FF00");
 					var e2 = graph.insertEdge(parent, null, '', v3, v2);
 					
 				}
@@ -92,17 +92,31 @@ $(document).ready(function(){
 $( "#sendChangesB" ).button().click(function( event ) {
 	var encoder = new mxCodec();
 	var result = encoder.encode(graph.getModel());
-	var xml = mxUtils.getXml(result);
+
+	var exml = mxUtils.getXml(result);
 	console.log("TA-DAN!");
-	console.log(xml);
-});
+	console.log(exml);
+	$.post("NetworkTopology",{"xml":exml},function(data,textStatus){
+		   alert("data"+data);	
+	},"xml");
+	});
 </script>
+<style>
+#graph-panel {
+    margin: auto;
+    text-align: center;
+    width: 700px;
+    height: 490px;
+    padding: 10px;
+    border: 2px solid gray;
+};
 
-<button id="sendChangesB">get xml!</button>
+</style>
 
-<div id="graphContainer">
+<div id="command" style="float:left;">
+<button id="sendChangesB">SEND</button>
 </div>
-	
-
-	
-	
+<div id="graph-panel">
+	<div id="graphContainer" style="width:inherit; height: inherit; overflow:hidden;">
+    </div>
+</div>
