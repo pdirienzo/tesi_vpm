@@ -16,6 +16,7 @@ import org.at.floodlight.types.LinkConnection;
 import org.at.floodlight.types.OvsSwitch;
 
 import com.mxgraph.io.mxCodec;
+import com.mxgraph.model.mxCell;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxUtils;
 import com.mxgraph.util.mxXmlUtils;
@@ -50,6 +51,13 @@ public class NetworkTopology extends HttpServlet {
 			graph.getModel().endUpdate();
 		}
 		
+		for(Object cell : graph.getChildCells(graph.getDefaultParent(), true, false)){
+			graph.getView().getState(cell).getLabel();
+			mxCell c = (mxCell)cell;
+			
+			System.out.println(c.isEdge()+" "+c.getAttribute("Label")+"---"+graph.getView().getState(c).getLabel());
+		}
+		/*
 		mxCodec codec = new mxCodec();
 		
 		String xml = mxXmlUtils.getXml(codec.encode(graph.getModel()));
@@ -61,9 +69,23 @@ public class NetworkTopology extends HttpServlet {
 		decoder.decode(node.getFirstChild(),newGraph.getModel());
 		
 		
-		System.out.println(mxXmlUtils.getXml(codec.encode(newGraph.getModel())));
+		System.out.println(mxXmlUtils.getXml(codec.encode(newGraph.getModel())));*/
 		//System.out.println(xml);
 	}
+    
+    private mxCell getVertexFromOvs(String dpid, mxGraph graph,mxCell[] vertexes){
+    	int i=0;
+    	mxCell result = null;
+    	while((result==null) && i<vertexes.length){
+    		String label = graph.getView().getState(vertexes[i]).getLabel();
+    		if(dpid.equals(label))
+    			result = vertexes[i];
+    		else
+    			i++;
+    	}
+    	
+    	return result;
+    }
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
@@ -81,18 +103,30 @@ public class NetworkTopology extends HttpServlet {
 		
 		graph.getModel().beginUpdate();
 		
+		mxCell[] vertexes = new mxCell[switches.length];
 		try{
 			for(int i=0;i<switches.length;i++){
-				graph.insertVertex(graph.getDefaultParent(), null, "<p>"+switches[i].dpid+"</p><p>"+switches[i].ip+"</p>", 20*i, 20, 80, 30);
+				double width=(double) switches[i].dpid.length() + 20;
+				vertexes[i] = (mxCell)graph.insertVertex(graph.getDefaultParent(), null, switches[i].dpid, 20*i, 20, 
+						width, 30);
 			}
 		
-		/*
-		for(int i=0;i<connections.length;i++){
-			graph.insertEdge(graph.getDefaultParent(),null,connections[i].srcPort, arg3, arg4);
-		}*/
 		}finally{
 			graph.getModel().endUpdate();
 		}
+		
+		graph.getModel().beginUpdate();
+		try{
+		//now edges
+		for(int i=0;i<connections.length;i++){
+			mxCell src = getVertexFromOvs(connections[i].dpidSrc, graph, vertexes);
+			mxCell dst = getVertexFromOvs(connections[i].dpidDst, graph, vertexes);
+			graph.insertEdge(graph.getDefaultParent(), null, "", src, dst);
+		}
+		}finally{
+			graph.getModel().endUpdate();
+		}
+		
 		
 		mxCodec codec = new mxCodec();
 		PrintWriter out = new PrintWriter(response.getOutputStream());
