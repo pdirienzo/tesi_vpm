@@ -24,14 +24,8 @@
 			else
 			{	
 				var xml;
-				$.get("NetworkTopology",function(data){
-					alert(data);
-					xml=data;
-				});
-				
 				// Disables the built-in context menu
 				mxEvent.disableContextMenu(container);
-				
 				// Creates the graph inside the given container
 				graph = new mxGraph(container);
 				
@@ -49,14 +43,25 @@
 								
 				// Adds cells to the model in a single step
 				graph.setConnectable(true);
-				graph.setAllowDaciaonglingEdges(false);
+				graph.setAllowDanglingEdges(false);
+				graph.setHtmlLabels(true);
+				graph.setAutoSizeCells(true);
 				graph.cellsResizable = false;
 				
 				var style = graph.getStylesheet().getDefaultEdgeStyle();
 				style["startArrow"] = "none";
 				style["endArrow"] = "none";
 				
-				graph.getModel().beginUpdate();
+				$.get("NetworkTopology",function(data){
+					xml=data;
+					var doc = mxUtils.parseXml(xml);
+					var decoder = new mxCodec(doc);
+					decoder.decode(doc.documentElement, graph.getModel());
+				});
+				
+				
+				
+				/*graph.getModel().beginUpdate();
 				try
 				{
 					var v1 = graph.insertVertex(parent, null, 'Hello,', 20, 20, 100, 50);
@@ -70,7 +75,7 @@
 				{
 					// Updates the display
 					graph.getModel().endUpdate();
-				}
+				}*/
 				
 				
 			}

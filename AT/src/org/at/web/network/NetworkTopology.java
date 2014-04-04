@@ -10,6 +10,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.at.db.Database;
+import org.at.floodlight.FloodlightController;
+import org.at.floodlight.types.LinkConnection;
+import org.at.floodlight.types.OvsSwitch;
+
 import com.mxgraph.io.mxCodec;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxUtils;
@@ -50,13 +55,10 @@ public class NetworkTopology extends HttpServlet {
 		String xml = mxXmlUtils.getXml(codec.encode(graph.getModel()));
 		System.out.println("First: "+xml);
 		mxGraph newGraph = new mxGraph();
-		newGraph.getModel().beginUpdate();
-		
 		org.w3c.dom.Node node = mxXmlUtils.parseXml(xml);
 		
 		mxCodec decoder = new mxCodec(node.getOwnerDocument());
 		decoder.decode(node.getFirstChild(),newGraph.getModel());
-		
 		
 		
 		System.out.println(mxXmlUtils.getXml(codec.encode(newGraph.getModel())));
@@ -67,18 +69,34 @@ public class NetworkTopology extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("called get");
-		Hashtable<String, Object> style = new Hashtable<String, Object>();
-		style.put("startArrow", mxConstants.NONE);
-		style.put("endArrow",mxConstants.NONE);
-		mxGraph graph = new mxGraph();
-		mxStylesheet stylesheet = graph.getStylesheet();
-		stylesheet.putCellStyle("MyStyle", style);
-		graph.insertVertex(graph.getDefaultParent(), null, "Hello", 20, 20, 80, 30);
-		graph.insertVertex(graph.getDefaultParent(), null, "World!", 200, 150, 80, 30);
+		Database d = new Database();
+		d.connect();
+		FloodlightController controller = new FloodlightController(d.getController());
+		d.close();
 		
+		OvsSwitch[] switches = controller.getSwitches();
+		LinkConnection[] connections = controller.getSwitchConnections();
+		
+		mxGraph graph = new mxGraph();
+		
+		graph.getModel().beginUpdate();
+		
+		try{
+			for(int i=0;i<switches.length;i++){
+				graph.insertVertex(graph.getDefaultParent(), null, "<p>"+switches[i].dpid+"</p><p>"+switches[i].ip+"</p>", 20*i, 20, 80, 30);
+			}
+		
+		/*
+		for(int i=0;i<connections.length;i++){
+			graph.insertEdge(graph.getDefaultParent(),null,connections[i].srcPort, arg3, arg4);
+		}*/
+		}finally{
+			graph.getModel().endUpdate();
+		}
+		
+		mxCodec codec = new mxCodec();
 		PrintWriter out = new PrintWriter(response.getOutputStream());
-		out.println("ciao");
+		out.println(mxXmlUtils.getXml(codec.encode(graph.getModel())));
 		out.close();
 	}
 

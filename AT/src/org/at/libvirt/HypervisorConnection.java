@@ -167,7 +167,8 @@ public class HypervisorConnection extends Connect{
 	
 	public void shutdownDomain(String name) throws LibvirtException{
 		Domain d = domainLookupByName(name);
-		d.shutdown();
+		//d.shutdown();
+		d.destroy();
 	}
 	
 	public CPUStatistic[] getCpuStatistics() throws LibvirtException{
