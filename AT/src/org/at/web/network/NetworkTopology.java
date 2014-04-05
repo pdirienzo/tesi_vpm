@@ -122,8 +122,8 @@ public class NetworkTopology extends HttpServlet {
 					org.w3c.dom.Element swEl = doc.createElement("switch");
 					swEl.setAttribute("dpid", switches[i].dpid);
 					swEl.setAttribute("ip", switches[i].ip);
-					vertexes[i] = (mxCell)graph.insertVertex(graph.getDefaultParent(), null, swEl, 200*i, 20, 
-							10, 30);
+					vertexes[i] = (mxCell)graph.insertVertex(graph.getDefaultParent(), null, swEl, 200*i, 10, 
+							150, 30);
 				}
 
 				for(int i=0;i<connections.length;i++){
@@ -132,6 +132,7 @@ public class NetworkTopology extends HttpServlet {
 					linkEl.setAttribute("dstPort", String.valueOf(connections[i].dstPort));
 					graph.insertEdge(graph.getDefaultParent(), null, linkEl, vertexes[getVertexId(connections[i].dpidSrc, switches)], 
 							vertexes[getVertexId(connections[i].dpidDst, switches)]);
+				
 				}
 
 			}finally{
@@ -155,48 +156,6 @@ public class NetworkTopology extends HttpServlet {
 		}
 
 	}
-
-	/*protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		FloodlightController controller = getController();
-
-		OvsSwitch[] switches = controller.getSwitches();
-		LinkConnection[] connections = controller.getSwitchConnections();
-
-		mxGraph graph = new mxGraph();
-
-		graph.getModel().beginUpdate();
-
-		mxCell[] vertexes = new mxCell[switches.length];
-		try{
-			for(int i=0;i<switches.length;i++){
-				vertexes[i] = (mxCell)graph.insertVertex(graph.getDefaultParent(), null, switches[i].dpid, 200*i+100, 20, 
-						200, 30);
-			}
-
-		}finally{
-			graph.getModel().endUpdate();
-		}
-
-		graph.getModel().beginUpdate();
-		try{
-		//now edges
-		for(int i=0;i<connections.length;i++){
-			mxCell src = getVertexFromOvs(connections[i].dpidSrc, graph, vertexes);
-			mxCell dst = getVertexFromOvs(connections[i].dpidDst, graph, vertexes);
-			graph.insertEdge(graph.getDefaultParent(), null, "", src, dst);
-		}
-		}finally{
-			graph.getModel().endUpdate();
-		}
-
-
-		mxCodec codec = new mxCodec();
-		PrintWriter out = new PrintWriter(response.getOutputStream());
-		String xmlString =  mxXmlUtils.getXml(codec.encode(graph.getModel()));
-		System.out.println(xmlString);
-		out.println(xmlString);
-		out.close();
-	}*/
 
 	private boolean linkExists(LinkConnection[] links,String src,String dst){
 		boolean result = false;
@@ -230,7 +189,7 @@ public class NetworkTopology extends HttpServlet {
 
 
 		for(Object cell : graph.getChildCells(graph.getDefaultParent(), false, true)){ //getting edges
-
+			
 		}
 
 		out.println("ok");

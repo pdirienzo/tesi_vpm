@@ -41,6 +41,9 @@
 					return false;
 				};
 				
+				//disables replication of edges
+				graph.multigraph = false;
+				
 				//this sets the label to the dpid
 				graph.convertValueToString = function(cell){
 					if (mxUtils.isNode(cell.value)){
@@ -51,6 +54,20 @@
 					
 					return ''; //returning empty string for edges and other stuff
 				};
+				
+				/*graph.addListener(mxEvent.CELLS_ADDED, function(sender, evt) {
+			    
+					var vertex = evt.getProperties().cells[0];
+			    	if(vertex.isVertex()){
+			    		var label = graph.getLabel(vertex);
+			    		var geometry= graph.getModel().getGeometry(vertex);
+			    		var fontSize = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
+					
+			    		var wid= (label.length ) * (fontSize * 0.625);
+			    		geometry.width = wid;
+			   			console.log(label.length+" "+wid+" "+geometry.width);
+			    	}
+				});*/
 				
 				var style = graph.getStylesheet().getDefaultEdgeStyle();
 				//style["startArrow"] = "none";
