@@ -28,10 +28,33 @@
 				mxEvent.disableContextMenu(container);
 				// Creates the graph inside the given container
 				graph = new mxGraph(container);
+				graph.setCellsResizable(false);
+				graph.setAllowDanglingEdges(false);
+				graph.setConnectable(true);
+				//graph.setHtmlLabels(true);
+				graph.setResizeContainer(true);
+				graph.minimumContainerSize = new mxRectangle(0, 0, 500, 380);
+				graph.setBorder(60);
 				
-				// Gets the default parent for inserting new cells. This
-				// is normally the first child of the root (ie. layer 0).
-				var parent = graph.getDefaultParent();
+				//disables editing of labels
+				graph.isCellEditable = function(cell){
+					return false;
+				};
+				
+				//this sets the label to the dpid
+				graph.convertValueToString = function(cell){
+					if (mxUtils.isNode(cell.value)){
+						if (cell.value.nodeName.toLowerCase() == ('switch')){
+							return cell.getAttribute('dpid');
+						}
+					}
+					
+					return ''; //returning empty string for edges and other stuff
+				};
+				
+				var style = graph.getStylesheet().getDefaultEdgeStyle();
+				//style["startArrow"] = "none";
+				//style["endArrow"] = "none";
 				
 				keyHandler = new mxKeyHandler(graph);
 				keyHandler.bindKey(46, function(evt){
@@ -40,42 +63,17 @@
 							graph.removeCells();
 					}
 				});
-								
-				// Adds cells to the model in a single step
-				graph.setConnectable(true);
-				graph.setAllowDanglingEdges(false);
-				graph.setHtmlLabels(true);
-				graph.setAutoSizeCells(true);
-				graph.cellsResizable = false;
 				
-				var style = graph.getStylesheet().getDefaultEdgeStyle();
-				style["startArrow"] = "none";
-				style["endArrow"] = "none";
-				
-				$.get("NetworkTopology",function(data){
-					xml=data;
-					var doc = mxUtils.parseXml(xml);
-					var decoder = new mxCodec(doc);
-					decoder.decode(doc.documentElement, graph.getModel());
+				$.getJSON("NetworkTopology",function(data){
+					if(data.status == "ok"){
+						xml=data.graph;
+						var doc = mxUtils.parseXml(xml);
+						var decoder = new mxCodec(doc);
+						decoder.decode(doc.documentElement, graph.getModel());
+					}else{
+						alert(data.details);
+					}
 				});
-				
-				
-				
-				/*graph.getModel().beginUpdate();
-				try
-				{
-					var v1 = graph.insertVertex(parent, null, 'Hello,', 20, 20, 100, 50);
-					var v2 = graph.insertVertex(parent, null, 'World!', 200, 150, 100, 50);
-					var v3 = graph.insertVertex(parent, null, 'pasquale!', 150, 200, 100, 50);
-					var e1 = graph.insertEdge(parent, null, '', v1, v2);//"startArrow=none;endArrow=none;strokeWidth=1;strokeColor=#66FF00");
-					var e2 = graph.insertEdge(parent, null, '', v3, v2);
-					
-				}
-				finally
-				{
-					// Updates the display
-					graph.getModel().endUpdate();
-				}*/
 				
 				
 			}
@@ -114,20 +112,20 @@ $( "#sendChangesB" ).button().click(function( event ) {
 </script>
 <style>
 #graph-panel {
-    margin: auto;
-    text-align: center;
-    width: 700px;
-    height: 490px;
-    padding: 10px;
-    border: 2px solid gray;
-};
-
+	margin: auto;
+	text-align: center;
+	width: 700px;
+	height: 490px;
+	padding: 10px;
+	border: 2px solid gray;
+}
+;
 </style>
 
-<div id="command" style="float:left;">
-<button id="sendChangesB">SEND</button>
+<div id="command" style="float: left;">
+	<button id="sendChangesB">SEND</button>
 </div>
+
 <div id="graph-panel">
-	<div id="graphContainer" style="width:inherit; height: inherit; overflow:hidden;">
-    </div>
+	<div id="graphContainer" style="width:inherit; height:inherit; overflow:hidden;"></div>
 </div>
