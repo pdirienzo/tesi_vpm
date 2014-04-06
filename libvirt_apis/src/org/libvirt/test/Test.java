@@ -7,10 +7,11 @@ import org.libvirt.LibvirtException;
 public class Test {
 
 	public static void main(String[] args) throws LibvirtException {
-		Connect conn = new Connect("qemu:///system");
-		Domain d = conn.domainLookupByName("dhcpM");
+		Connect conn = new Connect("qemu://pasquale-PC/system");
+		Domain d = conn.domainLookupByName("ubulinx_nfs");
 		
-		System.out.println(d.getID());
+		//System.out.println(d.getID());
+		d.destroyWithFlags(Domain.DestroyFlags.DESTROY_GRACEFUL);
 		//System.out.println(String.format("%.2f",v));
 		conn.close();
 

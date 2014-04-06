@@ -190,6 +190,7 @@ public interface Libvirt extends Library {
     DomainPointer virDomainCreateXML(ConnectionPointer virConnectPtr, String xmlDesc, int flags);
     DomainPointer virDomainDefineXML(ConnectionPointer virConnectPtr, String xmlDesc);
     int virDomainDestroy(DomainPointer virDomainPtr);
+    int virDomainDestroyFlags(DomainPointer virDomainPtr,long flags);
     int virDomainDetachDevice(DomainPointer virDomainPtr, String deviceXML);
     int virDomainDetachDeviceFlags(DomainPointer virDomainPtr, String deviceXML, int flags);
     int virDomainFree(DomainPointer virDomainPtr);

@@ -3,6 +3,8 @@ package org.at.floodlight;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -25,26 +27,26 @@ public class FloodlightController {
 				+":"+c.getPort();
 	}
 	
-	public LinkConnection[] getSwitchConnections() throws IOException{
+	public List<LinkConnection> getSwitchConnections() throws IOException{
 		JSONArray result = RestRequest.getJSonArray(baseURL+"/wm/topology/links/json");
-		LinkConnection[] links = new LinkConnection[result.length()];
-		for(int i=0;i<links.length;i++){
+		List<LinkConnection> links = new ArrayList<LinkConnection>(result.length());
+		for(int i=0;i<result.length();i++){
 			JSONObject o = result.getJSONObject(i);
-			links[i] = new LinkConnection(o.getString("src-switch"), o.getString("dst-switch"),o.getInt("src-port"), o.getInt("dst-port"));
+			links.add(new LinkConnection(o.getString("src-switch"), o.getString("dst-switch"),o.getInt("src-port"), o.getInt("dst-port")));
 		}
 		
 		return links;
 	}
 	
-	public OvsSwitch[] getSwitches() throws IOException{
+	public List<OvsSwitch> getSwitches() throws IOException{
 		JSONArray result = RestRequest.getJSonArray(baseURL+"/wm/core/controller/switches/json");
 		
-		OvsSwitch[] switches = new OvsSwitch[result.length()];
+		List<OvsSwitch> switches = new ArrayList<OvsSwitch>(result.length());
 		
-		for(int i=0;i<switches.length;i++){
+		for(int i=0;i<result.length();i++){
 			JSONObject o = result.getJSONObject(i);
 			String inet = (o.getString("inetAddress").substring(1)).split(":")[0];
-			switches[i] = new OvsSwitch(o.getString("dpid"), inet);
+			switches.add(new OvsSwitch(o.getString("dpid"), inet));
 		}
 		
 		return switches;

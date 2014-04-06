@@ -13,11 +13,11 @@ public class LinkConnection {
 		this.dstPort = dstPort;
 	}
 	
-	public boolean sameLink(LinkConnection l){
-		boolean same = (this.dpidSrc.equals(l.dpidSrc)) && (this.dpidDst.equals(l.dpidDst)) && (this.srcPort == l.srcPort) && (this.dstPort == l.dstPort);
+	public boolean oppositeLink(LinkConnection l){
+		//boolean same = (this.dpidSrc.equals(l.dpidSrc)) && (this.dpidDst.equals(l.dpidDst)) && (this.srcPort == l.srcPort) && (this.dstPort == l.dstPort);
 		boolean reverse = (this.dpidSrc.equals(l.dpidDst)) && (this.dpidDst.equals(l.dpidSrc)) && (this.srcPort == l.dstPort) && (this.dstPort == l.srcPort);
 	
-		return same || reverse;
+		return reverse;
 	}
 	
 	public boolean equals(Object o){

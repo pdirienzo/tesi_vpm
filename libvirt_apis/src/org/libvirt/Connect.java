@@ -31,7 +31,7 @@ import com.sun.jna.ptr.LongByReference;
  *
  * @author stoty
  */
-public class Connect {
+public class Connect implements AutoCloseable{
 
     /**
      * Get the version of a connection.
@@ -199,7 +199,7 @@ public class Connect {
      * @throws LibvirtException
      * @return number of remaining references (>= 0)
      */
-    public int close() throws LibvirtException {
+    public void close() throws LibvirtException {
         int success = 0;
         if (VCP != null) {
             success = libvirt.virConnectClose(VCP);
@@ -209,7 +209,8 @@ public class Connect {
             // it's called with a null virConnectPointer
             VCP = null;
         }
-        return processError(success);
+        
+        processError(success);
     }
 
     /**

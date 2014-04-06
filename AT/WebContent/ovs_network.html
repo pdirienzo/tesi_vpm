@@ -24,25 +24,16 @@
 			else
 			{	
 				var xml;
-				// Disables the built-in context menu
-				mxEvent.disableContextMenu(container);
-				// Creates the graph inside the given container
-				graph = new mxGraph(container);
-				graph.setCellsResizable(false);
-				graph.setAllowDanglingEdges(false);
-				graph.setConnectable(true);
-				//graph.setHtmlLabels(true);
-				graph.setResizeContainer(true);
-				graph.minimumContainerSize = new mxRectangle(0, 0, 500, 380);
-				graph.setBorder(60);
 				
-				//disables editing of labels
+				// Creates the graph inside the given container
+				graph = new mxGraph(document.getElementById('graphContainer'));
+				graph.setAllowDanglingEdges(false);
+				graph.setCellsResizable(false);
+				graph.setConnectable(true);
+				graph.multigraph = false;
 				graph.isCellEditable = function(cell){
 					return false;
 				};
-				
-				//disables replication of edges
-				graph.multigraph = false;
 				
 				//this sets the label to the dpid
 				graph.convertValueToString = function(cell){
@@ -55,31 +46,58 @@
 					return ''; //returning empty string for edges and other stuff
 				};
 				
-				/*graph.addListener(mxEvent.CELLS_ADDED, function(sender, evt) {
-			    
-					var vertex = evt.getProperties().cells[0];
-			    	if(vertex.isVertex()){
-			    		var label = graph.getLabel(vertex);
-			    		var geometry= graph.getModel().getGeometry(vertex);
-			    		var fontSize = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
-					
-			    		var wid= (label.length ) * (fontSize * 0.625);
-			    		geometry.width = wid;
-			   			console.log(label.length+" "+wid+" "+geometry.width);
-			    	}
-				});*/
 				
-				var style = graph.getStylesheet().getDefaultEdgeStyle();
-				//style["startArrow"] = "none";
-				//style["endArrow"] = "none";
-				
+				mxConnectionHandlerInsertEdge = mxConnectionHandler.prototype.insertEdge;
+				mxConnectionHandler.prototype.insertEdge = function(parent, id, value, source, target, style){
+				    
+				    //we get all outgoing edges from the target
+				    var targetEdges = graph.getEdges(target,target.parent,false,true,true,false); 
+				    
+				    //now we check if an opposite edge exists
+				    var result = false;
+				    var i = 0;
+				    while((result == false) && (i<targetEdges.length)){
+				      if(targetEdges[i].target.id == source.id)
+					result = true;
+				      else
+					i++;
+				    }
+				    
+				    //if there isn't an opposite connection we insert the edge
+				    if(result == false){
+				    	var doc = mxUtils.createXmlDocument();
+					    var linkEl = doc.createElement('link');
+					    linkEl.setAttribute("srcDpid", source.value.getAttribute("dpid"));
+					    linkEl.setAttribute("dstDpid", target.value.getAttribute("dpid"));
+					    linkEl.setAttribute("srcPort", 0);
+					    linkEl.setAttribute("dstPort", 0);
+					    value = linkEl;
+				      
+					    return mxConnectionHandlerInsertEdge.apply(this, arguments);
+				    }else
+				      return null; //else we don't
+				 };
+				  
 				keyHandler = new mxKeyHandler(graph);
 				keyHandler.bindKey(46, function(evt){
-					if (graph.isEnabled()){
-						if(graph.getSelectionCell().isEdge())
+					if(graph.getSelectionCell().isEdge())
 							graph.removeCells();
-					}
+					
 				});
+				  
+				
+				//setting style for vertexes
+				var vStyle = graph.getStylesheet().getDefaultVertexStyle();
+				vStyle[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE;
+				vStyle[mxConstants.STYLE_IMAGE] = "images/router.png";
+				vStyle[mxConstants.STYLE_VERTICAL_LABEL_POSITION] = mxConstants.ALIGN_BOTTOM;
+				vStyle[mxConstants.STYLE_FONTCOLOR] = "#0099CC";
+				vStyle[mxConstants.STYLE_FONTSIZE] = 15;
+				
+				//setting style for edges
+				var eStyle = graph.getStylesheet().getDefaultEdgeStyle();
+				eStyle[mxConstants.STYLE_ENDARROW] = "none";
+				
 				
 				$.getJSON("NetworkTopology",function(data){
 					if(data.status == "ok"){
@@ -87,6 +105,9 @@
 						var doc = mxUtils.parseXml(xml);
 						var decoder = new mxCodec(doc);
 						decoder.decode(doc.documentElement, graph.getModel());
+						
+						var layout = new mxCircleLayout(graph);
+						layout.execute(graph.getDefaultParent());
 					}else{
 						alert(data.details);
 					}
@@ -120,11 +141,27 @@ $( "#sendChangesB" ).button().click(function( event ) {
 	var result = encoder.encode(graph.getModel());
 
 	var exml = mxUtils.getXml(result);
-	console.log("TA-DAN!");
-	console.log(exml);
-	$.post("NetworkTopology",{"xml":exml},function(data,textStatus){
-		   alert("data"+data);	
-	},"xml");
+	
+	$.post("NetworkTopology",{"xml":exml},function(data){
+		   if(data.status == "ok"){
+			   graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
+			   $.getJSON("NetworkTopology",function(data){
+					if(data.status == "ok"){
+						xml=data.graph;
+						var doc = mxUtils.parseXml(xml);
+						var decoder = new mxCodec(doc);
+						decoder.decode(doc.documentElement, graph.getModel());
+						
+						var layout = new mxCircleLayout(graph);
+						layout.execute(graph.getDefaultParent());
+					}else{
+						alert(data.details);
+					}
+				});
+		   }else
+			   alert(data.details);
+	});
+	
 	});
 </script>
 <style>
