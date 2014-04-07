@@ -1,5 +1,8 @@
 package org.at.libvirt;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -13,6 +16,7 @@ import org.libvirt.Connect;
 import org.libvirt.Domain;
 import org.libvirt.DomainInfo;
 import org.libvirt.LibvirtException;
+import org.libvirt.Network;
 
 public class HypervisorConnection extends Connect{
 
@@ -160,9 +164,32 @@ public class HypervisorConnection extends Connect{
 		return domains;
 	}
 	
+	// ********************* managment apis ***************************
 	public void bootDomain(String name) throws LibvirtException{
 		Domain d = domainLookupByName(name);
 		d.create();
+	}
+	
+	/**
+	 * Creates a new network from an xmlfile. This will just define it
+	 * but not start it.
+	 * @param xmlFilePath
+	 * @return
+	 * @throws LibvirtException
+	 * @throws IOException
+	 */
+	public Network createNetworkFromFile(String xmlFilePath) throws LibvirtException, IOException{
+		Network net = null;
+		try(BufferedReader reader = new BufferedReader(new FileReader(new File(xmlFilePath)))){
+			StringBuilder xmlDescr = new StringBuilder();
+			String read = null;
+			while((read =reader.readLine())!=null)
+				xmlDescr.append(read);
+			
+			net = super.networkDefineXML(xmlDescr.toString());
+		}
+		
+		return net;
 	}
 	
 	public void shutdownDomain(String name) throws LibvirtException{

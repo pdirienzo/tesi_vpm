@@ -108,6 +108,7 @@
 
 		$.getJSON("DeleteHypervisor?hostname=" + hypervisor,
 				function(response) {
+					alert(response.details);
 					getHypervisorSettings();
 
 				});
