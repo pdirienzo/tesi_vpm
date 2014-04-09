@@ -98,7 +98,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		
 		//closing every active connection
 		for(int i=0;i<activeConnections.size();i++)
-			removeHypervisor(activeConnections.remove(i).getHypervisor());
+			removeHypervisor(activeConnections.get(i).getHypervisor());
 			
 	}
 	

@@ -3,5 +3,6 @@
 <properties>
 	<entry key="network_name">vpm-network</entry>
 	<entry key="bridge_name">br-vpm</entry>
-	<entry key="nfs_server">sprom-Dell</entry>
+	<entry key="image_server_addr">192.168.1.4</entry>
+	<entry key="image_server_port">8123</entry>
 </properties>

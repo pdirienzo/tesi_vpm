@@ -24,6 +24,8 @@ public class HypervisorConnection extends Connect{
 	public static final String TLS = "qemu";
 	public static final String SSH = "qemu+ssh";
 	public static final String TCP = "qemu+tcp";
+	
+	public static final String NET_NAME = "vpm-network";
 
 	private static final String DEFAULT_CONN_METHOD = TLS;
 	
@@ -185,7 +187,8 @@ public class HypervisorConnection extends Connect{
 			while((read =reader.readLine())!=null)
 				xmlDescr.append(read);
 			
-			net = super.networkCreateXML(xmlDescr.toString());
+			if((net=super.networkLookupByName(NET_NAME)) == null)
+				net = super.networkCreateXML(xmlDescr.toString());
 		}
 		
 		return net;
@@ -196,7 +199,6 @@ public class HypervisorConnection extends Connect{
 	 * @throws LibvirtException
 	 */
 	public void networkShutdown() throws LibvirtException{
-		System.out.println("shutdown network");
 		if(net != null)
 			net.destroy();
 	}
