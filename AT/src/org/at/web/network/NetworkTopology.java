@@ -47,41 +47,6 @@ public class NetworkTopology extends HttpServlet {
 		// TODO Auto-generated constructor stub
 	}
 
-	public static void main(String[] args){
-		mxGraph graph = new mxGraph();
-
-		graph.getModel().beginUpdate();
-
-		try{
-			Object v1 = graph.insertVertex(graph.getDefaultParent(), null, "Hello", 20, 20, 80, 30);
-			Object v2 = graph.insertVertex(graph.getDefaultParent(), null, "World!", 200, 150, 80, 30);
-			graph.insertEdge(graph.getDefaultParent(),null,"",v1,v2);
-		}finally{
-			graph.getModel().endUpdate();
-		}
-
-		for(Object cell : graph.getChildCells(graph.getDefaultParent(), true, false)){
-			graph.getView().getState(cell).getLabel();
-			mxCell c = (mxCell)cell;
-
-			System.out.println(c.isEdge()+" "+c.getAttribute("Label")+"---"+graph.getView().getState(c).getLabel());
-		}
-		/*
-		mxCodec codec = new mxCodec();
-
-		String xml = mxXmlUtils.getXml(codec.encode(graph.getModel()));
-		System.out.println("First: "+xml);
-		mxGraph newGraph = new mxGraph();
-		org.w3c.dom.Node node = mxXmlUtils.parseXml(xml);
-
-		mxCodec decoder = new mxCodec(node.getOwnerDocument());
-		decoder.decode(node.getFirstChild(),newGraph.getModel());
-
-
-		System.out.println(mxXmlUtils.getXml(codec.encode(newGraph.getModel())));*/
-		//System.out.println(xml);
-	}
-
 	private int getVertexId(String dpid,List<OvsSwitch> switches){
 		int index = -1;
 		int i = 0;
@@ -173,7 +138,7 @@ public class NetworkTopology extends HttpServlet {
 		}catch(IOException ex){
 			ex.printStackTrace();
 			jsResp.put("status","error");
-			jsResp.put("details", ex.getMessage());
+			jsResp.put("details", "Communication error with "+ex.getMessage());
 		}finally{
 			out.println(jsResp.toString());
 			out.close();

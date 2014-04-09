@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+	<entry key="network_name">vpm-network</entry>
+	<entry key="bridge_name">br-vpm</entry>
+	<entry key="nfs_server">sprom-Dell</entry>
+</properties>

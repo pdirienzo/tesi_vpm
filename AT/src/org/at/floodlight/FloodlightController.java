@@ -21,10 +21,11 @@ import org.json.JSONObject;
 public class FloodlightController {
 
 	private String baseURL;
-
+	
 	public FloodlightController(Controller c){
 		this.baseURL = "http://"+c.getHostAddress()
 				+":"+c.getPort();
+		
 	}
 	
 	public List<LinkConnection> getSwitchConnections() throws IOException{

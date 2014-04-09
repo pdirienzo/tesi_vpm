@@ -28,6 +28,7 @@ public class HypervisorConnection extends Connect{
 	private static final String DEFAULT_CONN_METHOD = TLS;
 	
 	private Hypervisor hypervisor;
+	private Network net; //custom network for our vms
 	
 	/**
 	 * The most complete call as it allows to specify everything
@@ -171,25 +172,33 @@ public class HypervisorConnection extends Connect{
 	}
 	
 	/**
-	 * Creates a new network from an xmlfile. This will just define it
-	 * but not start it.
+	 * Creates a new network from an xmlfile. This will just create but not define it
 	 * @param xmlFilePath
 	 * @return
 	 * @throws LibvirtException
 	 * @throws IOException
 	 */
 	public Network createNetworkFromFile(String xmlFilePath) throws LibvirtException, IOException{
-		Network net = null;
 		try(BufferedReader reader = new BufferedReader(new FileReader(new File(xmlFilePath)))){
 			StringBuilder xmlDescr = new StringBuilder();
 			String read = null;
 			while((read =reader.readLine())!=null)
 				xmlDescr.append(read);
 			
-			net = super.networkDefineXML(xmlDescr.toString());
+			net = super.networkCreateXML(xmlDescr.toString());
 		}
 		
 		return net;
+	}
+	
+	/**
+	 * This shutdowns our custom network
+	 * @throws LibvirtException
+	 */
+	public void networkShutdown() throws LibvirtException{
+		System.out.println("shutdown network");
+		if(net != null)
+			net.destroy();
 	}
 	
 	public void shutdownDomain(String name) throws LibvirtException{

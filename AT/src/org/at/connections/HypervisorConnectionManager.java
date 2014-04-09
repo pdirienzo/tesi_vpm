@@ -16,6 +16,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	
 	private static final int CONNECTION_TIMEOUT = 500;
 	public static final String HYPERVISOR_CONNECTION_MANAGER = "hmanager";
+	private static final String XML_NETWORK_FILEPATH = "xml_definitions/vpm_network.xml";
 	
 	private int retryTimout;
 	private Timer timer; //this timer is used by the polling thread
@@ -34,6 +35,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	
 	private Database d;
 	
+	// listener methods----------------------------------------------------------->
 	@Override
 	public void hypervisorInserted(Hypervisor h) {
 		addHypervisor(h);
@@ -43,8 +45,10 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	@Override
 	public void hypervisorDeleted(Hypervisor h) {
 		removeHypervisor(h);
-		
 	}
+	
+	//<-----------------------------------------------------------------------------
+	
 	/**
 	 * Creates a connection manager with a specified timeout in order to
 	 * check if any hypervisor has returned on. 
@@ -65,14 +69,17 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		d.connect();
 		
 		for(Hypervisor h : d.getAllHypervisors()){
-			try {
-				activeConnections.add(HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT));
+			addHypervisor(h);
+			/*try {
+				HypervisorConnection conn = HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT);
+				conn.createNetworkFromFile(XML_NETWORK_FILEPATH);
+				activeConnections.add(conn);
 			} catch (IOException e) {
 				System.err.println("Hypervisor "+h+" was offline, adding it to offline list");
 				offlineConnections.add(h);
 			} catch(LibvirtException e1){
 				e1.printStackTrace();
-			}
+			}*/
 		}	
 		d.close();
 		
@@ -90,14 +97,55 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		}
 		
 		//closing every active connection
-		for(HypervisorConnection hc : activeConnections)
-			try {
-				hc.close();
-			} catch (LibvirtException e) {
-				throw new IOException(e.getMessage());
-			}
+		for(int i=0;i<activeConnections.size();i++)
+			removeHypervisor(activeConnections.remove(i).getHypervisor());
+			
 	}
 	
+	public synchronized void addHypervisor(Hypervisor h){
+		try {
+			HypervisorConnection conn = HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT); 
+			try{
+				conn.createNetworkFromFile(XML_NETWORK_FILEPATH);
+			}catch(LibvirtException ex){
+				//this just catches if a network already exists.
+				//normally the network should be destroyed at app shutdown, but if some errors occur this could not happen.
+			}
+			activeConnections.add(conn);
+		} catch (IOException e) {
+			System.err.println("Hypervisor "+h+" was offline, adding it to offline list");
+			offlineConnections.add(h);
+		} catch (LibvirtException e1){
+			e1.printStackTrace();
+		}
+	}
+	
+	public synchronized void removeHypervisor(Hypervisor h){
+		//we check if it is among the offlines
+		if(offlineConnections.contains(h)){
+			offlineConnections.remove(h); //easy!
+			
+		}else{ //we have to check if it is among active connections
+			int i = 0;
+			boolean result = false;
+			while((!result) && (i<activeConnections.size())){
+				if(activeConnections.get(i).getHypervisor().equals(h)){//found
+					try {
+						HypervisorConnection conn = activeConnections.get(i);
+						conn.networkShutdown();
+						conn.close();
+						activeConnections.removeElementAt(i); //and then remove the element itself
+						result = true;
+					} catch (LibvirtException e) {
+						e.printStackTrace();
+					}
+				}else
+					i++;
+			}	
+		}
+	}
+	
+	/*
 	public static void main(String[] args) throws IOException{
 		//testing some stuff
 		
@@ -113,7 +161,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		
 		System.out.println(c.getOfflineHypervisors().contains(h) +""+c.getActiveConnections().size());
 		c.stop();
-	}
+	}*/
 	
 	/**
 	 * Creates a connection manager with a specified timeout in order to
@@ -163,14 +211,6 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		return conn;
 	}
 	
-	public synchronized void addHypervisor(Hypervisor h){
-		try {
-			activeConnections.add(HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT));
-		} catch (IOException | LibvirtException e) {
-			offlineConnections.add(h);
-		}
-	}
-	
 	/**
 	 * Marks as inactive a connection, if retry timeout is !=0 the system will periodically check it to see
 	 * if it returns online
@@ -180,28 +220,6 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	public synchronized void setInactive(HypervisorConnection c){
 		activeConnections.removeElement(c);
 		offlineConnections.addElement(c.getHypervisor());
-	}
-	
-	public synchronized void removeHypervisor(Hypervisor h){
-		//we check if it is among the offlines
-		if(offlineConnections.contains(h)){
-			offlineConnections.remove(h); //easy!
-			
-		}else{ //we have to check if it is among active connections
-			int i = 0;
-			boolean result = false;
-			while((!result) && (i<activeConnections.size())){
-				if(activeConnections.get(i).getHypervisor().equals(h)){//found
-					try {
-						activeConnections.get(i).close(); //we first close the connection
-						activeConnections.removeElementAt(i); //and then remove the element itself
-					} catch (LibvirtException e) {
-						e.printStackTrace();
-					}
-				}else
-					i++;
-			}	
-		}
 	}
 	
 	/**

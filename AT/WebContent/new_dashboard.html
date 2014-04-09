@@ -85,6 +85,19 @@
  $(document).ready(function(){
 	 getHypervisor(true);
  }); 
+ 
+ var controlOp = new Object(); //this is a shared object containing details about current control operation
+ 
+ function controlHypervisor(){
+	 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest,function(result){
+     		if(result.result == "error"){
+     			alert("Request failed: "+result.details);
+     		}
+     });
+	 
+	 $("#vm_menu").dialog("close");
+	 alert("Sending a "+controlOp.action+" request for "+controlOp.guest);
+ }
 
  function getHypervisor(firstRun){
 	 $.getJSON("HypervisorInfo", function(hvList){
@@ -98,7 +111,7 @@
 	   
 	 	       	 for(j in hypervisor.machines){
 	 	       		 vmachine = hypervisor.machines[j];
-	 	       		 html += "<button name='"+vmachine.name+"' class=\"vmbutton\"></button><br>";
+	 	       		 html += "<button name='"+vmachine.name+"' class=\"vmbutton\" ></button><br>";
 	 	       	 }
 	 	       	 
 	    	 	 html += "</div></div>";
@@ -114,26 +127,37 @@
 		         active: false 
 		     });
 	    	 
+	    	 $("#vm_menu").dialog({
+	             title : "Control",
+	             autoOpen : false,
+	             resizable: false,
+	             modal:true
+	    	 });
 	    	 
 	    	 $( ".vmbutton" ).button().click(function( event ) {
 		 	       	event.preventDefault();
-		 	       	var action;
-		 	       	if(this.getAttribute('status') == "offline")
-		 	       		action = "boot";
-		 	       	else if (this.getAttribute('status') == "online")
-		 	       		action = "shutdown";
+		 	        $("#vm_menu").dialog("option","title",this.name+" Control");
+		 	        
+		 	        controlOp.hypervisor = this.parentNode.id.split("_")[0];
+		 	        controlOp.guest = this.name;
+	 	       		
+		 	       	if(this.getAttribute('status') == "offline"){
+		 	       	    controlOp.action = "boot";
+		 	       		$("#vm_menu button[name=shutVM]").switchClass("ui-state-enabled","ui-state-disabled");
+		 	       		$("#vm_menu button[name=startVM]").switchClass("ui-state-disabled","ui-state-enabled");
+		 	       	}else if (this.getAttribute('status') == "online"){
+		 	          	controlOp.action = "shutdown";
+		 	       		$("#vm_menu button[name=shutVM]").switchClass("ui-state-disabled","ui-state-enabled");
+		 	       	    $("#vm_menu button[name=startVM]").switchClass("ui-state-enabled","ui-state-disabled");
+		 	       	}
 		 	       	
-		 	       	var hypervisor = this.parentNode.id.split("_")[0];
-		 	       	var guest = this.name;
+		 	       
 		 	       	
-		 	       	alert("Sending a "+action+" request for "+guest);
-		 	       	
-		 	        $.getJSON("DomainControl?action="+action+"&hypervisorId="+hypervisor+"&guestName="+guest,function(result){
-		 	       		if(result.result == "error"){
-		 	       			alert("Request failed: "+result.details);
-		 	       		}
-		 	       	});
+		 	       $("#vm_menu").dialog("open");
+		 	       
 	    	 });
+	    	 
+	    	 
 	    	 
 	     }
 	     
@@ -208,4 +232,10 @@
 		<strong>Hypervisors disponibili (cool)</strong>
 	</p>
 	<div id="hypervisormenu"></div>
+</div>
+
+<div id="vm_menu" class="ui-helper-hidden">
+	<button name="startVM" onclick="controlHypervisor()" style="width:'20px';" class="ui-state-disabled">Avvia VM</button>
+	<button name="shutVM" onclick="controlHypervisor()" style="width:'20px';" class="ui-state-disabled">Spegni VM</button>
+	<button name="stopVM" onclick="controlHypervisor()" style="width:'20px';">Elimina VM</button>
 </div>

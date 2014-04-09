@@ -16,8 +16,7 @@ public class TryDomainOps {
 						16514), false, 3000);
 		
 		Network n = hc.createNetworkFromFile("xml_definitions/vpm_network.xml");
-		n.setAutostart(true);
-		n.create();
+		
 		hc.close();
 
 	}

@@ -1,8 +1,6 @@
 package org.at.connections;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -12,8 +10,7 @@ import org.at.db.DatabaseEventDispatcher;
 
 public class LimeContextServerListener implements ServletContextListener {
 
-	private static final int MANAGER_RETRY_TIME = 5000;
-	private static final String JSP_URL = "http://localhost:8081/AT/prova.jsp?jsp_precompile=true";	
+	private static final int MANAGER_RETRY_TIME = 5000;	
 	
 	@Override
 	public void contextInitialized(ServletContextEvent c) {
@@ -34,7 +31,6 @@ public class LimeContextServerListener implements ServletContextListener {
 	
 	@Override
 	public void contextDestroyed(ServletContextEvent c) {
-		System.out.println("destroyed");
 		HypervisorConnectionManager manager = (HypervisorConnectionManager)c.getServletContext()
 				.getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		try {

@@ -31,6 +31,7 @@
 				graph.setCellsResizable(false);
 				graph.setConnectable(true);
 				graph.multigraph = false;
+				graph.htmlLabels = true;
 				graph.isCellEditable = function(cell){
 					return false;
 				};
@@ -39,7 +40,7 @@
 				graph.convertValueToString = function(cell){
 					if (mxUtils.isNode(cell.value)){
 						if (cell.value.nodeName.toLowerCase() == ('switch')){
-							return cell.getAttribute('dpid');
+							return cell.getAttribute('ip');
 						}
 					}
 					
@@ -181,5 +182,5 @@ $( "#sendChangesB" ).button().click(function( event ) {
 </div>
 
 <div id="graph-panel">
-	<div id="graphContainer" style="width:inherit; height:inherit; overflow:hidden;"></div>
+	<div id="graphContainer" style="width:inherit; height:inherit; overflow:hidden;background:url('images/gears.jpg')"></div>
 </div>
