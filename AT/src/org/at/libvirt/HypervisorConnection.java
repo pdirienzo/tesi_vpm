@@ -1,8 +1,5 @@
 package org.at.libvirt;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -25,7 +22,7 @@ public class HypervisorConnection extends Connect{
 	public static final String SSH = "qemu+ssh";
 	public static final String TCP = "qemu+tcp";
 	
-	public static final String NET_NAME = "vpm-network";
+	//public static final String NET_NAME = "vpm-network";
 
 	private static final String DEFAULT_CONN_METHOD = TLS;
 	
@@ -174,24 +171,34 @@ public class HypervisorConnection extends Connect{
 	}
 	
 	/**
-	 * Creates a new network from an xmlfile. This will just create but not define it
+	 * Creates a new custom network from an xml string. This will just create but not define it
 	 * @param xmlFilePath
 	 * @return
 	 * @throws LibvirtException
 	 * @throws IOException
 	 */
-	public Network createNetworkFromFile(String xmlFilePath) throws LibvirtException, IOException{
-		try(BufferedReader reader = new BufferedReader(new FileReader(new File(xmlFilePath)))){
-			StringBuilder xmlDescr = new StringBuilder();
-			String read = null;
-			while((read =reader.readLine())!=null)
-				xmlDescr.append(read);
-			
-			if((net=super.networkLookupByName(NET_NAME)) == null)
-				net = super.networkCreateXML(xmlDescr.toString());
-		}
+	public Network createNetwork(String xmlFile) throws LibvirtException{
+		net = super.networkCreateXML(xmlFile);
 		
 		return net;
+	}
+	
+	public void setNetwork(Network net){
+		this.net = net;
+	}
+	
+	public boolean networkExists(String networkName) throws LibvirtException{
+		boolean result = false;
+		int i=0;
+		String[] networks = super.listNetworks();
+		
+		while((!result) && i<networks.length)
+			if(networks[i].equals(networkName))
+				result = true;
+			else
+				i++;
+		
+		return result;
 	}
 	
 	/**

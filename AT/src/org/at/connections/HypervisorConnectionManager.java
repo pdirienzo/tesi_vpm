@@ -1,5 +1,6 @@
 package org.at.connections;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
@@ -10,16 +11,25 @@ import org.at.db.Database;
 import org.at.db.DatabaseListener;
 import org.at.db.Hypervisor;
 import org.at.libvirt.HypervisorConnection;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 import org.libvirt.LibvirtException;
 
 public class HypervisorConnectionManager implements DatabaseListener{
 	
 	private static final int CONNECTION_TIMEOUT = 500;
 	public static final String HYPERVISOR_CONNECTION_MANAGER = "hmanager";
-	private static final String XML_NETWORK_FILEPATH = "xml_definitions/vpm_network.xml";
+	private static final String XML_NETWORK_FILEPATH = "xml_definitions/network_template.xml";
 	
 	private int retryTimout;
 	private Timer timer; //this timer is used by the polling thread
+	
+	//network settings
+	private final String NETWORK_NAME;
+	private final String BRIDGE_NAME;
 	
 	private boolean active;
 	private synchronized boolean isActive(){
@@ -49,6 +59,27 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	
 	//<-----------------------------------------------------------------------------
 	
+	//utility ------------------------------------------------------------------------->
+	
+	private String getNetworkDescription() throws IOException{
+		SAXBuilder builder = new SAXBuilder();
+		File xmlFile = new File(XML_NETWORK_FILEPATH);
+ 
+		Document doc = null;
+		try{
+			doc = (Document) builder.build(xmlFile);
+		}catch(JDOMException ex){
+			throw new IOException(ex.getMessage());
+		}
+		
+		Element rootNode = doc.getRootElement();
+		rootNode.getChild("name").setText(NETWORK_NAME);
+		rootNode.getChild("bridge").setAttribute("name",BRIDGE_NAME);
+		
+		return new XMLOutputter().outputString(doc);
+	}
+	
+	//<--------------------------------------------------------------------------------
 	/**
 	 * Creates a connection manager with a specified timeout in order to
 	 * check if any hypervisor has returned on. 
@@ -57,12 +88,25 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	 * @param dbPath path to the sqlite db
 	 * @throws IOException 
 	 */
-	public HypervisorConnectionManager(int retryTimeout,String dbPath) {
+	public HypervisorConnectionManager(int retryTimeout,String dbPath,String network_name,String bridge_name) {
 		this.retryTimout = retryTimeout;
+		this.NETWORK_NAME = network_name;
+		this.BRIDGE_NAME = bridge_name;
 		activeConnections = new Vector<HypervisorConnection>();
 		offlineConnections = new Vector<Hypervisor>();
 		d = new Database(dbPath);
 		timer = new Timer();
+	}
+	
+	/**
+	 * Creates a connection manager with a specified timeout in order to
+	 * check if any hypervisor has returned on. Default db path is used
+	 * 
+	 * @param retryTimeout 0 for no retry
+	 * @throws IOException 
+	 */
+	public HypervisorConnectionManager(int retryTimeout,String network_name,String bridge_name) throws IOException{
+		this(retryTimeout,Database.DEFAULT_DBPATH,network_name,bridge_name);
 	}
 	
 	void start() throws IOException{
@@ -70,16 +114,6 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		
 		for(Hypervisor h : d.getAllHypervisors()){
 			addHypervisor(h);
-			/*try {
-				HypervisorConnection conn = HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT);
-				conn.createNetworkFromFile(XML_NETWORK_FILEPATH);
-				activeConnections.add(conn);
-			} catch (IOException e) {
-				System.err.println("Hypervisor "+h+" was offline, adding it to offline list");
-				offlineConnections.add(h);
-			} catch(LibvirtException e1){
-				e1.printStackTrace();
-			}*/
 		}	
 		d.close();
 		
@@ -89,6 +123,26 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		}
 	}
 	
+	public synchronized void addHypervisor(Hypervisor h){
+		try {
+			HypervisorConnection conn = HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT); 
+			
+			if(!conn.networkExists(NETWORK_NAME)) //this should always happen as a network is destroyed at each app shutdown
+					conn.createNetwork(getNetworkDescription());
+			else{ //anyway crashes and such can not make that happen so we foresee that
+				conn.setNetwork(conn.networkLookupByName(NETWORK_NAME));
+			}
+			
+			activeConnections.add(conn);
+		} catch (IOException e) {
+			System.err.println("Hypervisor "+h+" was offline, adding it to offline list");
+			offlineConnections.add(h);
+		} catch (LibvirtException e1){
+			e1.printStackTrace();
+		}
+	}
+	
+	//TODO to solve
 	synchronized void stop() throws IOException{
 		
 		if(retryTimout != 0){//polling thread was active
@@ -97,27 +151,9 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		}
 		
 		//closing every active connection
-		for(int i=0;i<activeConnections.size();i++)
-			removeHypervisor(activeConnections.get(i).getHypervisor());
+		for(HypervisorConnection hc : activeConnections)
+			removeHypervisor(hc.getHypervisor());
 			
-	}
-	
-	public synchronized void addHypervisor(Hypervisor h){
-		try {
-			HypervisorConnection conn = HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT); 
-			try{
-				conn.createNetworkFromFile(XML_NETWORK_FILEPATH);
-			}catch(LibvirtException ex){
-				//this just catches if a network already exists.
-				//normally the network should be destroyed at app shutdown, but if some errors occur this could not happen.
-			}
-			activeConnections.add(conn);
-		} catch (IOException e) {
-			System.err.println("Hypervisor "+h+" was offline, adding it to offline list");
-			offlineConnections.add(h);
-		} catch (LibvirtException e1){
-			e1.printStackTrace();
-		}
 	}
 	
 	public synchronized void removeHypervisor(Hypervisor h){
@@ -162,17 +198,6 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		System.out.println(c.getOfflineHypervisors().contains(h) +""+c.getActiveConnections().size());
 		c.stop();
 	}*/
-	
-	/**
-	 * Creates a connection manager with a specified timeout in order to
-	 * check if any hypervisor has returned on. Default db path is used
-	 * 
-	 * @param retryTimeout 0 for no retry
-	 * @throws IOException 
-	 */
-	public HypervisorConnectionManager(int retryTimeout) throws IOException{
-		this(retryTimeout,Database.DEFAULT_DBPATH);
-	}
 	
 	public synchronized List<HypervisorConnection> getActiveConnections(){
 		return this.activeConnections;

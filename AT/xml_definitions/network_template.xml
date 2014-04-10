@@ -1,11 +1,11 @@
 <network>
-  <name>vpm-network</name>
+  <name></name>
   <forward mode='bridge'/>
-  <bridge name='br-vpm'/>
+  <bridge name=''/>
   <virtualport type='openvswitch'/>
-  <portgroup name='vlan-01' default='yes'>
+  <portgroup name='vlan-00' default='yes'>
   </portgroup>
-  <portgroup name='vlan-stream'>
+  <portgroup name='vlan-02'>
     <vlan>
       <tag id='2'/>
     </vlan>

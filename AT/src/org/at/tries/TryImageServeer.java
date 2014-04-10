@@ -13,7 +13,7 @@ public class TryImageServeer {
 		params.put("hypervisor", "H1");
 		params.put("flavour", "test");
 		ImageCreationThread t = new ImageCreationThread(client, params);
-		t.start();
+		//t.start();
 		
 		Thread.sleep(1000);
 		while(t.getProgressStatus().equals(ImageCreationThread.PROGRESS)){

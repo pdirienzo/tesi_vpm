@@ -15,8 +15,6 @@ public class TryDomainOps {
 				new Hypervisor("pasquale", "pasquale-VPCEB1A4E",
 						16514), false, 3000);
 		
-		Network n = hc.createNetworkFromFile("xml_definitions/vpm_network.xml");
-		
 		hc.close();
 
 	}

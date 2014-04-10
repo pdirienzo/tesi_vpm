@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -36,15 +37,17 @@ import com.mxgraph.view.mxGraph;
 public class NetworkTopology extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	private static final String BR_NAME = "br0";
-	private static final int BR_PORT = 6640;
+	private final String BR_NAME;
+	private final int BR_PORT;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
 	 */
 	public NetworkTopology() {
 		super();
-		// TODO Auto-generated constructor stub
+		Properties props = (Properties)getServletContext().getAttribute("properties");
+		BR_NAME = props.getProperty("bridge_name");
+		BR_PORT = Integer.parseInt(props.getProperty("ovs_manager_port"));
 	}
 
 	private int getVertexId(String dpid,List<OvsSwitch> switches){
