@@ -7,12 +7,17 @@
 <script src="js/jquery-1.11.0.js"></script>
 <script src="js/jquery-ui-1.10.4.js"></script>
 <script src="js/jquery-ui-contextmenu.js"></script>
+<%@page import="java.util.Properties"%>
 
-	<script type="text/javascript">
+<script type="text/javascript">
 	
+	<%
+	Properties props = (Properties)application.getAttribute("properties");
+	%>
 			//global variables
-			var WARNING_THRESHOLD=60.0;
-			var DANGER_THRESHOLD=90.0;
+			var WARNING_THRESHOLD= <%=Float.parseFloat(props.getProperty("warning_treshold"))%>;
+			var DANGER_THRESHOLD=<%=Float.parseFloat(props.getProperty("danger_treshold"))%>;
+			
 			var REFRESH_INTERVAL = 5000; //time in ms of info refreshing
 			var timedFunction; //this contains the timed function for the
 			                   //dashboard refreshing logic
@@ -25,13 +30,22 @@
 					}
 				});
 				
-				 
-				
 				$.ajaxSetup ({
 		    		// Disable caching of AJAX responses
 		    		cache: false
 				});
+				
+				$( "#vpm-alert" ).dialog({
+					autoOpen : false
+				});
+				
 			});
+			
+			function showDialog(title,message){
+				$("#vpm-alert").dialog("option","title",title);
+				$("#vpm-alert p").text(message);
+				$("#vpm-alert").dialog("open");
+			}
 			 
 		</script>
 </head>
@@ -52,8 +66,8 @@
 	</div>
 </body>
 
-<div id="custom-alert" hidden="true">
-
+<div id="vpm-alert" title="Info">
+	<p></p>
 </div>
 
 </html>

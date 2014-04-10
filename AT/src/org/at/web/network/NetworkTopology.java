@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.at.db.Controller;
 import org.at.db.Database;
 import org.at.floodlight.FloodlightController;
 import org.at.floodlight.types.LinkConnection;
@@ -37,14 +38,20 @@ import com.mxgraph.view.mxGraph;
 public class NetworkTopology extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	private final String BR_NAME;
-	private final int BR_PORT;
+	private String BR_NAME;
+	private int BR_PORT;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
 	 */
 	public NetworkTopology() {
 		super();
+	}
+	
+	@Override
+	public void init() throws ServletException {
+		super.init();
+		
 		Properties props = (Properties)getServletContext().getAttribute("properties");
 		BR_NAME = props.getProperty("bridge_name");
 		BR_PORT = Integer.parseInt(props.getProperty("ovs_manager_port"));
@@ -66,9 +73,14 @@ public class NetworkTopology extends HttpServlet {
 	private FloodlightController getController() throws IOException{
 		Database d = new Database();
 		d.connect();
-		FloodlightController controller = new FloodlightController(d.getController());
+		Controller c = d.getController();
 		d.close();
-
+		
+		if(c==null)
+			return null;
+		
+		FloodlightController controller = new FloodlightController(c);
+		
 		return controller;
 	}
 
@@ -101,43 +113,52 @@ public class NetworkTopology extends HttpServlet {
 		try{
 
 			FloodlightController controller = getController();
-			List<OvsSwitch> switches = controller.getSwitches();
-			List<LinkConnection> connections = deleteOpposites(controller.getSwitchConnections());
+			
+			if(controller != null){
+				List<OvsSwitch> switches = controller.getSwitches();
+				List<LinkConnection> connections = deleteOpposites(controller.getSwitchConnections());
 
 
-			mxGraph graph = new mxGraph();
-			mxCell[] vertexes = new mxCell[switches.size()];
+				mxGraph graph = new mxGraph();
+				mxCell[] vertexes = new mxCell[switches.size()];
 
-			graph.getModel().beginUpdate();
-			org.w3c.dom.Document doc = mxDomUtils.createDocument();
+				graph.getModel().beginUpdate();
+				org.w3c.dom.Document doc = mxDomUtils.createDocument();
 
-			try{	
-				for(int i=0;i<switches.size();i++){
-					org.w3c.dom.Element swEl = doc.createElement("switch");
-					swEl.setAttribute("dpid", switches.get(i).dpid);
-					swEl.setAttribute("ip", switches.get(i).ip);
-					vertexes[i] = (mxCell)graph.insertVertex(graph.getDefaultParent(), null, swEl, 10, 10, 
-							100, 50);
+				try{	
+					for(int i=0;i<switches.size();i++){
+						org.w3c.dom.Element swEl = doc.createElement("switch");
+						swEl.setAttribute("dpid", switches.get(i).dpid);
+						swEl.setAttribute("ip", switches.get(i).ip);
+						vertexes[i] = (mxCell)graph.insertVertex(graph.getDefaultParent(), null, swEl, 10, 10, 
+								100, 50);
+					}
+
+					for(int i=0;i<connections.size();i++){
+						Element linkEl = linkToDom(doc,connections.get(i));
+						graph.insertEdge(graph.getDefaultParent(), null, linkEl, vertexes[getVertexId(connections.get(i).dpidSrc, switches)], 
+								vertexes[getVertexId(connections.get(i).dpidDst, switches)]);
+
+					}
+
+				}finally{
+					graph.getModel().endUpdate();
 				}
 
-				for(int i=0;i<connections.size();i++){
-					Element linkEl = linkToDom(doc,connections.get(i));
-					graph.insertEdge(graph.getDefaultParent(), null, linkEl, vertexes[getVertexId(connections.get(i).dpidSrc, switches)], 
-							vertexes[getVertexId(connections.get(i).dpidDst, switches)]);
+				mxCodec codec = new mxCodec();	
+				String xmlString =  mxXmlUtils.getXml(codec.encode(graph.getModel()));
 
-				}
+				//System.out.println(mxUtils.getPrettyXml(codec.encode(graph.getModel())));
 
-			}finally{
-				graph.getModel().endUpdate();
+				jsResp.put("status", "ok");
+				jsResp.put("graph", xmlString);
+			
+			}else{
+				jsResp.put("status", "error");
+				jsResp.put("details", "No controller set");
 			}
-
-			mxCodec codec = new mxCodec();	
-			String xmlString =  mxXmlUtils.getXml(codec.encode(graph.getModel()));
-
-			//System.out.println(mxUtils.getPrettyXml(codec.encode(graph.getModel())));
-
-			jsResp.put("status", "ok");
-			jsResp.put("graph", xmlString);
+			
+			
 		}catch(IOException ex){
 			ex.printStackTrace();
 			jsResp.put("status","error");
@@ -202,11 +223,11 @@ public class NetworkTopology extends HttpServlet {
 		return sb.toString();
 
 	}
-	
+
 	private int linkPresent(LinkConnection l, List<LinkConnection> links){
 		int index = -1;
 		int i = 0;
-		
+
 		while((index==-1) && (i<links.size())){
 			if(links.get(i).dpidSrc.equals(l.dpidSrc) && links.get(i).dpidDst.equals(l.dpidDst) ||
 					links.get(i).dpidSrc.equals(l.dpidDst) && links.get(i).dpidDst.equals(l.dpidSrc))
@@ -214,7 +235,7 @@ public class NetworkTopology extends HttpServlet {
 			else
 				i++;
 		}
-		
+
 		return index;
 	}
 
@@ -296,7 +317,7 @@ public class NetworkTopology extends HttpServlet {
 
 				}
 			}
-			
+
 			jResponse.put("status", "ok");
 
 		}catch(IOException | OvsdbException ex){

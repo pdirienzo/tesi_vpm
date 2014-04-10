@@ -53,7 +53,7 @@
 	 		if(jobList["length"] > 0)
 	 			showMigrationBox();
 	 		else
-	 			alert("Nessun job di migrazione attualmente schedulato");
+	 			showDialog("Errore","Nessun job di migrazione attualmente schedulato");
 	 	});
 	 	
 	 	//setup of dialogs
@@ -341,7 +341,7 @@
                
                 setTimeout(refreshProgress(response.id), 500);
             } else if(response.state == "-1"){
-                alert("Impossibile effettuare la migrazione: "+response.error);
+                showDialog("Impossibile effettuare la migrazione",response.error);
                 $("#"+response.id+"-mem").html("<p>Failed</p>");
                 $.getJSON("GetElapsedTime?lmid="+response.id, function(response) {
                    //$("#vmboxes").dialog("close");

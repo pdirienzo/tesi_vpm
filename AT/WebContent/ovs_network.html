@@ -110,7 +110,8 @@
 						var layout = new mxCircleLayout(graph);
 						layout.execute(graph.getDefaultParent());
 					}else{
-						alert(data.details);
+						//alert(data.details);
+						showDialog("Errore",data.details);
 					}
 				});
 				
@@ -156,11 +157,11 @@ $( "#sendChangesB" ).button().click(function( event ) {
 						var layout = new mxCircleLayout(graph);
 						layout.execute(graph.getDefaultParent());
 					}else{
-						alert(data.details);
+						showDialog("Errore",data.details);
 					}
 				});
 		   }else
-			   alert(data.details);
+			   showDialog("Errore",data.details);
 	});
 	
 	});
