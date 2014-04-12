@@ -87,7 +87,7 @@
 </head>
 
 
-<body>
+<body style="background:#CCC">
 	<div id="wrapper">
 		<div id="header">
 			<div id="tabs" class="centered">
