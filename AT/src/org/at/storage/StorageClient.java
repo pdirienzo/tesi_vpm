@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import org.json.JSONObject;
@@ -25,7 +27,13 @@ public class StorageClient {
 	}
 	
 	private JSONObject sendRequest(JSONObject request) throws IOException{
-		Socket s = new Socket(ip,port);
+		Socket s = new Socket();
+		
+		InetSocketAddress addr = new InetSocketAddress(
+				InetAddress.getByName(ip), port);
+		
+		s.connect(addr, 3000);
+		
 		PrintWriter outToServer = new PrintWriter(s.getOutputStream(),true);
 		BufferedReader inFromServer = new BufferedReader(new InputStreamReader(
 				s.getInputStream()));

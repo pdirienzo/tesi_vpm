@@ -84,7 +84,11 @@
  
  $(document).ready(function(){
 	 getHypervisor(true);
+	 $.getJSON("DomainControl?action=list_flavours",function(result){
+		 console.log(result);
+	 });
  }); 
+ 
  
  var controlOp = new Object(); //this is a shared object containing details about current control operation
  
