@@ -160,7 +160,7 @@ public class NetworkTopology extends HttpServlet {
 			
 			
 		}catch(IOException ex){
-			ex.printStackTrace();
+			System.err.println(ex.getMessage());
 			jsResp.put("status","error");
 			jsResp.put("details", "Communication error with "+ex.getMessage());
 		}finally{

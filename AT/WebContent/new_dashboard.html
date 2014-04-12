@@ -82,15 +82,14 @@
 }
  */
  
+ var controlOp = new Object(); //this is a shared object containing details about current control operation
+ 
  $(document).ready(function(){
 	 getHypervisor(true);
 	 $.getJSON("DomainControl?action=list_flavours",function(result){
 		 console.log(result);
 	 });
  }); 
- 
- 
- var controlOp = new Object(); //this is a shared object containing details about current control operation
  
  function controlHypervisor(){
 	 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest,function(result){
@@ -202,14 +201,10 @@
 		 	       		$("#vm_menu button[name=shutVM]").switchClass("ui-state-disabled","ui-state-enabled");
 		 	       	    $("#vm_menu button[name=startVM]").switchClass("ui-state-enabled","ui-state-disabled");
 		 	       	}
-		 	       	
-		 	       
-		 	       	
+      	
 		 	       $("#vm_menu").dialog("open");
 		 	       
-	    	 });
-	    	 
-	    	 
+	    	 }); 
 	    	 
 	     }
 	     

@@ -15,7 +15,8 @@ public class TryCPUStats {
 				new Hypervisor("pasquale", "pasquale-VPCEB1A4E",
 						16514), true, 3000);
 		
-		NodeInfo infos = hc.nodeInfo();
+
+		System.out.println(hc.getCapabilities());
 		hc.close();
 	}
 

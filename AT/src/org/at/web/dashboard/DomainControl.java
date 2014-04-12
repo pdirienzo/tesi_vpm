@@ -68,6 +68,8 @@ public class DomainControl extends HttpServlet {
 					jResponse.put("details","impossible contact image server");
 				}
 
+			}else if(action.equals("destroy")){
+				
 			}else{
 				jResponse.put("result", "error");
 				jResponse.put("details", "unrecognized action");
