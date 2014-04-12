@@ -13,7 +13,6 @@ import org.libvirt.Connect;
 import org.libvirt.Domain;
 import org.libvirt.DomainInfo;
 import org.libvirt.LibvirtException;
-import org.libvirt.Network;
 
 public class HypervisorConnection extends Connect{
 
@@ -24,10 +23,9 @@ public class HypervisorConnection extends Connect{
 	
 	//public static final String NET_NAME = "vpm-network";
 
-	private static final String DEFAULT_CONN_METHOD = TLS;
+	protected static final String DEFAULT_CONN_METHOD = TLS;
 	
 	private Hypervisor hypervisor;
-	private Network net; //custom network for our vms
 	
 	/**
 	 * The most complete call as it allows to specify everything
@@ -36,7 +34,7 @@ public class HypervisorConnection extends Connect{
 	 * @param readOnly
 	 * @throws LibvirtException
 	 */
-	private HypervisorConnection(Hypervisor h, String method, boolean readOnly) throws LibvirtException{
+	protected HypervisorConnection(Hypervisor h, String method, boolean readOnly) throws LibvirtException{
 			super(method+"://"+h.getName()+"@"+h.getHostAddress()+":"+h.getPort()+
 				"/system", readOnly);
 			this.hypervisor = h;
@@ -48,7 +46,7 @@ public class HypervisorConnection extends Connect{
 	 * @param readOnly
 	 * @throws LibvirtException
 	 */
-	private HypervisorConnection(Hypervisor h,boolean readOnly) throws LibvirtException{
+	protected HypervisorConnection(Hypervisor h,boolean readOnly) throws LibvirtException{
 		this(h,DEFAULT_CONN_METHOD,readOnly);
 	}
 	
@@ -82,7 +80,7 @@ public class HypervisorConnection extends Connect{
 	 * @param timeout timeout in millis
 	 * @throws IOException when times out
 	 */
-	private static void checkConnection(Hypervisor h, int timeout) throws IOException{
+	protected static void checkConnection(Hypervisor h, int timeout) throws IOException{
 		Socket s = new Socket();
 		InetSocketAddress addr = new InetSocketAddress(
 				InetAddress.getByName(h.getHostAddress()), (int)h.getPort());
@@ -101,7 +99,7 @@ public class HypervisorConnection extends Connect{
 	 * @throws IOException
 	 * @throws LibvirtException
 	 */
-	public static HypervisorConnection getConnectionWithTimeout(
+	public final static HypervisorConnection getConnectionWithTimeout(
 			Hypervisor h, String method, boolean readOnly, int timeout) throws IOException, LibvirtException{
 		
 		checkConnection(h, timeout);
@@ -117,7 +115,7 @@ public class HypervisorConnection extends Connect{
 	 * @throws IOException
 	 * @throws LibvirtException
 	 */
-	public static HypervisorConnection getConnectionWithTimeout(Hypervisor h,
+	public final static HypervisorConnection getConnectionWithTimeout(Hypervisor h,
 			boolean readOnly,int timeout) throws IOException, LibvirtException{
 		
 		checkConnection(h, timeout);
@@ -165,49 +163,15 @@ public class HypervisorConnection extends Connect{
 	}
 	
 	// ********************* managment apis ***************************
+	/**
+	 * Boots a domain and attachs it to the network if it is defined 
+	 * @param name
+	 * @throws LibvirtException
+	 */
 	public void bootDomain(String name) throws LibvirtException{
 		Domain d = domainLookupByName(name);
 		d.create();
-	}
-	
-	/**
-	 * Creates a new custom network from an xml string. This will just create but not define it
-	 * @param xmlFilePath
-	 * @return
-	 * @throws LibvirtException
-	 * @throws IOException
-	 */
-	public Network createNetwork(String xmlFile) throws LibvirtException{
-		net = super.networkCreateXML(xmlFile);
 		
-		return net;
-	}
-	
-	public void setNetwork(Network net){
-		this.net = net;
-	}
-	
-	public boolean networkExists(String networkName) throws LibvirtException{
-		boolean result = false;
-		int i=0;
-		String[] networks = super.listNetworks();
-		
-		while((!result) && i<networks.length)
-			if(networks[i].equals(networkName))
-				result = true;
-			else
-				i++;
-		
-		return result;
-	}
-	
-	/**
-	 * This shutdowns our custom network
-	 * @throws LibvirtException
-	 */
-	public void networkShutdown() throws LibvirtException{
-		if(net != null)
-			net.destroy();
 	}
 	
 	public void shutdownDomain(String name) throws LibvirtException{

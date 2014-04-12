@@ -4,20 +4,20 @@ import java.util.Locale;
 import java.util.concurrent.Callable;
 
 import org.at.db.Hypervisor;
-import org.at.libvirt.HypervisorConnection;
+import org.at.libvirt.NetHypervisorConnection;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.libvirt.Domain;
 import org.libvirt.LibvirtException;
 
 public class GetHypervisorStatsThread implements Callable<JSONObject>{
-	private HypervisorConnection c;
+	private NetHypervisorConnection c;
 	
-	public HypervisorConnection getHypervisorConnection(){
+	public NetHypervisorConnection getHypervisorConnection(){
 		return c;
 	}
 	
-	public GetHypervisorStatsThread(HypervisorConnection c){
+	public GetHypervisorStatsThread(NetHypervisorConnection c){
 		this.c = c;
 	}
 	
