@@ -188,8 +188,7 @@ $( "#sendChangesB" ).button().click(function( event ) {
 	height: 490px;
 	padding: 10px;
 	border: 2px solid gray;
-}
-;
+};
 </style>
 
 <div id="content">
@@ -203,6 +202,9 @@ $( "#sendChangesB" ).button().click(function( event ) {
 	</div>
      
 	<div id="graph-panel" style="visibility:hidden" >
-		<div id="graphContainer" style="width:inherit; height:inherit; overflow:hidden;background:url('images/gears.jpg')"></div>
+		<div id="graphContainer" style="width:inherit; height:inherit; overflow:hidden;background: rgb(226,226,226); /* Old browsers */
+	background: -moz-linear-gradient(-45deg, rgba(226,226,226,1) 0%, rgba(219,219,219,1) 50%, rgba(209,209,209,1) 51%, rgba(254,254,254,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,rgba(226,226,226,1)), color-stop(50%,rgba(219,219,219,1)), color-stop(51%,rgba(209,209,209,1)), color-stop(100%,rgba(254,254,254,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(-45deg, rgba(226,226,226,1) 0%,rgba(219,219,219,1) 50%,rgba(209,209,209,1) 51%,rgba(254,254,254,1) 100%); /* Chrome10+,Safari5.1+ */"></div>
 	</div>
 </div>
