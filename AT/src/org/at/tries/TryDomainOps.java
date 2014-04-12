@@ -1,21 +1,16 @@
 package org.at.tries;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.at.db.Hypervisor;
-import org.at.libvirt.HypervisorConnection;
 import org.at.libvirt.NetHypervisorConnection;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
-import org.libvirt.Domain;
 import org.libvirt.LibvirtException;
-import org.libvirt.Network;
 
 public class TryDomainOps {
 	private static final String XML_NETWORK_FILEPATH = "xml_definitions/network_template.xml";

@@ -100,7 +100,7 @@
      });
 	 
 	 $("#vm_menu").dialog("close");
-	 alert("Sending a "+controlOp.action+" request for "+controlOp.guest);
+	 showDialog("Info","Sending a "+controlOp.action+" request for "+controlOp.guest);
  }
 
  function getHypervisor(firstRun){
@@ -168,7 +168,7 @@
 	    					$('#vm_creation_box').hide();
 	    					$('#vm_creation_loader').show();
 	    				}else
-	    					alert("Il nome non puo' essere vuoto!");
+	    					showDialog("Error","Il nome non puo' essere vuoto!");
 	    				
 	    			}
 	    		}]
