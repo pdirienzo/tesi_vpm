@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.at.connections.HypervisorConnectionManager;
 import org.at.db.Hypervisor;
-import org.at.libvirt.HypervisorConnection;
+import org.at.libvirt.NetHypervisorConnection;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -50,7 +50,7 @@ public class HypervisorInfo extends HttpServlet {
 		HypervisorConnectionManager manager = (HypervisorConnectionManager)getServletContext()
 				.getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		
-		List<HypervisorConnection> hypervisors = manager.getActiveConnections();
+		List<NetHypervisorConnection> hypervisors = manager.getActiveConnections();
 		
 		GetHypervisorStatsThread[] threads = new GetHypervisorStatsThread[hypervisors.size()];
 		List<Future<?>> futures = new ArrayList<Future<?>>();

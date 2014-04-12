@@ -6,12 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Vector;
 
 import org.at.db.Database;
 import org.at.db.DatabaseListener;
 import org.at.db.Hypervisor;
-import org.at.libvirt.HypervisorConnection;
+import org.at.libvirt.NetHypervisorConnection;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -41,7 +40,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	}
 	
 	
-	private List<HypervisorConnection> activeConnections;
+	private List<NetHypervisorConnection> activeConnections;
 	private List<Hypervisor> offlineConnections;
 	
 	private Database d;
@@ -97,7 +96,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		this.retryTimout = retryTimeout;
 		this.NETWORK_NAME = network_name;
 		this.BRIDGE_NAME = bridge_name;
-		activeConnections = new ArrayList<HypervisorConnection>();
+		activeConnections = new ArrayList<NetHypervisorConnection>();
 		offlineConnections = new ArrayList<Hypervisor>();
 		d = new Database(dbPath);
 		timer = new Timer();
@@ -132,13 +131,8 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	
 	public synchronized void addHypervisor(Hypervisor h,String networkDescr){
 		try {
-			HypervisorConnection conn = HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT); 
-			
-			if(!conn.networkExists(NETWORK_NAME)) //this should always happen as a network is destroyed at each app shutdown
-					conn.createNetwork(networkDescr);
-			else{ //anyway crashes and such can not make that happen so we foresee that
-				conn.setNetwork(conn.networkLookupByName(NETWORK_NAME));
-			}
+			NetHypervisorConnection conn = NetHypervisorConnection.getConnectionWithTimeout(h,NETWORK_NAME,networkDescr,
+					CONNECTION_TIMEOUT); 
 			
 			activeConnections.add(conn);
 		} catch (IOException e) {
@@ -158,7 +152,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		}
 		
 		//closing every active connection
-		for(HypervisorConnection hc : activeConnections)
+		for(NetHypervisorConnection hc : activeConnections)
 			removeHypervisor(hc.getHypervisor());
 			
 	}
@@ -174,8 +168,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 			while((!result) && (i<activeConnections.size())){
 				if(activeConnections.get(i).getHypervisor().equals(h)){//found
 					try {
-						HypervisorConnection conn = activeConnections.get(i);
-						conn.networkShutdown();
+						NetHypervisorConnection conn = activeConnections.get(i);
 						conn.close();
 						activeConnections.remove(i); //and then remove the element itself
 						result = true;
@@ -206,7 +199,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		c.stop();
 	}*/
 	
-	public synchronized List<HypervisorConnection> getActiveConnections(){
+	public synchronized List<NetHypervisorConnection> getActiveConnections(){
 		return this.activeConnections;
 	}
 	
@@ -214,9 +207,9 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		return this.offlineConnections;
 	}
 	
-	public synchronized HypervisorConnection getActiveConnection(Hypervisor h){
+	public synchronized NetHypervisorConnection getActiveConnection(Hypervisor h){
 		int i = 0;
-		HypervisorConnection conn = null;
+		NetHypervisorConnection conn = null;
 		
 		
 		while((conn == null) && (i<activeConnections.size())){
@@ -229,9 +222,9 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		return conn;
 	}
 	
-	public synchronized HypervisorConnection getActiveConnection(String hypervisorId){
+	public synchronized NetHypervisorConnection getActiveConnection(String hypervisorId){
 		int i = 0;
-		HypervisorConnection conn = null;
+		NetHypervisorConnection conn = null;
 		
 		while((conn == null) && (i<activeConnections.size())){
 			if(activeConnections.get(i).getHypervisor().getId().equals(hypervisorId)){//found
@@ -249,7 +242,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	 * 
 	 * @param c
 	 */
-	public synchronized void setInactive(HypervisorConnection c){
+	public synchronized void setInactive(NetHypervisorConnection c){
 		activeConnections.remove(c);
 		offlineConnections.add(c.getHypervisor());
 	}
@@ -265,7 +258,8 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		public void run() {
 			for(Hypervisor h : offlineConnections){
 				try {
-					HypervisorConnection c = HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT);
+					NetHypervisorConnection c = NetHypervisorConnection.getConnectionWithTimeout(h, NETWORK_NAME,
+							getNetworkDescription(),CONNECTION_TIMEOUT);
 					activeConnections.add(c);
 					offlineConnections.remove(h);
 				} catch (IOException | LibvirtException e) {

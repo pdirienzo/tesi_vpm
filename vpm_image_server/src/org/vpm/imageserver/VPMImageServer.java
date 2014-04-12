@@ -7,6 +7,8 @@ import java.net.Socket;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import org.vpm.imageserver.*;
+
 public class VPMImageServer {
 	
 	static Logger logger=Logger.getLogger("org.vpm.imageServer");

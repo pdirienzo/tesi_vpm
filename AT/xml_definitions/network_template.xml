@@ -1,7 +1,7 @@
 <network>
-  <name></name>
+  <name>test-network</name>
   <forward mode='bridge'/>
-  <bridge name=''/>
+  <bridge name='br0'/>
   <virtualport type='openvswitch'/>
   <portgroup name='vlan-00' default='yes'>
   </portgroup>

@@ -91,7 +91,7 @@
  function controlHypervisor(){
 	 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest,function(result){
      		if(result.result == "error"){
-     			alert("Request failed: "+result.details);
+     			showDialog("Errore","Request failed: "+result.details);
      		}
      });
 	 
@@ -114,6 +114,8 @@
 	 	       		 html += "<button name='"+vmachine.name+"' class=\"vmbutton\" ></button><br>";
 	 	       	 }
 	 	       	 
+	 	       	 html += "<button class=\"crbutton\" name=\"crB\">Crea Nuova VM</button><br>";
+	 	       	 
 	    	 	 html += "</div></div>";
  
 	    	 }
@@ -132,6 +134,52 @@
 	             autoOpen : false,
 	             resizable: false,
 	             modal:true
+	    	 });
+	    	 
+	    	 $("#new_vm_run input").switchButton();
+	    	 
+	    	 $("#vm_creation").dialog({
+	    		title : "Il potere della creazione",
+	    		autoOpen : false,
+	    		resizable : false,
+	    		modal : true,
+	    		buttons : [ {
+	    			text : "Crea",
+	    			click : function() {
+	    				vmName = $('#new_vm_name input').val();
+	    				if(vmName != ""){
+	    					controlOp.flavour = $('#new_vm_flavour select :selected').text();
+	    					controlOp.guest = "VPM-"+vmName;
+	    					controlOp.autostart = $('#new_vm_run input').switchButton("option","checked"); 
+	    					
+	    					 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
+	    							 +"&flavour="+controlOp.flavour+"&autostart="+controlOp.autostart,function(result){
+	    				     		if(result.result == "error"){
+	    				     			showDialog("Errore","Request failed: "+result.details);
+	    				     		}
+	    				     		$('#vm_creation_box').show();
+	    							$('#vm_creation_loader').hide();
+	    					});
+	    					 
+	    					$('#vm_creation_box').hide();
+	    					$('#vm_creation_loader').show();
+	    				}else
+	    					alert("Il nome non puo' essere vuoto!");
+	    				
+	    			}
+	    		}]
+	    	 });
+	    	 
+	    	 $(".crbutton").button().click(function(event){
+	     		event.preventDefault();
+	     		controlOp.hypervisor = this.parentNode.id.split("_")[0];
+	     		controlOp.action = "create";
+	     		
+	     		$('#new_vm_name input').val("");
+	    		$("#vm_creation").dialog("open"); 
+	    		$('#vm_creation_box').show();
+				$('#vm_creation_loader').hide();
+	    		
 	    	 });
 	    	 
 	    	 $( ".vmbutton" ).button().click(function( event ) {
@@ -170,6 +218,8 @@
 	    	 
 	    		 labelId.removeClass("normal warning danger");
 	    		 if (hypervisor.status=="online"){
+	    			$("#"+hypervisor.id+"_box button[name=crB]").switchClass("ui-state-disabled","ui-state-enabled"); 
+	    			 
 		 	        if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){ //warning zone
 		 	        	labelId.addClass("warning");
 		 	        }else if (hypervisor.cpuUsage >=DANGER_THRESHOLD){ //danger zone
@@ -212,6 +262,7 @@
 		 	        labelId.text(hypervisor.ip+" ("+hypervisor.cpuUsage+"%)");
 		 	        
 	    	 	}else{
+	    	 		$("#"+hypervisor.id+"_box button[name=crB]").switchClass("ui-state-enabled","ui-state-disabled");
 	    	 		labelId.text(hypervisor.ip+" (offline)");
 	    	 	}
 	     }
@@ -238,4 +289,30 @@
 	<button name="startVM" onclick="controlHypervisor()" style="width:'20px';" class="ui-state-disabled">Avvia VM</button>
 	<button name="shutVM" onclick="controlHypervisor()" style="width:'20px';" class="ui-state-disabled">Spegni VM</button>
 	<button name="stopVM" onclick="controlHypervisor()" style="width:'20px';">Elimina VM</button>
+</div>
+
+<div id="vm_creation" class="ui-helper-hidden">
+	<div id="vm_creation_loader" hidden="true"
+	     style="background: none repeat scroll 0% 0% rgb(255, 255, 255); margin-top: 0px; width: inherit; height: inherit;">
+		<img src="images/loading.gif" width="260px">
+		<p>Creating...this operation can take some minutes..</p>
+	</div>
+	<div id="vm_creation_box">
+	<label style="font-weight: bold;margin-top:2px;" for="new_vm_name">Nome VM:</label>
+	<div id="new_vm_name">
+	VPM-<input type="text"></input>
+	</div>
+	<label style="font-weight: bold;margin-top:2px;" for="new_vm_flavour">Tipo</label>
+	<div id="new_vm_flavour">
+		<select>
+			<option>ubuntu10.04</option>
+			<option>dhcpd</option>
+		</select>
+		
+	</div>
+	<label style="font-weight: bold;margin-top:10px;" for="new_vm_run">Avvia dopo creazione</label>
+	<div id="new_vm_run">
+		<input type="checkbox" value="1" checked>
+	</div>
+	</div>
 </div>
