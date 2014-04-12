@@ -5,9 +5,14 @@
 <link href="css/smoothness/jquery-ui-1.10.4.css" rel="stylesheet" />
 <link href="css/tabs_style.css" rel="stylesheet" />
 <link href="css/bootstrap.css" rel="stylesheet" />
+<link href="css/jquery.switchButton.css" rel="stylesheet" />
 <script src="js/jquery-1.11.0.js"></script>
 <script src="js/jquery-ui-1.10.4.js"></script>
 <script src="js/jquery-ui-contextmenu.js"></script>
+<script src="js/jquery.switchButton.js"></script>
+
+<script src="js/jquery.switchButton.js"></script>
+
 <%@page import="java.util.Properties"%>
 
 <script type="text/javascript">
