@@ -222,7 +222,7 @@
 	    	 
 	    		 labelId.removeClass("normal warning danger");
 	    		 if (hypervisor.status=="online"){
-	    			$("#"+hypervisor.id+"_box button[name=crB]").switchClass("ui-state-disabled","ui-state-enabled"); 
+	    			$("#"+hypervisor.id+"_box button[name=crB]").button("option","disabled",false);//switchClass("ui-state-disabled","ui-state-enabled"); 
 	    			 
 		 	        if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){ //warning zone
 		 	        	labelId.addClass("warning");
@@ -266,7 +266,7 @@
 		 	        labelId.text(hypervisor.ip+" ("+hypervisor.cpuUsage+"%)");
 		 	        
 	    	 	}else{
-	    	 		$("#"+hypervisor.id+"_box button[name=crB]").switchClass("ui-state-enabled","ui-state-disabled");
+	    	 		$("#"+hypervisor.id+"_box button[name=crB]").button("option","disabled",true);//.switchClass("ui-state-enabled","ui-state-disabled");
 	    	 		labelId.text(hypervisor.ip+" (offline)");
 	    	 	}
 	     }
