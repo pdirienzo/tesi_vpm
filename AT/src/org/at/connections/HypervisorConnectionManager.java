@@ -2,6 +2,7 @@ package org.at.connections;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -40,15 +41,19 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	}
 	
 	
-	private Vector<HypervisorConnection> activeConnections;
-	private Vector<Hypervisor> offlineConnections;
+	private List<HypervisorConnection> activeConnections;
+	private List<Hypervisor> offlineConnections;
 	
 	private Database d;
 	
 	// listener methods----------------------------------------------------------->
 	@Override
 	public void hypervisorInserted(Hypervisor h) {
-		addHypervisor(h);
+		try {
+			addHypervisor(h,getNetworkDescription());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 	}
 	
@@ -92,8 +97,8 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		this.retryTimout = retryTimeout;
 		this.NETWORK_NAME = network_name;
 		this.BRIDGE_NAME = bridge_name;
-		activeConnections = new Vector<HypervisorConnection>();
-		offlineConnections = new Vector<Hypervisor>();
+		activeConnections = new ArrayList<HypervisorConnection>();
+		offlineConnections = new ArrayList<Hypervisor>();
 		d = new Database(dbPath);
 		timer = new Timer();
 	}
@@ -112,8 +117,10 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	void start() throws IOException{
 		d.connect();
 		
+		String netDescr = getNetworkDescription();
+		
 		for(Hypervisor h : d.getAllHypervisors()){
-			addHypervisor(h);
+			addHypervisor(h,netDescr);
 		}	
 		d.close();
 		
@@ -123,12 +130,12 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		}
 	}
 	
-	public synchronized void addHypervisor(Hypervisor h){
+	public synchronized void addHypervisor(Hypervisor h,String networkDescr){
 		try {
 			HypervisorConnection conn = HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT); 
 			
 			if(!conn.networkExists(NETWORK_NAME)) //this should always happen as a network is destroyed at each app shutdown
-					conn.createNetwork(getNetworkDescription());
+					conn.createNetwork(networkDescr);
 			else{ //anyway crashes and such can not make that happen so we foresee that
 				conn.setNetwork(conn.networkLookupByName(NETWORK_NAME));
 			}
@@ -170,7 +177,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 						HypervisorConnection conn = activeConnections.get(i);
 						conn.networkShutdown();
 						conn.close();
-						activeConnections.removeElementAt(i); //and then remove the element itself
+						activeConnections.remove(i); //and then remove the element itself
 						result = true;
 					} catch (LibvirtException e) {
 						e.printStackTrace();
@@ -243,8 +250,8 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	 * @param c
 	 */
 	public synchronized void setInactive(HypervisorConnection c){
-		activeConnections.removeElement(c);
-		offlineConnections.addElement(c.getHypervisor());
+		activeConnections.remove(c);
+		offlineConnections.add(c.getHypervisor());
 	}
 	
 	/**
@@ -260,7 +267,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 				try {
 					HypervisorConnection c = HypervisorConnection.getConnectionWithTimeout(h, false, CONNECTION_TIMEOUT);
 					activeConnections.add(c);
-					offlineConnections.removeElement(h);
+					offlineConnections.remove(h);
 				} catch (IOException | LibvirtException e) {
 					//System.err.println(h+" is still offline");
 				}

@@ -93,6 +93,12 @@ public class Database {
 			Statement s = connection.createStatement();
 			s.execute("insert into host (nome,ip,port) values(\""+ 
 					h.getName() + "\" ,\"" + h.getHostAddress() +"\" , \"" + h.getPort() +"\");"); 
+			
+			ResultSet rs = s.executeQuery("SELECT last_insert_rowid()");
+			rs.next();
+			h.setId(rs.getInt(1));
+			
+			rs.close();
 			s.close();
 			DatabaseEventDispatcher.dispatchEvent(DBEvent.hypervisor_insert, h);
 		} catch (SQLException e) {

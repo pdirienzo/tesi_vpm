@@ -4,7 +4,7 @@
 	<entry key="network_name">vpm-network</entry>
 	<entry key="bridge_name">br0</entry>
 	<entry key="ovs_manager_port">6640</entry>
-	<entry key="image_server_addr">192.168.1.4</entry>
+	<entry key="image_server_addr">alessandro-Optiplex</entry>
 	<entry key="image_server_port">8123</entry>	
 	<!-- tresholds -->
 	<entry key="warning_treshold">60.0</entry>
