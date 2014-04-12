@@ -13,7 +13,7 @@
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
-	<classpathentry kind="lib" path="/home/enry/Desktop/apache-tomcat-7.0.53/lib/gstreamer-java-1.6.jar"/>
-	<classpathentry kind="lib" path="/home/enry/git/tesi_lime/AT/resources/jdom-2.0.5.jar"/>
+	<classpathentry kind="lib" path="resources/jdom-2.0.5.jar"/>
+	<classpathentry kind="lib" path="resources/gstreamer-java-1.6.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
