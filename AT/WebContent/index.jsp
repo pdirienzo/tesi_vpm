@@ -106,17 +106,17 @@
     	<div class="row">
             <div class="span4" style="float:left">
             	<div class="span4 text-center"><br />
-            	<img src="images/customLogo.png" alt="confindustria" />
+            	<img src="images/customLogo.png" alt="PLATINO" />
         		</div>
            	</div>
             <div class="span4" style="float:left">
             	<div class="span4 text-center"><br />
-            	<img src="images/garland_logo.gif" alt="confindustria" />
+            	<img src="images/garland_logo.gif" alt="CINI" />
         		</div>
         	</div>
         	<div class="span4" style="float:left">
             	<div class="span4 text-center"><br />
-            	<img src="images/federico2.png" alt="confindustria" />
+            	<img src="images/federico2.png" alt="FEDERICO II"/>
         		</div>
         	</div>
           </div>
