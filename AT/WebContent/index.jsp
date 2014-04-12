@@ -4,6 +4,7 @@
 <title>Live migration</title>
 <link href="css/smoothness/jquery-ui-1.10.4.css" rel="stylesheet" />
 <link href="css/tabs_style.css" rel="stylesheet" />
+<link href="css/bootstrap.css" rel="stylesheet" />
 <script src="js/jquery-1.11.0.js"></script>
 <script src="js/jquery-ui-1.10.4.js"></script>
 <script src="js/jquery-ui-contextmenu.js"></script>
@@ -48,6 +49,31 @@
 			}
 			 
 		</script>
+<style>
+#share {
+	background-color: #CCC;
+	background-repeat: repeat;
+	height: auto;
+}
+
+#share .container {
+	border-top: 1px solid #DDD3CD;
+	/* [disabled]background-image: url(../images/share/pattern.png); */
+	background-repeat: repeat-x;
+	padding: 20px 0;
+}
+
+#share h2 {
+	color: #3F3F3F;
+	font-size: 18px;
+	line-height: 1em;
+}
+
+#share a { color:#794F34;}
+
+
+
+</style>
 </head>
 
 
@@ -64,6 +90,30 @@
 			</div>
 		</div>
 	</div>
+	<section id="share">
+  	<div class="container">
+  	<h2>Con la collaborazione di:</h2>
+    	<div class="row">
+            <div class="span4" style="float:left">
+            	<div class="span4 text-center"><br />
+            	<img src="images/customLogo.png" alt="confindustria" />
+        		</div>
+           	</div>
+            <div class="span4" style="float:left">
+            	<div class="span4 text-center"><br />
+            	<img src="images/garland_logo.gif" alt="confindustria" />
+        		</div>
+        	</div>
+        	<div class="span4" style="float:left">
+            	<div class="span4 text-center"><br />
+            	<img src="images/federico2.png" alt="confindustria" />
+        		</div>
+        	</div>
+          </div>
+        </div>
+  </section>
+
+	
 </body>
 
 <div id="vpm-alert" title="Info">
