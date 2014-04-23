@@ -37,6 +37,49 @@
 				};
 				
 				graph.minFitScale = null;
+				graph.getView().updateStyle = true;
+				
+				var previous = graph.model.getStyle;
+				
+				graph.model.getStyle = function(cell)
+				{
+					if (cell != null)
+					{
+						var style = previous.apply(this, arguments);
+						
+						if (this.isEdge(cell))
+						{
+							if ( cell.getAttribute("isTree") == "true" ){
+								var target = this.getTerminal(cell, false);
+
+								if (target != null)
+								{
+									var state = graph.getView().getState(target);
+									var targetStyle = (state != null) ? state.style : graph.getCellStyle(target);
+									var fill = mxUtils.getValue(targetStyle, mxConstants.STYLE_FILLCOLOR);
+									
+									if (fill != null)
+									{
+										style += ';strokeWidth=4;strokeColor='+fill;
+									}
+								}
+							}
+						}else if (this.isVertex(cell))
+						{
+							var geometry = this.getGeometry(cell);
+							
+							if (geometry != null &&
+								geometry.width > 80)
+							{
+								style += ';fillColor=green';
+							}
+						}
+						
+						return style;
+					}
+					
+					return null;
+				};
 				
 				//this sets the label to the dpid
 				graph.convertValueToString = function(cell){
@@ -44,9 +87,6 @@
 						if (cell.value.nodeName.toLowerCase() == ('switch')){
 							var sw = "<div><p>"+cell.getAttribute('ip')+"</p><p>"+cell.getAttribute('dpid')+"</p></div>";
 							return sw;
-						}else if(cell.value.nodeName.toLowerCase() == ('link')){
-							if(cell.getAttribute('isTree') == "true")
-								return 'T';
 						}
 					}
 					
