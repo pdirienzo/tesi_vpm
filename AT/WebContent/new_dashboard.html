@@ -114,10 +114,10 @@
 	   
 	 	       	 for(j in hypervisor.machines){
 	 	       		 vmachine = hypervisor.machines[j];
-	 	       		 html += "<button name='"+vmachine.name+"' class=\"vmbutton\" ></button><br>";
+	 	       		 html += "<button name='"+vmachine.name+"' class=\"vmbutton\" ></button><div class=\"clearer\" style=\"height:5px;\" />";
 	 	       	 }
 	 	       	 
-	 	       	 html += "<button class=\"crbutton\" name=\"crB\">Crea Nuova VM</button><br>";
+	 	       	 html += "<button class=\"crbutton\" name=\"crB\">Crea Nuova VM</button><br />";
 	 	       	 
 	    	 	 html += "</div></div>";
  
@@ -209,7 +209,7 @@
 	     }
 	     
 	     //--------------------------- end first run ------------------------------
-	     
+	     $("#hypervisors-infopanel label").text("Hypervisor disponibili ("+hypervisorList.length+")");
 	     //updating informations. This is done anyways
 	     for(var i=0; i<hypervisorList.length; i++) {
 	    	 var hypervisor = hypervisorList[i];
@@ -278,9 +278,8 @@
 </script>
 
 <div id="hypervisors-infopanel">
-	<p>
-		<strong>Hypervisors disponibili (cool)</strong>
-	</p>
+	<label style="font-weight:bold;" ></label>
+	
 	<div id="hypervisormenu"></div>
 </div>
 

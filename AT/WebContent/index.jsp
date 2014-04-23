@@ -60,26 +60,26 @@
 		</script>
 </head>
 <style>
-#share {
+#footer {
 	background-color: #CCC;
 	background-repeat: repeat;
 	height: auto;
 }
 
-#share .container {
+#footer .container {
 	border-top: 1px solid #DDD3CD;
 	/* [disabled]background-image: url(../images/share/pattern.png); */
 	background-repeat: repeat-x;
 	padding: 20px 0;
 }
 
-#share h2 {
+#footer h2 {
 	color: #3F3F3F;
 	font-size: 18px;
 	line-height: 1em;
 }
 
-#share a { color:#794F34;}
+#footer a { color:#794F34;}
 
 
 
@@ -100,34 +100,35 @@
 			</div>
 		</div>
 	</div>
-	<section id="share">
+	<section id="footer">
   	<div class="container">
   	<h2>Con la collaborazione di:</h2>
     	<div class="row">
             <div class="span4" style="float:left">
             	<div class="span4 text-center"><br />
-            	<img src="images/customLogo.png" alt="PLATINO" />
+            	<a href="http://www.progettoplatino.it/" target="_blank"><img src="images/customLogo.png" alt="PLATINO" /></a>
         		</div>
            	</div>
             <div class="span4" style="float:left">
             	<div class="span4 text-center"><br />
-            	<img src="images/garland_logo.gif" alt="CINI" />
+            	<a href="http://www.consorzio-cini.it/" target="_blank"><img src="images/garland_logo.gif" alt="CINI" /></a>
         		</div>
         	</div>
         	<div class="span4" style="float:left">
             	<div class="span4 text-center"><br />
-            	<img src="images/federico2.png" alt="FEDERICO II"/>
+            	<a href="http://www.unina.it/" target="_blank"><img src="images/federico2.png" alt="FEDERICO II"/></a>
         		</div>
         	</div>
           </div>
         </div>
   </section>
 
-	
-</body>
-
 <div id="vpm-alert" title="Info">
 	<p></p>
 </div>
+	
+</body>
+
+
 
 </html>
