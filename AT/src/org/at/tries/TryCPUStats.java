@@ -7,6 +7,8 @@ import org.at.libvirt.HypervisorConnection;
 import org.libvirt.CPUStatistic;
 import org.libvirt.LibvirtException;
 import org.libvirt.NodeInfo;
+import org.libvirt.StoragePool;
+import org.libvirt.StoragePoolInfo;
 
 public class TryCPUStats {
 
@@ -15,8 +17,14 @@ public class TryCPUStats {
 				new Hypervisor("pasquale", "pasquale-VPCEB1A4E",
 						16514), true, 3000);
 		
-
-		System.out.println(hc.getCapabilities());
+		String[] pools = hc.listStoragePools();
+		StoragePool pool = hc.storagePoolLookupByName("lun_atico");
+		
+		for(String s : pool.listVolumes()){
+			
+			System.out.println(s);
+		}
+		//System.out.println(hc.getCapabilities());
 		hc.close();
 	}
 

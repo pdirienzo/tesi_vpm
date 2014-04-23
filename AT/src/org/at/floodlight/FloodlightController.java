@@ -28,12 +28,48 @@ public class FloodlightController {
 		
 	}
 	
-	public List<LinkConnection> getSwitchConnections() throws IOException{
+	private List<LinkConnection> deleteOpposites(List<LinkConnection> original){
+		List<LinkConnection> result = new ArrayList<LinkConnection>();
+
+		while(original.size() > 0){
+			LinkConnection l = original.remove(0); //taking first element
+			for(int i=0;i<original.size();i++){
+				if(original.get(i).oppositeLink(l))
+					original.remove(i);
+			}
+			result.add(l);
+		}
+
+		return result;
+	}
+	
+	private boolean isOpposite(LinkConnection l, List<LinkConnection> connections){
+		boolean opposite = false;
+		int i = 0;
+		
+		while((!opposite) && (i<connections.size())){
+			if(connections.get(i).oppositeLink(l))
+				opposite = true;
+			else
+				i++;
+		}
+		
+		return opposite;
+	}
+	
+	public List<LinkConnection> getSwitchConnections(boolean undirected) throws IOException{
 		JSONArray result = RestRequest.getJSonArray(baseURL+"/wm/topology/links/json");
 		List<LinkConnection> links = new ArrayList<LinkConnection>(result.length());
 		for(int i=0;i<result.length();i++){
 			JSONObject o = result.getJSONObject(i);
-			links.add(new LinkConnection(o.getString("src-switch"), o.getString("dst-switch"),o.getInt("src-port"), o.getInt("dst-port")));
+			LinkConnection l = new LinkConnection(o.getString("src-switch"), o.getString("dst-switch"),o.getInt("src-port"), o.getInt("dst-port"));
+			
+			if(undirected){
+				if(!isOpposite(l, links))
+					links.add(l);
+				
+			}else
+				links.add(l);
 		}
 		
 		return links;
@@ -186,7 +222,7 @@ public class FloodlightController {
 		FloodlightController f = new FloodlightController(
 				new Controller("127.0.0.1", 8080));
 		
-		for(LinkConnection ovs : f.getSwitchConnections())
+		for(LinkConnection ovs : f.getSwitchConnections(true))
 			System.out.println(ovs);
 		 /*JSONObject data = new JSONObject()
 		 .put("name", "flow-mod-vm1-swl")

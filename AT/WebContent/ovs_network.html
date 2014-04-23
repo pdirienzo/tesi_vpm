@@ -36,18 +36,27 @@
 					return false;
 				};
 				
+				graph.minFitScale = null;
+				
 				//this sets the label to the dpid
 				graph.convertValueToString = function(cell){
 					if (mxUtils.isNode(cell.value)){
 						if (cell.value.nodeName.toLowerCase() == ('switch')){
-							return cell.getAttribute('ip');
+							var sw = "<div><p>"+cell.getAttribute('ip')+"</p><p>"+cell.getAttribute('dpid')+"</p></div>";
+							return sw;
+						}else if(cell.value.nodeName.toLowerCase() == ('link')){
+							if(cell.getAttribute('isTree') == "true")
+								return 'T';
 						}
 					}
+					
 					
 					return ''; //returning empty string for edges and other stuff
 				};
 				
-				
+				//this will listen for the user trying to connect two switches.
+				//if the link is non existent this handler will allow its creation, otherwise the user
+				//event will be ignored
 				mxConnectionHandlerInsertEdge = mxConnectionHandler.prototype.insertEdge;
 				mxConnectionHandler.prototype.insertEdge = function(parent, id, value, source, target, style){
 				    

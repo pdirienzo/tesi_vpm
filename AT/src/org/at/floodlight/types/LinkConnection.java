@@ -1,32 +1,41 @@
 package org.at.floodlight.types;
 
-public class LinkConnection {
-	public String dpidSrc;
+import org.jgrapht.graph.DefaultEdge;
+
+public class LinkConnection extends DefaultEdge {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	public String src;
 	public int srcPort;
-	public String dpidDst;
-	public int dstPort;
+	public String target;
+	public int targetPort;
+	public boolean isTree;
 	
 	public LinkConnection(String src,String dst, int srcPort,int dstPort){
-		this.dpidSrc = src;
-		this.dpidDst = dst;
+		this.src = src;
+		this.target = dst;
 		this.srcPort = srcPort;
-		this.dstPort = dstPort;
+		this.targetPort = dstPort;
+		this.isTree = false;
 	}
 	
 	public boolean oppositeLink(LinkConnection l){
 		//boolean same = (this.dpidSrc.equals(l.dpidSrc)) && (this.dpidDst.equals(l.dpidDst)) && (this.srcPort == l.srcPort) && (this.dstPort == l.dstPort);
-		boolean reverse = (this.dpidSrc.equals(l.dpidDst)) && (this.dpidDst.equals(l.dpidSrc)) && (this.srcPort == l.dstPort) && (this.dstPort == l.srcPort);
+		boolean reverse = (this.src.equals(l.target)) && (this.target.equals(l.src)) && (this.srcPort == l.targetPort) && (this.targetPort == l.srcPort);
 	
 		return reverse;
 	}
 	
 	public boolean equals(Object o){
 		LinkConnection l = (LinkConnection)o;
-		return (this.dpidSrc.equals(l.dpidSrc)) && (this.dpidDst.equals(l.dpidDst)) && (this.srcPort == l.srcPort) && (this.dstPort == l.dstPort);
+		return (this.src.equals(l.src)) && (this.target.equals(l.target)) && (this.srcPort == l.srcPort) && (this.targetPort == l.targetPort);
 	}
 	
 	public String toString(){
-		return "OvsLink/ from "+this.dpidSrc+":"+this.srcPort+" to "+this.dpidDst+":"+this.dstPort;
+		return "OvsLink/ from "+this.src+":"+this.srcPort+" to "+this.target+":"+this.targetPort;
 	}
 	
 }

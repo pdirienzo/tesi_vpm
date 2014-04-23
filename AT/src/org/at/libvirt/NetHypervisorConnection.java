@@ -77,7 +77,7 @@ public class NetHypervisorConnection extends HypervisorConnection{
 	
 	@Override
 	public int close() throws LibvirtException {
-		net.destroy();
+		//net.destroy();
 		return super.close();
 	}
 	

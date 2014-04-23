@@ -3,6 +3,7 @@ package org.at.web.network;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -17,6 +18,8 @@ import org.at.db.Database;
 import org.at.floodlight.FloodlightController;
 import org.at.floodlight.types.LinkConnection;
 import org.at.floodlight.types.OvsSwitch;
+import org.jgrapht.alg.KruskalMinimumSpanningTree;
+import org.jgrapht.graph.ListenableUndirectedGraph;
 import org.json.JSONObject;
 import org.opendaylight.ovsdb.lib.notation.OvsdbOptions;
 import org.opendaylight.ovsdb.lib.standalone.DefaultOvsdbClient;
@@ -84,21 +87,26 @@ public class NetworkTopology extends HttpServlet {
 		return controller;
 	}
 
-	private List<LinkConnection> deleteOpposites(List<LinkConnection> original){
-		List<LinkConnection> result = new ArrayList<LinkConnection>();
+	
 
-		while(original.size() > 0){
-			LinkConnection l = original.remove(0); //taking first element
-			for(int i=0;i<original.size();i++){
-				if(original.get(i).oppositeLink(l))
-					original.remove(i);
-			}
-			result.add(l);
+	private void createTree(List<LinkConnection> links){
+		ListenableUndirectedGraph<String,LinkConnection> graph = new ListenableUndirectedGraph<String, LinkConnection>(LinkConnection.class);
+		
+		for(LinkConnection link : links){
+			graph.addVertex(link.src);
+			graph.addVertex(link.target);
+			graph.addEdge(link.src, link.target,link);
+		
 		}
-
-		return result;
+		
+		KruskalMinimumSpanningTree<String, LinkConnection> k = new KruskalMinimumSpanningTree<String,LinkConnection>(graph);
+		
+		Iterator<LinkConnection> iterator = k.getMinimumSpanningTreeEdgeSet().iterator();
+		
+		while(iterator.hasNext()){
+			iterator.next().isTree = true;
+		}
 	}
-
 
 
 	/**
@@ -116,7 +124,12 @@ public class NetworkTopology extends HttpServlet {
 			
 			if(controller != null){
 				List<OvsSwitch> switches = controller.getSwitches();
-				List<LinkConnection> connections = deleteOpposites(controller.getSwitchConnections());
+				List<LinkConnection> connections = controller.getSwitchConnections(true);
+				
+				//TODO think a better way (tree should be stored so to not repeat this
+				createTree(connections);
+				
+				//*************************************************************
 
 
 				mxGraph graph = new mxGraph();
@@ -136,8 +149,8 @@ public class NetworkTopology extends HttpServlet {
 
 					for(int i=0;i<connections.size();i++){
 						Element linkEl = linkToDom(doc,connections.get(i));
-						graph.insertEdge(graph.getDefaultParent(), null, linkEl, vertexes[getVertexId(connections.get(i).dpidSrc, switches)], 
-								vertexes[getVertexId(connections.get(i).dpidDst, switches)]);
+						graph.insertEdge(graph.getDefaultParent(), null, linkEl, vertexes[getVertexId(connections.get(i).src, switches)], 
+								vertexes[getVertexId(connections.get(i).target, switches)]);
 
 					}
 
@@ -178,9 +191,10 @@ public class NetworkTopology extends HttpServlet {
 	private Element linkToDom(Document doc, LinkConnection link){
 		Element linkEl = doc.createElement("link");
 		linkEl.setAttribute("srcPort", String.valueOf(link.srcPort));
-		linkEl.setAttribute("dstPort", String.valueOf(link.dstPort));
-		linkEl.setAttribute("srcDpid", link.dpidSrc);
-		linkEl.setAttribute("dstDpid", link.dpidDst);
+		linkEl.setAttribute("dstPort", String.valueOf(link.targetPort));
+		linkEl.setAttribute("srcDpid", link.src);
+		linkEl.setAttribute("dstDpid", link.target);
+		linkEl.setAttribute("isTree", String.valueOf(link.isTree));
 
 		return linkEl;
 	}
@@ -229,8 +243,8 @@ public class NetworkTopology extends HttpServlet {
 		int i = 0;
 
 		while((index==-1) && (i<links.size())){
-			if(links.get(i).dpidSrc.equals(l.dpidSrc) && links.get(i).dpidDst.equals(l.dpidDst) ||
-					links.get(i).dpidSrc.equals(l.dpidDst) && links.get(i).dpidDst.equals(l.dpidSrc))
+			if(links.get(i).src.equals(l.src) && links.get(i).target.equals(l.target) ||
+					links.get(i).src.equals(l.target) && links.get(i).target.equals(l.src))
 				index = i;
 			else
 				i++;
@@ -254,7 +268,7 @@ public class NetworkTopology extends HttpServlet {
 			d.close();
 
 			//we get link connections
-			List<LinkConnection> links = deleteOpposites(controller.getSwitchConnections());
+			List<LinkConnection> links = controller.getSwitchConnections(true);
 			//we get switches
 			List<OvsSwitch> switches = controller.getSwitches();
 
@@ -275,10 +289,10 @@ public class NetworkTopology extends HttpServlet {
 
 					}else{//we add the link phisically to the switches
 
-						String srcPortName = computePortName(l.dpidSrc, l.dpidDst);
-						String dstPortName = computePortName(l.dpidDst, l.dpidSrc);
-						String srcIpAddr = getSwitchFromDpid(switches, l.dpidSrc).ip;
-						String dstIpAddr = getSwitchFromDpid(switches, l.dpidDst).ip;
+						String srcPortName = computePortName(l.src, l.target);
+						String dstPortName = computePortName(l.target, l.src);
+						String srcIpAddr = getSwitchFromDpid(switches, l.src).ip;
+						String dstIpAddr = getSwitchFromDpid(switches, l.target).ip;
 
 						//1. starting from source switch
 						DefaultOvsdbClient client = new DefaultOvsdbClient(srcIpAddr, BR_PORT);
@@ -300,10 +314,10 @@ public class NetworkTopology extends HttpServlet {
 
 			if(links.size() > 0){ //user deleted some link
 				for(LinkConnection l : links){
-					String srcIpAddr = getSwitchFromDpid(switches, l.dpidSrc).ip;
-					String dstIpAddr = getSwitchFromDpid(switches, l.dpidDst).ip;
-					String srcPortName = computePortName(l.dpidSrc, l.dpidDst);
-					String dstPortName = computePortName(l.dpidDst, l.dpidSrc);
+					String srcIpAddr = getSwitchFromDpid(switches, l.src).ip;
+					String dstIpAddr = getSwitchFromDpid(switches, l.target).ip;
+					String srcPortName = computePortName(l.src, l.target);
+					String dstPortName = computePortName(l.target, l.src);
 
 					DefaultOvsdbClient client = new DefaultOvsdbClient(srcIpAddr, BR_PORT);
 					String ovs = client.getOvsdbNames()[0];
