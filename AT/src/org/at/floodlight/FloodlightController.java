@@ -83,7 +83,7 @@ public class FloodlightController {
 		for(int i=0;i<result.length();i++){
 			JSONObject o = result.getJSONObject(i);
 			String inet = (o.getString("inetAddress").substring(1)).split(":")[0];
-			switches.add(new OvsSwitch(o.getString("dpid"), inet));
+			switches.add(new OvsSwitch(o.getString("dpid"), inet,OvsSwitch.Type.NULL));
 		}
 		
 		return switches;
