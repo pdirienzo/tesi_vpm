@@ -144,7 +144,7 @@
 				vStyle[mxConstants.STYLE_VERTICAL_LABEL_POSITION] = mxConstants.ALIGN_BOTTOM;
 				vStyle[mxConstants.STYLE_FONTCOLOR] = "#0099CC";
 				vStyle[mxConstants.STYLE_FONTSIZE] = 15;
-				
+				vStyle[mxConstants.STYLE_IMAGE_BORDER]="#FF0000";
 				//setting style for edges
 				var eStyle = graph.getStylesheet().getDefaultEdgeStyle();
 				eStyle[mxConstants.STYLE_ENDARROW] = "none";
@@ -175,17 +175,19 @@
 					menu.addItem('Root', null, function()
 				    {
 						alert('Root Selected');
-						cell.setAttribute("type","ROOT");
+						cell.setAttribute("type",ROOT_TYPE);
+						var style=graph.getCellStyle(cell);
+						
 				    });
 					
 					menu.addItem('Leaf', null, function()
 				    {
-						cell.setAttribute("type","Leaf");
+						cell.setAttribute("type",LEAF_TYPE);
 						alert('Leaf Selected');
 				    });
 					menu.addItem('Relay', null, function()
 					{
-						cell.setAttribute("type","Relay");
+						cell.setAttribute("type",RELAY_TYPE);
 								alert('Relay Selected');
 					});
 				}

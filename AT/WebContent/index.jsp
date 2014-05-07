@@ -12,7 +12,7 @@
 <script src="js/jquery.switchButton.js"></script>
 
 <%@page import="java.util.Properties"%>
-
+<%@page import="org.at.floodlight.types.OvsSwitch"%>
 <script type="text/javascript">
 	
 	<%
@@ -21,7 +21,11 @@
 			//global variables
 			var WARNING_THRESHOLD= <%=Float.parseFloat(props.getProperty("warning_treshold"))%>;
 			var DANGER_THRESHOLD=<%=Float.parseFloat(props.getProperty("danger_treshold"))%>;
-			
+			var ROOT_TYPE=<%=OvsSwitch.Type.ROOT.getValue()%>;
+			var RELAY_TYPE=<%=OvsSwitch.Type.RELAY.getValue()%>;
+			var LEAF_TYPE=<%=OvsSwitch.Type.LEAF.getValue()%>;
+			var NULL_TYPE=<%=OvsSwitch.Type.NULL.getValue()%>;
+
 			var REFRESH_INTERVAL = 5000; //time in ms of info refreshing
 			var timedFunction; //this contains the timed function for the
 			                   //dashboard refreshing logic
@@ -102,7 +106,7 @@
 	</div>
 	<section id="footer">
   	<div class="container">
-  	<h2>Con la collaborazione di:</h2>
+  	
     	<div class="row">
             <div class="span4" style="float:left">
             	<div class="span4 text-center"><br />
