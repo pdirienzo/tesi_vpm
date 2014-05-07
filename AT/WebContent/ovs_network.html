@@ -24,7 +24,8 @@
 			else
 			{	
 				var xml;
-				
+				// Disables built-in context menu
+				mxEvent.disableContextMenu(document.body);
 				// Creates the graph inside the given container
 				graph = new mxGraph(document.getElementById('graphContainer'));
 				graph.setAllowDanglingEdges(false);
@@ -147,7 +148,7 @@
 				//setting style for edges
 				var eStyle = graph.getStylesheet().getDefaultEdgeStyle();
 				eStyle[mxConstants.STYLE_ENDARROW] = "none";
-				
+				createMenu();
 				getNetwork();
 				document.getElementById("zoom").appendChild(mxUtils.button('+', function()
 				{
@@ -157,8 +158,50 @@
 				{
 					graph.zoomOut();
 				})).className="btn";
+				
+				
 				$(".btn").css("margin",10);
+				
 			}
+		}
+		
+		function createMenu(){
+			// Configures automatic expand on mouseover
+			graph.popupMenuHandler.autoExpand = true;
+		    // Installs context menu
+			graph.popupMenuHandler.factoryMethod = function(menu, cell, evt)
+			{
+				if (cell!=null && cell.isVertex()){
+					menu.addItem('Root', null, function()
+				    {
+						alert('Root Selected');
+						cell.setAttribute("type","ROOT");
+				    });
+					
+					menu.addItem('Leaf', null, function()
+				    {
+						cell.setAttribute("type","Leaf");
+						alert('Leaf Selected');
+				    });
+					menu.addItem('Relay', null, function()
+					{
+						cell.setAttribute("type","Relay");
+								alert('Relay Selected');
+					});
+				}
+				else if(cell!=null && cell.isEdge()){
+					menu.addItem('tree edge', null, function()
+						    {
+								alert('tree Selected');
+						    });
+					
+					menu.addItem('redundancy', null, function()
+				    {
+						alert('redundancy');
+				    });
+					
+				}
+			};
 		}
 		
 		function getNetwork(){
