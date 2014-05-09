@@ -13,8 +13,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.at.db.Controller;
+import org.at.network.NetworkConverter;
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
+import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -57,6 +59,10 @@ public class FloodlightController {
 		return opposite;
 	}
 	
+	public ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> getJgraphTopology() throws IOException{
+		return NetworkConverter.getJgraphTopology(getSwitches(), getSwitchConnections(false));
+	}
+	
 	public List<LinkConnection> getSwitchConnections(boolean undirected) throws IOException{
 		JSONArray result = RestRequest.getJSonArray(baseURL+"/wm/topology/links/json");
 		List<LinkConnection> links = new ArrayList<LinkConnection>(result.length());
@@ -83,7 +89,7 @@ public class FloodlightController {
 		for(int i=0;i<result.length();i++){
 			JSONObject o = result.getJSONObject(i);
 			String inet = (o.getString("inetAddress").substring(1)).split(":")[0];
-			switches.add(new OvsSwitch(o.getString("dpid"), inet,OvsSwitch.Type.NULL));
+			switches.add(new OvsSwitch(o.getString("dpid"), inet));
 		}
 		
 		return switches;

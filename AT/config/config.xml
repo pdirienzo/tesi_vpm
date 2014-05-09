@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
-	<entry key="network_name">vpm-network</entry>
+	<entry key="network_name">ovs-network</entry>
 	<entry key="bridge_name">br0</entry>
+	<entry key="vpm_vlan_id">2</entry>
 	<entry key="ovs_manager_port">6640</entry>
+	
 	<entry key="image_server_addr">alessandro-Optiplex</entry>
 	<entry key="image_server_port">8123</entry>	
 	<!-- tresholds -->

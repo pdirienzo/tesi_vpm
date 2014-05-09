@@ -20,6 +20,10 @@ public class OvsSwitch {
 	public String dpid;
 	public Type type;
 	
+	public OvsSwitch(String dpid, String ip){
+		this(dpid,ip,Type.NULL);
+	}
+	
 	public OvsSwitch(String dpid,String ip, Type type){
 		this.ip = ip;
 		this.dpid = dpid;

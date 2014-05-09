@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -16,11 +17,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.at.db.Controller;
 import org.at.db.Database;
 import org.at.floodlight.FloodlightController;
+import org.at.network.NetworkConverter;
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
 import org.jgrapht.graph.ListenableUndirectedGraph;
+import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.json.JSONObject;
+import org.opendaylight.ovsdb.lib.notation.OvsDBSet;
 import org.opendaylight.ovsdb.lib.notation.OvsdbOptions;
 import org.opendaylight.ovsdb.lib.standalone.DefaultOvsdbClient;
 import org.opendaylight.ovsdb.lib.standalone.OvsdbException;
@@ -31,6 +35,7 @@ import org.w3c.dom.Element;
 import com.mxgraph.io.mxCodec;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.util.mxDomUtils;
+import com.mxgraph.util.mxUtils;
 import com.mxgraph.util.mxXmlUtils;
 import com.mxgraph.view.mxGraph;
 
@@ -43,6 +48,7 @@ public class NetworkTopology extends HttpServlet {
 
 	private String BR_NAME;
 	private int BR_PORT;
+	private int VLAN_ID;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -58,20 +64,9 @@ public class NetworkTopology extends HttpServlet {
 		Properties props = (Properties)getServletContext().getAttribute("properties");
 		BR_NAME = props.getProperty("bridge_name");
 		BR_PORT = Integer.parseInt(props.getProperty("ovs_manager_port"));
+		VLAN_ID = Integer.parseInt(props.getProperty("vpm_vlan_id"));
 	}
 
-	private int getVertexId(String dpid,List<OvsSwitch> switches){
-		int index = -1;
-		int i = 0;
-
-		while((index==-1) && (i<switches.size())){
-			if(switches.get(i).dpid.equals(dpid))
-				index=i;
-			else
-				i++;
-		}
-		return i;
-	}
 
 	private FloodlightController getController() throws IOException{
 		Database d = new Database();
@@ -89,17 +84,9 @@ public class NetworkTopology extends HttpServlet {
 
 	
 
-	private void createTree(List<LinkConnection> links){
-		ListenableUndirectedGraph<String,LinkConnection> graph = new ListenableUndirectedGraph<String, LinkConnection>(LinkConnection.class);
+	private void createTree(ListenableUndirectedWeightedGraph<OvsSwitch,LinkConnection> graph){	
 		
-		for(LinkConnection link : links){
-			graph.addVertex(link.src);
-			graph.addVertex(link.target);
-			graph.addEdge(link.src, link.target,link);
-		
-		}
-		
-		KruskalMinimumSpanningTree<String, LinkConnection> k = new KruskalMinimumSpanningTree<String,LinkConnection>(graph);
+		KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> k = new KruskalMinimumSpanningTree<OvsSwitch,LinkConnection>(graph);
 		
 		Iterator<LinkConnection> iterator = k.getMinimumSpanningTreeEdgeSet().iterator();
 		
@@ -114,7 +101,7 @@ public class NetworkTopology extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		/*response.setContentType("application/json");
+		response.setContentType("application/json");
 		PrintWriter out = response.getWriter();
 		JSONObject jsResp = new JSONObject();
 
@@ -123,16 +110,10 @@ public class NetworkTopology extends HttpServlet {
 			FloodlightController controller = getController();
 			
 			if(controller != null){
-				List<OvsSwitch> switches = controller.getSwitches();
-				List<LinkConnection> connections = controller.getSwitchConnections(true);
+				ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> topo = controller.getJgraphTopology();
+				createTree(topo); //creating tree
 				
-				//TODO think a better way (tree should be stored so to not repeat this
-				createTree(connections);
-				
-				//*************************************************************
-
-
-				mxGraph graph = new mxGraph();
+				/*mxGraph graph = new mxGraph();
 				mxCell[] vertexes = new mxCell[switches.size()];
 
 				graph.getModel().beginUpdate();
@@ -156,12 +137,12 @@ public class NetworkTopology extends HttpServlet {
 
 				}finally{
 					graph.getModel().endUpdate();
-				}
+				}*/
 
 				mxCodec codec = new mxCodec();	
-				String xmlString =  mxXmlUtils.getXml(codec.encode(graph.getModel()));
+				String xmlString =  mxXmlUtils.getXml(codec.encode((NetworkConverter.jgraphToMx(topo)).getModel()));
 
-				//System.out.println(mxUtils.getPrettyXml(codec.encode(graph.getModel())));
+				System.out.println(mxUtils.getPrettyXml(codec.encode((NetworkConverter.jgraphToMx(topo)).getModel())));
 
 				jsResp.put("status", "ok");
 				jsResp.put("graph", xmlString);
@@ -179,13 +160,9 @@ public class NetworkTopology extends HttpServlet {
 		}finally{
 			out.println(jsResp.toString());
 			out.close();
-		}*/
+		}
 
 	}
-
-	
-
-	
 
 	private OvsSwitch getSwitchFromDpid(List<OvsSwitch> switches,String dpid){
 		boolean found = false;
@@ -248,12 +225,9 @@ public class NetworkTopology extends HttpServlet {
 		PrintWriter out = new PrintWriter(response.getOutputStream());
 		response.setContentType("application/json");
 		JSONObject jResponse = new JSONObject();
-/*
+
 		try{
-			Database d = new Database();
-			d.connect();
-			FloodlightController controller = new FloodlightController(d.getController());
-			d.close();
+			FloodlightController controller = getController();
 
 			//we get link connections
 			List<LinkConnection> links = controller.getSwitchConnections(true);
@@ -265,12 +239,18 @@ public class NetworkTopology extends HttpServlet {
 			org.w3c.dom.Node node = mxXmlUtils.parseXml(request.getParameter("xml"));
 			mxCodec decoder = new mxCodec(node.getOwnerDocument());
 			decoder.decode(node.getFirstChild(),graph.getModel());
+			
+			ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> jgraph =
+					(ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection>) NetworkConverter.mxToJgraphT(graph);
+			
+			Iterator<LinkConnection> iterator = jgraph.edgeSet().iterator();
+			
+			//for(Object cell : graph.getChildCells(graph.getDefaultParent(),false,true)){//graph.getDefaultParent(), false, true)){ //getting edges
+			//	Element element = (Element)(((mxCell)cell).getValue());
 
-			for(Object cell : graph.getChildCells(graph.getDefaultParent(),false,true)){//graph.getDefaultParent(), false, true)){ //getting edges
-				Element element = (Element)(((mxCell)cell).getValue());
-
-				if(element.getNodeName().equals("link")){
-					LinkConnection l = domToLink(element);
+			while(iterator.hasNext()){
+					LinkConnection l = iterator.next();
+					
 					int index = linkPresent(l, links);
 					if(index != -1){ //we simply remove the link from the list: it will not be processed
 						links.remove(index);
@@ -279,6 +259,7 @@ public class NetworkTopology extends HttpServlet {
 
 						String srcPortName = computePortName(l.src, l.target);
 						String dstPortName = computePortName(l.target, l.src);
+						
 						String srcIpAddr = getSwitchFromDpid(switches, l.src).ip;
 						String dstIpAddr = getSwitchFromDpid(switches, l.target).ip;
 
@@ -286,18 +267,21 @@ public class NetworkTopology extends HttpServlet {
 						DefaultOvsdbClient client = new DefaultOvsdbClient(srcIpAddr, BR_PORT);
 						String ovs = null;
 
+						OvsDBSet<Integer> trunks = new OvsDBSet<Integer>();
+						trunks.add(VLAN_ID);
+						
 						ovs = client.getOvsdbNames()[0];
 						OvsdbOptions opts = new OvsdbOptions();
 						opts.put(OvsdbOptions.REMOTE_IP, dstIpAddr);
-						client.addPort(ovs, BR_NAME, srcPortName, Interface.Type.gre.name(),0,null,opts);
+						client.addPort(ovs, BR_NAME, srcPortName, Interface.Type.gre.name(),0,trunks,opts);
 
 						//2. now the other one
 						client = new DefaultOvsdbClient(dstIpAddr, BR_PORT);
 						opts = new OvsdbOptions();
 						opts.put(OvsdbOptions.REMOTE_IP, srcIpAddr);
-						client.addPort(ovs, BR_NAME, dstPortName, Interface.Type.gre.name(),0,null,opts);
+						client.addPort(ovs, BR_NAME, dstPortName, Interface.Type.gre.name(),0,trunks,opts);
 					}
-				}
+				
 			}
 
 			if(links.size() > 0){ //user deleted some link
@@ -326,7 +310,7 @@ public class NetworkTopology extends HttpServlet {
 			jResponse.put("status", "error");
 			jResponse.put("details", ex.getMessage());
 			ex.printStackTrace();
-		}*/
+		}
 
 		out.println(jResponse.toString());
 		out.close();

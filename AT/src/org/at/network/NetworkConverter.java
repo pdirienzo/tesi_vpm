@@ -1,7 +1,9 @@
 package org.at.network;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
@@ -66,6 +68,28 @@ public final class NetworkConverter {
 				}
 
 				return myGraph;
+	}
+	
+	public static ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> getJgraphTopology(List<OvsSwitch> swList,
+			List<LinkConnection> linkList) throws IOException{
+		
+		ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> graph =
+				new ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection>(LinkConnection.class);
+		
+		HashMap<String, OvsSwitch> switches = new HashMap<String, OvsSwitch>();
+		
+		for(OvsSwitch sw : swList){// getting vertexes
+
+			graph.addVertex(sw); //putting it into the graph
+			switches.put(sw.dpid, sw);  // and into the hashtable so to get it later
+		}
+
+		for(LinkConnection link : linkList){ //now links
+			graph.addEdge(switches.get(link.src), switches.get(link.target), link);
+		}
+		
+		return graph;
+		
 	}
 
 	public static mxGraph jgraphToMx(Graph<OvsSwitch, LinkConnection> graph){
