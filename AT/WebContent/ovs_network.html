@@ -12,7 +12,7 @@
 		var graph;
 		var keyHandler;
 		var focusedCell;
-		
+		var root=0;
 		function main(container)
 		{
 			// Checks if the browser is supported
@@ -86,7 +86,7 @@
 				graph.convertValueToString = function(cell){
 					if (mxUtils.isNode(cell.value)){
 						if (cell.value.nodeName.toLowerCase() == ('switch')){
-							var sw = "<div><p>"+cell.getAttribute('ip')+"</p><p>"+cell.getAttribute('dpid')+"</p></div>";
+							var sw = "<div style=\" margin-top:15px\"><p>"+cell.getAttribute('ip')+"<br />"+cell.getAttribute('dpid')+"</p></div>";
 							return sw;
 						}
 					}
@@ -143,8 +143,8 @@
 				vStyle[mxConstants.STYLE_IMAGE] = "images/router.png";
 				vStyle[mxConstants.STYLE_VERTICAL_LABEL_POSITION] = mxConstants.ALIGN_BOTTOM;
 				vStyle[mxConstants.STYLE_FONTCOLOR] = "#0099CC";
-				vStyle[mxConstants.STYLE_FONTSIZE] = 15;
-				vStyle[mxConstants.STYLE_IMAGE_BORDER]="#FF0000";
+				vStyle[mxConstants.STYLE_FONTSIZE] = 12;
+				//vStyle[mxConstants.STYLE_IMAGE_BORDER]="#FF0000";
 				//setting style for edges
 				var eStyle = graph.getStylesheet().getDefaultEdgeStyle();
 				eStyle[mxConstants.STYLE_ENDARROW] = "none";
@@ -169,26 +169,90 @@
 			// Configures automatic expand on mouseover
 			graph.popupMenuHandler.autoExpand = true;
 		    // Installs context menu
+		    graph.setTooltips(true);
 			graph.popupMenuHandler.factoryMethod = function(menu, cell, evt)
 			{
 				if (cell!=null && cell.isVertex()){
 					menu.addItem('Root', null, function()
 				    {
-						alert('Root Selected');
-						cell.setAttribute("type",ROOT_TYPE);
-						var style=graph.getCellStyle(cell);
+						if(root==0){
+							root+=1;
+							alert('Root Selected');
+							// Creates a new overlay with an image and a tooltip
+							var overlays=graph.getCellOverlays(cell);
 						
+							if (overlays!=null){
+								graph.removeCellOverlays(cell);	
+							}
+							var overlay = new mxCellOverlay(
+									new mxImage('images/crown.png', 26, 26),
+									'Root');
+							overlay.addListener(mxEvent.CLICK, function(sender, evt2)
+									{
+										mxUtils.alert('Root');
+									});
+														
+							// Sets the overlay for the cell in the graph
+							graph.addCellOverlay(cell, overlay);
+							cell.setAttribute("type",ROOT_TYPE);
+							var style=graph.getCellStyle(cell);
+						}
+						else {
+							alert("Error root already selected");
+						}
+					
 				    });
 					
 					menu.addItem('Leaf', null, function()
 				    {
-						cell.setAttribute("type",LEAF_TYPE);
+						if(cell.getAttribute("type")==ROOT_TYPE){
+							root=0;
+						}
 						alert('Leaf Selected');
+						// Creates a new overlay with an image and a tooltip
+						var overlays=graph.getCellOverlays(cell);
+						
+						if (overlays!=null){
+							graph.removeCellOverlays(cell);	
+						}
+					
+						var overlay = new mxCellOverlay(new mxImage('images/leaf.png', 26, 26),
+							'Leaf');
+						overlay.addListener(mxEvent.CLICK, function(sender, evt2)
+								{
+									mxUtils.alert('Leaf');
+								});
+													
+						// Sets the overlay for the cell in the graph
+						graph.addCellOverlay(cell, overlay);
+						
+						cell.setAttribute("type",LEAF_TYPE);
 				    });
 					menu.addItem('Relay', null, function()
 					{
+						if(cell.getAttribute("type")==ROOT_TYPE){
+							root=0;
+						}
+						alert('Relay Selected');
+						// Creates a new overlay with an image and a tooltip
+						var overlays=graph.getCellOverlays(cell);
+						
+						if (overlays!=null){
+							graph.removeCellOverlays(cell);	
+						}
+					
+						var overlay = new mxCellOverlay(
+							new mxImage('images/relay.png', 26, 26),
+							'Relay');
+						overlay.addListener(mxEvent.CLICK, function(sender, evt2)
+								{
+									mxUtils.alert('Relay');
+								});
+													
+						// Sets the overlay for the cell in the graph
+						graph.addCellOverlay(cell, overlay);
+											
 						cell.setAttribute("type",RELAY_TYPE);
-								alert('Relay Selected');
 					});
 				}
 				else if(cell!=null && cell.isEdge()){
