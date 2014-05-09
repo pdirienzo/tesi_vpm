@@ -16,8 +16,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.at.db.Controller;
 import org.at.db.Database;
 import org.at.floodlight.FloodlightController;
-import org.at.floodlight.types.LinkConnection;
-import org.at.floodlight.types.OvsSwitch;
+import org.at.network.types.LinkConnection;
+import org.at.network.types.OvsSwitch;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
 import org.jgrapht.graph.ListenableUndirectedGraph;
 import org.json.JSONObject;
@@ -114,7 +114,7 @@ public class NetworkTopology extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setContentType("application/json");
+		/*response.setContentType("application/json");
 		PrintWriter out = response.getWriter();
 		JSONObject jsResp = new JSONObject();
 
@@ -179,25 +179,13 @@ public class NetworkTopology extends HttpServlet {
 		}finally{
 			out.println(jsResp.toString());
 			out.close();
-		}
+		}*/
 
 	}
 
-	private LinkConnection domToLink(Element el){
-		return new LinkConnection(el.getAttribute("srcDpid"),el.getAttribute("dstDpid") ,
-				Integer.parseInt(el.getAttribute("srcPort")),Integer.parseInt(el.getAttribute("dstPort")));
-	}
+	
 
-	private Element linkToDom(Document doc, LinkConnection link){
-		Element linkEl = doc.createElement("link");
-		linkEl.setAttribute("srcPort", String.valueOf(link.srcPort));
-		linkEl.setAttribute("dstPort", String.valueOf(link.targetPort));
-		linkEl.setAttribute("srcDpid", link.src);
-		linkEl.setAttribute("dstDpid", link.target);
-		linkEl.setAttribute("isTree", String.valueOf(link.isTree));
-
-		return linkEl;
-	}
+	
 
 	private OvsSwitch getSwitchFromDpid(List<OvsSwitch> switches,String dpid){
 		boolean found = false;
@@ -260,7 +248,7 @@ public class NetworkTopology extends HttpServlet {
 		PrintWriter out = new PrintWriter(response.getOutputStream());
 		response.setContentType("application/json");
 		JSONObject jResponse = new JSONObject();
-
+/*
 		try{
 			Database d = new Database();
 			d.connect();
@@ -338,7 +326,7 @@ public class NetworkTopology extends HttpServlet {
 			jResponse.put("status", "error");
 			jResponse.put("details", ex.getMessage());
 			ex.printStackTrace();
-		}
+		}*/
 
 		out.println(jResponse.toString());
 		out.close();

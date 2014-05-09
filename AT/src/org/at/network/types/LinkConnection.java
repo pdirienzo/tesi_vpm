@@ -1,4 +1,4 @@
-package org.at.floodlight.types;
+package org.at.network.types;
 
 import org.jgrapht.graph.DefaultEdge;
 

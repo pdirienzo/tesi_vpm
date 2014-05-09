@@ -1,9 +1,9 @@
-package org.at.floodlight.types;
+package org.at.network.types;
 
 public class OvsSwitch {
 	
 	public static enum Type {
-		ROOT(0),RELAY(1),LEAF(2),NULL(-1);
+		ROOT(0),RELAY(1),LEAF(2),NULL(3);
 		
 		private int value;
 		

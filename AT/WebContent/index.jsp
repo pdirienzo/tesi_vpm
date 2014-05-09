@@ -12,7 +12,7 @@
 <script src="js/jquery.switchButton.js"></script>
 
 <%@page import="java.util.Properties"%>
-<%@page import="org.at.floodlight.types.OvsSwitch"%>
+<%@page import="org.at.network.types.OvsSwitch"%>
 <script type="text/javascript">
 	
 	<%
@@ -21,10 +21,10 @@
 			//global variables
 			var WARNING_THRESHOLD= <%=Float.parseFloat(props.getProperty("warning_treshold"))%>;
 			var DANGER_THRESHOLD=<%=Float.parseFloat(props.getProperty("danger_treshold"))%>;
-			var ROOT_TYPE=<%=OvsSwitch.Type.ROOT.getValue()%>;
-			var RELAY_TYPE=<%=OvsSwitch.Type.RELAY.getValue()%>;
-			var LEAF_TYPE=<%=OvsSwitch.Type.LEAF.getValue()%>;
-			var NULL_TYPE=<%=OvsSwitch.Type.NULL.getValue()%>;
+			var ROOT_TYPE=<%=OvsSwitch.Type.ROOT.name()%>;
+			var RELAY_TYPE=<%=OvsSwitch.Type.RELAY.name()%>;
+			var LEAF_TYPE=<%=OvsSwitch.Type.LEAF.name()%>;
+			var NULL_TYPE=<%=OvsSwitch.Type.NULL.name()%>;
 
 			var REFRESH_INTERVAL = 5000; //time in ms of info refreshing
 			var timedFunction; //this contains the timed function for the

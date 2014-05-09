@@ -13,8 +13,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.at.db.Controller;
-import org.at.floodlight.types.LinkConnection;
-import org.at.floodlight.types.OvsSwitch;
+import org.at.network.types.LinkConnection;
+import org.at.network.types.OvsSwitch;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
