@@ -15,10 +15,13 @@ import org.apache.http.impl.client.HttpClients;
 import org.at.db.Controller;
 import org.at.network.NetworkConverter;
 import org.at.network.types.LinkConnection;
+import org.at.network.types.Port;
 import org.at.network.types.OvsSwitch;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import com.mxgraph.view.mxGraph;
 
 public class FloodlightController {
 
@@ -63,12 +66,20 @@ public class FloodlightController {
 		return NetworkConverter.getJgraphTopology(getSwitches(), getSwitchConnections(false));
 	}
 	
+	public mxGraph getMxTopology() throws IOException{
+		return NetworkConverter.getMxTopology(getSwitches(), getSwitchConnections(false));
+	}
+	
 	public List<LinkConnection> getSwitchConnections(boolean undirected) throws IOException{
-		JSONArray result = RestRequest.getJSonArray(baseURL+"/wm/topology/links/json");
+		JSONArray result = RestRequest.getJSonArray(baseURL+"/vpm/topology/links/json");
 		List<LinkConnection> links = new ArrayList<LinkConnection>(result.length());
 		for(int i=0;i<result.length();i++){
 			JSONObject o = result.getJSONObject(i);
-			LinkConnection l = new LinkConnection(o.getString("src-switch"), o.getString("dst-switch"),o.getInt("src-port"), o.getInt("dst-port"));
+			LinkConnection l = new LinkConnection(
+					o.getString("src-switch"),o.getString("src-inet"), 
+					o.getString("dst-switch"),o.getString("dst-inet"),
+					new Port(o.getString("src-port")), 
+					new Port(o.getString("dst-port")) );
 			
 			if(undirected){
 				if(!isOpposite(l, links))
@@ -226,25 +237,26 @@ public class FloodlightController {
 	
 	public static void main(String[] args) throws IOException{
 		FloodlightController f = new FloodlightController(
-				new Controller("127.0.0.1", 8080));
+				new Controller("192.168.1.180", 8080));
 		
-		for(LinkConnection ovs : f.getSwitchConnections(true))
-			System.out.println(ovs);
-		 /*JSONObject data = new JSONObject()
+		/*for(LinkConnection ovs : f.getSwitchConnections(true))
+			System.out.println(ovs);*/
+		 
+		JSONObject data = new JSONObject()
 		 .put("name", "flow-mod-vm1-swl")
-		.put("switch", "00:00:00:24:be:c1:a9:5c")
-		.put("cookie", "5")
-		.put("priority", "200")
-		.put("idle_timeout","5")
-		.put("vlan-id", "1")
-		.put("ingress-port", "3")
-		.put("ether-type", "0x0800")
+		.put("switch", "00:00:00:0c:29:4a:ba:96")
+		//.put("cookie", "5")
+		.put("priority", "20")
+		//.put("idle_timeout","5")
+		//.put("vlan-id", "1")
+		//.put("ingress-port", "3")
+		//.put("ether-type", "0x0800")
 		.put("active", "true")
-		.put("dst-ip", "192.168.1.1")
+		.put("dst-port", "6633")
 		.put("actions", "output=1");
 		
-		System.out.println(f.addFlow(data));*/
-		//f.deleteAllFlows("00:00:00:24:be:c1:a9:5c");
+		System.out.println(f.addFlow(data));
+		f.deleteAllFlows("00:00:00:0c:29:4a:ba:96");
 		
 		//JSONObject obj = f.getFlows("00:00:00:24:be:c1:a9:5c");
 		//JSONObject obj = f.deleteFlow("00:00:00:24:be:c1:a9:5c","pleaseWork_out");

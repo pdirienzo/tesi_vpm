@@ -8,15 +8,20 @@ public class LinkConnection extends DefaultEdge {
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	public String src;
-	public int srcPort;
-	public String target;
-	public int targetPort;
+	public OvsSwitch src;
+	public Port srcPort;
+	public OvsSwitch target;
+	public Port targetPort;
 	public boolean isTree;
 	
-	public LinkConnection(String src,String dst, int srcPort,int dstPort){
-		this.src = src;
-		this.target = dst;
+	public LinkConnection(String src,String dst, Port srcPort, Port dstPort){
+		this(src,"",dst,"",srcPort,dstPort);
+	}
+	
+	public LinkConnection(String src, String srcIp, String dst, String dstIp, Port srcPort,
+			Port dstPort){
+		this.src = new OvsSwitch(src, srcIp);
+		this.target = new OvsSwitch(dst,dstIp);
 		this.srcPort = srcPort;
 		this.targetPort = dstPort;
 		this.isTree = false;

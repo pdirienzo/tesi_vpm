@@ -1,6 +1,7 @@
 package org.at.network;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.List;
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
 import org.at.network.types.OvsSwitch.Type;
+import org.at.network.types.Port;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.w3c.dom.Document;
@@ -21,15 +23,15 @@ public final class NetworkConverter {
 
 	private static LinkConnection domToLink(Element el){
 		return new LinkConnection(el.getAttribute("srcDpid"),el.getAttribute("dstDpid") ,
-				Integer.parseInt(el.getAttribute("srcPort")),Integer.parseInt(el.getAttribute("dstPort")));
+				new Port(el.getAttribute("srcPort")), new Port(el.getAttribute("dstPort")));
 	}
 
 	private static Element linkToDom(Document doc, LinkConnection link){
-		Element linkEl = doc.createElement("link");
-		linkEl.setAttribute("srcPort", String.valueOf(link.srcPort));
-		linkEl.setAttribute("dstPort", String.valueOf(link.targetPort));
-		linkEl.setAttribute("srcDpid", link.src);
-		linkEl.setAttribute("dstDpid", link.target);
+		org.w3c.dom.Element linkEl = doc.createElement("link");
+		linkEl.setAttribute("srcPort", link.srcPort.toString());
+		linkEl.setAttribute("dstPort", link.targetPort.toString());
+		linkEl.setAttribute("srcDpid", link.src.dpid);
+		linkEl.setAttribute("dstDpid", link.target.dpid);
 		linkEl.setAttribute("isTree", String.valueOf(link.isTree));
 
 		return linkEl;
@@ -64,7 +66,7 @@ public final class NetworkConverter {
 
 				for(Object cell : graph.getChildCells(graph.getDefaultParent(),false, true)){ //now links
 					LinkConnection link = domToLink((Element)(((mxCell)cell).getValue()));
-					myGraph.addEdge(switches.get(link.src), switches.get(link.target), link);
+					myGraph.addEdge(switches.get(link.src.dpid), switches.get(link.target.dpid), link);
 				}
 
 				return myGraph;
@@ -85,16 +87,47 @@ public final class NetworkConverter {
 		}
 
 		for(LinkConnection link : linkList){ //now links
-			graph.addEdge(switches.get(link.src), switches.get(link.target), link);
+			graph.addEdge(switches.get(link.src.dpid), switches.get(link.target.dpid), link);
 		}
 		
 		return graph;
 		
 	}
+	
+	public static mxGraph getMxTopology(List<OvsSwitch> swList,
+			List<LinkConnection> linkList) throws IOException{
+		
+		mxGraph graph = new mxGraph();
+		try{
+			graph.getModel().beginUpdate();
+			org.w3c.dom.Document doc = mxDomUtils.createDocument();
+			HashMap<String, mxCell> vertexes = new HashMap<String, mxCell>();
+			
+			for(OvsSwitch sw : swList){
+				org.w3c.dom.Element swEl = switchToDom(doc,sw);
+				vertexes.put(sw.dpid, (mxCell)graph.insertVertex(graph.getDefaultParent(), null, swEl, 10, 10, 
+						100, 50));
+			}
+			
+			for(LinkConnection l : linkList){
+				Element linkEl = linkToDom(doc,l);
+
+				graph.insertEdge(graph.getDefaultParent(), null, linkEl, vertexes.get(l.src.dpid), 
+						vertexes.get(l.target.dpid));
+			}
+			
+		}finally{
+			graph.getModel().endUpdate();
+		}
+		
+		return graph;
+	}
+	
+	
 
 	public static mxGraph jgraphToMx(Graph<OvsSwitch, LinkConnection> graph){
 		mxGraph myGraph = new mxGraph();
-
+		
 		try{
 			myGraph.getModel().beginUpdate();
 			org.w3c.dom.Document doc = mxDomUtils.createDocument();
@@ -114,10 +147,10 @@ public final class NetworkConverter {
 
 			while(links.hasNext()){
 				LinkConnection l = links.next();
-				Element linkEl = linkToDom(doc,links.next());
+				Element linkEl = linkToDom(doc,l);
 
-				myGraph.insertEdge(myGraph.getDefaultParent(), null, linkEl, vertexes.get(l.src), 
-						vertexes.get(l.target));
+				myGraph.insertEdge(myGraph.getDefaultParent(), null, linkEl, vertexes.get(l.src.dpid), 
+						vertexes.get(l.target.dpid));
 
 			}
 
@@ -126,5 +159,22 @@ public final class NetworkConverter {
 		}
 		return myGraph;
 
+	}
+	
+	public List<LinkConnection> getLinkConnection(Graph<OvsSwitch, LinkConnection> graph){
+		List<LinkConnection> l = new ArrayList<LinkConnection>();
+		Iterator<LinkConnection> it = graph.edgeSet().iterator();
+		while(it.hasNext())
+			l.add(it.next());
+		return l;
+	}
+	
+	public List<LinkConnection> getLinkConnection(mxGraph graph){
+		List<LinkConnection> l = new ArrayList<LinkConnection>();
+		for(Object cell : graph.getChildCells(graph.getDefaultParent(),false,true)){
+			l.add(domToLink((Element)(((mxCell)cell).getValue())));
+		}
+		return l;
+		
 	}
 }

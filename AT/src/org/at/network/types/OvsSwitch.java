@@ -14,6 +14,18 @@ public class OvsSwitch {
 		public int getValue(){
 			return value;
 		}
+		
+		public String toString(){
+			String str = null;
+			
+			switch(value){
+			case 0:
+				str = "ROOT";
+				break;
+			}
+			
+			return str;
+		}
 	}
 	
 	public String ip;
@@ -36,7 +48,10 @@ public class OvsSwitch {
 	
 	public boolean equals(Object o){
 		OvsSwitch s = (OvsSwitch)o;
-		return (s.ip.equals(this.ip)) && (s.dpid.equals(this.dpid)
-				&& (s.type == type));
+		return (s.ip.equals(this.ip)) && (s.dpid.equals(this.dpid));
+	}
+	
+	public static void main(String[] args){
+		System.out.println(OvsSwitch.Type.ROOT.name());
 	}
 }
