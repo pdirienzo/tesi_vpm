@@ -34,6 +34,7 @@ import org.opendaylight.ovsdb.lib.standalone.OvsdbException;
 import org.opendaylight.ovsdb.lib.table.Interface;
 
 import com.mxgraph.io.mxCodec;
+import com.mxgraph.util.mxUtils;
 import com.mxgraph.util.mxXmlUtils;
 import com.mxgraph.view.mxGraph;
 
@@ -246,6 +247,10 @@ public class NetworkTopology extends HttpServlet {
 			mxCodec decoder = new mxCodec(node.getOwnerDocument());
 			decoder.decode(node.getFirstChild(),userGraph.getModel());
 
+			mxCodec codec = new mxCodec();	
+			System.out.println(mxUtils.getPrettyXml(codec.encode(userGraph.getModel())));
+			
+			
 			//saving topology to file
 			topologyToFile(userGraph);
 			
@@ -267,22 +272,21 @@ public class NetworkTopology extends HttpServlet {
 			
 			Iterator<LinkConnection> iterator = jgraph.edgeSet().iterator();
 
-			//for(Object cell : graph.getChildCells(graph.getDefaultParent(),false,true)){//graph.getDefaultParent(), false, true)){ //getting edges
-			//	Element element = (Element)(((mxCell)cell).getValue());
+			
 
 		
 			while(iterator.hasNext()){
 				LinkConnection l = iterator.next();
-				System.out.println(l.isTree);
+				
 				
 				int index = linkPresent(l, links);
 				if(index != -1){ //we simply remove the link from the list: it will not be processed as it existed before and still exists now
 					links.remove(index);
 
 				}else if(l.isTree){//we phisically add the link to the switches
-
+					
 					//1. starting from source switch
-					DefaultOvsdbClient client = new DefaultOvsdbClient(l.src.ip, BR_PORT);
+					DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
 					String ovs = null;
 
 					OvsDBSet<Integer> trunks = new OvsDBSet<Integer>();
@@ -290,15 +294,18 @@ public class NetworkTopology extends HttpServlet {
 
 					ovs = client.getOvsdbNames()[0];
 					OvsdbOptions opts = new OvsdbOptions();
-					opts.put(OvsdbOptions.REMOTE_IP, l.target.ip);
-					client.addPort(ovs, BR_NAME, computePortName(l.src.dpid,l.target.dpid), Interface.Type.gre.name(),0,trunks,opts);
+					opts.put(OvsdbOptions.REMOTE_IP, l.getTarget().ip);
+					client.addPort(ovs, BR_NAME, computePortName(l.getSource().dpid,l.getTarget().dpid), Interface.Type.gre.name(),0,trunks,opts);
 
 					//2. now the other one
-					client = new DefaultOvsdbClient(l.target.ip, BR_PORT);
+					client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
 					opts = new OvsdbOptions();
-					opts.put(OvsdbOptions.REMOTE_IP, l.src.ip);
-					client.addPort(ovs, BR_NAME, computePortName(l.target.dpid,l.src.dpid), Interface.Type.gre.name(),0,trunks,opts);
+					opts.put(OvsdbOptions.REMOTE_IP, l.getSource().ip);
+					client.addPort(ovs, BR_NAME, computePortName(l.getTarget().dpid,l.getSource().dpid), Interface.Type.gre.name(),0,trunks,opts);
 					
+					
+					System.out.println("Creating "+computePortName(l.src.dpid,l.target.dpid)+" on "+l.getSource());
+					System.out.println("Creating "+computePortName(l.target.dpid,l.src.dpid)+" on "+l.getTarget());
 					links.remove(l); //removing from links list
 				}
 
@@ -306,13 +313,14 @@ public class NetworkTopology extends HttpServlet {
 
 			if(links.size() > 0){ //user deleted some link
 				for(LinkConnection l : links){
-					DefaultOvsdbClient client = new DefaultOvsdbClient(l.src.ip, BR_PORT);
+					System.out.println("To delete "+l);
+					DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
 					String ovs = client.getOvsdbNames()[0];
 					//1.
 					client.deletePort(ovs, BR_NAME,l.srcPort.name);
 
 					//2.
-					client = new DefaultOvsdbClient(l.target.ip, BR_PORT);
+					client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
 					client.deletePort(ovs, BR_NAME,l.targetPort.name);
 
 				}

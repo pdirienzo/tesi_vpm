@@ -27,6 +27,14 @@ public class LinkConnection extends DefaultEdge {
 		this.isTree = false;
 	}
 	
+	public OvsSwitch getSource(){
+		return (OvsSwitch)super.getSource();
+	}
+	
+	public OvsSwitch getTarget(){
+		return (OvsSwitch)super.getTarget();
+	}
+	
 	public boolean oppositeLink(LinkConnection l){
 		//boolean same = (this.dpidSrc.equals(l.dpidSrc)) && (this.dpidDst.equals(l.dpidDst)) && (this.srcPort == l.srcPort) && (this.dstPort == l.dstPort);
 		boolean reverse = (this.src.equals(l.target)) && (this.target.equals(l.src)) && (this.srcPort == l.targetPort) && (this.targetPort == l.srcPort);
