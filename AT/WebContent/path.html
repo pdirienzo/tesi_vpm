@@ -259,6 +259,7 @@
 
 			if (data.status == "ok") {
 				console.log(data.path);
+				graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
 				
 				xml = data.path;
 				var doc = mxUtils.parseXml(xml);
