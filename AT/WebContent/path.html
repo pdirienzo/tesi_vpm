@@ -159,7 +159,9 @@ function fillOption(){
 		'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="344.6817188995533" y="179.34085944977664"/></mxCell></switch><switch dpid="00:00:72:a7:06:77:4a:48" id="4" ip="192.168.1.102" type="ROOT"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977667" y="10.0"/></mxCell></switch><switch dpid="00:00:72:5b:2d:c5:15:46" id="5" ip="192.168.1.101" type="LEAF"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="9.0" y="179.34085944977662"/></mxCell></switch><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="6" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="3"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:16:d1:61:6a:85:49" dstPort="0" id="7" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="2"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:72:5b:2d:c5:15:46" dstPort="0" id="8" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="5"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="9" srcDpid="00:00:72:5b:2d:c5:15:46" srcPort="0"><mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
 		'</mxCell></link></root></mxGraphModel>'); */
 		var x=doc.getElementsByTagName("switch");
+	
 		for (i=0; i<x.length;i++){
+			console.log(x[i]);
 			if(x[i].getAttribute("type")==LEAF_TYPE){
 				var element=document.getElementById("leaf_id");
 				 opt = document.createElement("option");
@@ -172,6 +174,7 @@ function fillOption(){
 				 opt = document.createElement("option");
 	                opt.value = x[i].getAttribute("dpid");
 	                opt.text=x[i].getAttribute("ip");
+	                
 	             element.appendChild(opt);
 			}
 		}
@@ -188,7 +191,7 @@ function getNetwork(){
 	$.getJSON("VPMPathManager",function(data){
 		if(data.status == "ok"){
 			xml=data.path;
-			console.log(xml);
+			//console.log(xml);
 			var doc = mxUtils.parseXml(xml);
 			var decoder = new mxCodec(doc);
 			decoder.decode(doc.documentElement, graph.getModel());
