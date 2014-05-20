@@ -8,6 +8,8 @@ import org.at.network.types.OvsSwitch;
 import org.at.network.types.OvsSwitch.Type;
 import org.at.network.types.Port;
 import org.at.network.types.VPMGraph;
+import org.jgrapht.GraphPath;
+import org.jgrapht.alg.DijkstraShortestPath;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -103,6 +105,21 @@ public final class NetworkConverter {
 
 	}
 	
+	public mxGraph jpathTomx(GraphPath<OvsSwitch, LinkConnection> jpath){
+		mxGraph graph = new mxGraph();
+		try{
+			graph.getModel().beginUpdate();
+			org.w3c.dom.Document doc = mxDomUtils.createDocument();
+			
+			HashMap<String, mxCell> vertexes = new HashMap<String, mxCell>();
+			//graph.insertVertex(arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+			
+		}finally{
+			graph.getModel().endUpdate();
+		}
+		return graph;
+	}
+	
 	public static void main(String[] args){
 		VPMGraph<OvsSwitch, LinkConnection> myGraph = new VPMGraph<>(LinkConnection.class);
 		
@@ -122,12 +139,31 @@ public final class NetworkConverter {
 		conns[2] = myGraph.addLinkConnection(c, new Port("p3",1),d,new Port("p4",2),true);
 		conns[3] = myGraph.addLinkConnection(a, new Port("p1",4),c,new Port("p2",1));
 		
+		OvsSwitch b1 = new OvsSwitch("b","2");
+		OvsSwitch d1 = new OvsSwitch("d","4");
+		
+		for(OvsSwitch o : myGraph.vertexSet()){
+			if(o.equals(b1))
+				b1 = o;
+			else if(o.equals(d1))
+				d1 = o;
+		}
+		
+		
+		DijkstraShortestPath<OvsSwitch, LinkConnection> dj = new DijkstraShortestPath<OvsSwitch, LinkConnection>(myGraph, 
+				b1, d1);
+		
+		
+		for(LinkConnection l : dj.getPathEdgeList()){
+			System.out.println(l);
+		}
+		
 		mxGraph mx = NetworkConverter.jgraphToMx(myGraph);
 		mxCodec codec = new mxCodec();	
-		System.out.println(mxUtils.getPrettyXml(codec.encode(mx.getModel())));
+		//System.out.println(mxUtils.getPrettyXml(codec.encode(mx.getModel())));
 		
 		VPMGraph<OvsSwitch, LinkConnection> anotherJ = NetworkConverter.mxToJgraphT(mx);
-		System.out.println(anotherJ.toString());
+		//System.out.println(anotherJ.toString());
 	}
 	
 	/*private static LinkConnection domToLink(Element el){

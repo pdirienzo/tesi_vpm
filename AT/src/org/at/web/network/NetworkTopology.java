@@ -134,6 +134,7 @@ public class NetworkTopology extends HttpServlet {
 		while(iterator.hasNext()){
 			LinkConnection l = iterator.next();
 			l.isTree = true;
+			graph.setEdgeWeight(l, 0); //setting tree's weight to zero so that minimum shortest path alghoritm just inspects tree edges
 		}
 
 		return k;
@@ -141,7 +142,7 @@ public class NetworkTopology extends HttpServlet {
 	
 	private void potateRelays(VPMGraph<OvsSwitch, LinkConnection> g){
 		for(OvsSwitch sw : g.vertexSet()){
-			if(sw.type == OvsSwitch.Type.RELAY){
+			if(sw.type == OvsSwitch.Type.RELAY || sw.type == OvsSwitch.Type.NULL){
 				boolean hasLeaf = false;
 				boolean hasRootRelay = false;
 				

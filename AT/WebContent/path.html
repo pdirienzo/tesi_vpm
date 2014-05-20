@@ -1,335 +1,342 @@
 <!-- Loads and initializes the library -->
 <script type="text/javascript">
- var mxBasePath = "mxgraph";
+	var mxBasePath = "mxgraph";
 </script>
-<link href="tools/Jquery_selected/css/jquery.selectbox.css" type="text/css" rel="stylesheet" />
+<link href="tools/Jquery_selected/css/jquery.selectbox.css"
+	type="text/css" rel="stylesheet" />
 
+<script type="text/javascript" src="tools/Jquery_selected/js/jquery.selectbox-0.2.min.js"></script>
 <script type="text/javascript" src="mxgraph/js/mxClient.js"></script>
 
 <script type="text/javascript">
-var graph;
-var keyHandler;
-var focusedCell;
-var root=0;
-var leaf=0;
-var xml;
+	var graph;
+	var keyHandler;
+	var focusedCell;
+	var root = 0;
+	var leaf = 0;
+	var xml;
 
-function main(container)
-{
-	// Checks if the browser is supported
-	if (!mxClient.isBrowserSupported())
-	{
-		// Displays an error message if the browser is not supported.
-		mxUtils.error('Browser is not supported!', 200, false);
-	}
-	else
-	{	
-		// Creates the graph inside the given container
-		graph = new mxGraph(document.getElementById('graphContainer'));
-		graph.setAllowDanglingEdges(false);
-		graph.setCellsResizable(false);
-		graph.setConnectable(false);
-		graph.multigraph = false;
-		graph.htmlLabels = true;
-		graph.isCellEditable = function(cell){
-			return false;
-		};
-		graph.minFitScale = null;
-		graph.getView().updateStyle = true;
+	$(document).ready(function() {
+		main(document.getElementById('graphContainer'));
+		fillOption();
 		
-		var previous = graph.model.getStyle;
-		
-		graph.model.getStyle = function(cell)
-		{
-			if (cell != null)
-			{
-				var style = previous.apply(this, arguments);
-				
-				if (this.isEdge(cell))
-				{
-					if ( cell.getAttribute("isTree") == "true" ){
-						var target = this.getTerminal(cell, false);
+		$("#sendPath").button().click(
+				function(event) {
+					if ($("#root_id").val() != -1 && $("#leaf_id").val() != -1) {
+						postPath();
+					} else {
+						showDialog("Errore",
+								"Devi selezionare almeno una radice e una foglia");
+					}
+				});
+	});
 
-						if (target != null)
-						{
-							var state = graph.getView().getState(target);
-							var targetStyle = (state != null) ? state.style : graph.getCellStyle(target);
-							var fill = mxUtils.getValue(targetStyle, mxConstants.STYLE_FILLCOLOR);
-							
-							if (fill != null)
-							{
-								style += ';strokeWidth=4;strokeColor='+fill;
+	
+
+	function main(container) {
+		// Checks if the browser is supported
+		if (!mxClient.isBrowserSupported()) {
+			// Displays an error message if the browser is not supported.
+			mxUtils.error('Browser is not supported!', 200, false);
+		} else {
+			// Creates the graph inside the given container
+			graph = new mxGraph(document.getElementById('graphContainer'));
+			graph.setAllowDanglingEdges(false);
+			graph.setCellsResizable(false);
+			graph.setConnectable(false);
+			graph.multigraph = false;
+			graph.htmlLabels = true;
+			graph.isCellEditable = function(cell) {
+				return false;
+			};
+			graph.minFitScale = null;
+			graph.getView().updateStyle = true;
+
+			var previous = graph.model.getStyle;
+
+			graph.model.getStyle = function(cell) {
+				if (cell != null) {
+					var style = previous.apply(this, arguments);
+
+					if (this.isEdge(cell)) {
+						if (cell.getAttribute("isTree") == "true") {
+							var target = this.getTerminal(cell, false);
+
+							if (target != null) {
+								var state = graph.getView().getState(target);
+								var targetStyle = (state != null) ? state.style
+										: graph.getCellStyle(target);
+								var fill = mxUtils.getValue(targetStyle,
+										mxConstants.STYLE_FILLCOLOR);
+
+								if (fill != null) {
+									style += ';strokeWidth=4;strokeColor='
+											+ fill;
+								}
 							}
 						}
+					} else if (this.isVertex(cell)) {
+						if (cell.getAttribute("type") != null) {
+							var type = cell.getAttribute("type");
+							if (type == ROOT_TYPE) {
+								root = 1;
+								var overlay = new mxCellOverlay(new mxImage(
+										'images/crown.png', 26, 26), 'Root');
+								graph.addCellOverlay(cell, overlay);
+
+							} else if (type == LEAF_TYPE) {
+								leaf = 1;
+								var overlay = new mxCellOverlay(new mxImage(
+										'images/leaf.png', 26, 26), 'Leaf');
+								graph.addCellOverlay(cell, overlay);
+							} else if (type == RELAY_TYPE) {
+								var overlay = new mxCellOverlay(new mxImage(
+										'images/relay.png', 26, 26), 'Relay');
+								graph.addCellOverlay(cell, overlay);
+
+							}
+						}
+
+						var geometry = this.getGeometry(cell);
+
+						if (geometry != null && geometry.width > 80) {
+							style += ';fillColor=#00de56';
+						}
 					}
-				}else if (this.isVertex(cell))
-				{
-					if(cell.getAttribute("type")!=null){
-						var type=cell.getAttribute("type");
-						if (type==ROOT_TYPE){
-							root=1;
-							var overlay = new mxCellOverlay(new mxImage('images/crown.png', 26, 26),
-								'Root');
-							graph.addCellOverlay(cell, overlay);
-						
-						}
-						else if (type==LEAF_TYPE){
-							leaf=1;
-							var overlay = new mxCellOverlay(new mxImage('images/leaf.png', 26, 26),
-							'Leaf');
-							graph.addCellOverlay(cell, overlay);
-						}
-						else if (type == RELAY_TYPE){
-							var overlay = new mxCellOverlay(new mxImage('images/relay.png', 26, 26),
-							'Relay');
-						graph.addCellOverlay(cell, overlay);
-					
-						}
+
+					return style;
+				}
+
+				return null;
+			};
+
+			//this sets the label to the dpid
+			graph.convertValueToString = function(cell) {
+				if (mxUtils.isNode(cell.value)) {
+					if (cell.value.nodeName.toLowerCase() == ('switch')) {
+						var sw = "<div style=\" margin-top:15px\"><p>"
+								+ cell.getAttribute('ip') + "<br />"
+								+ cell.getAttribute('dpid') + "</p></div>";
+						return sw;
 					}
-					
-					var geometry = this.getGeometry(cell);
-					
-					if (geometry != null &&
-						geometry.width > 80)
-					{
-						style += ';fillColor=#00de56';
+				}
+
+				return ''; //returning empty string for edges and other stuff
+			};
+			//setting style for vertexes
+			var vStyle = graph.getStylesheet().getDefaultVertexStyle();
+			vStyle[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE;
+			vStyle[mxConstants.STYLE_IMAGE] = "images/router.png";
+			vStyle[mxConstants.STYLE_VERTICAL_LABEL_POSITION] = mxConstants.ALIGN_BOTTOM;
+			vStyle[mxConstants.STYLE_FONTCOLOR] = "#0099CC";
+			vStyle[mxConstants.STYLE_FONTSIZE] = 12;
+			//vStyle[mxConstants.STYLE_IMAGE_BORDER]="#FF0000";
+			//setting style for edges
+			var eStyle = graph.getStylesheet().getDefaultEdgeStyle();
+			eStyle[mxConstants.STYLE_ENDARROW] = "none";
+			//createMenu();
+			//getNetwork();
+			document.getElementById("zoom").appendChild(
+					mxUtils.button('+', function() {
+						graph.zoomIn();
+					})).className = "btn";
+			document.getElementById("zoom").appendChild(
+					mxUtils.button('-', function() {
+						graph.zoomOut();
+					})).className = "btn";
+
+			$(".btn").css("margin", 10);
+
+		}
+	}
+
+	function fillOption() {
+		$.getJSON("NetworkTopology", function(data) {
+			if (data.status == "ok") {
+				xml = data.graph;
+				//		console.log("xml");
+				var doc = mxUtils.parseXml(xml);
+				/* var doc = mxUtils.parseXml('<mxGraphModel>'+
+				'<root><mxCell id="0"/><mxCell id="1" parent="0"/>'+
+				'<switch dpid="00:00:16:d1:61:6a:85:49" id="2" ip="192.168.1.180" type="LEAF">'+
+				'<mxCell parent="1" vertex="1">'+
+				'<mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977664" y="348.6817188995533"/>'+
+				'</mxCell></switch>'+
+				'<switch dpid="00:00:82:f2:6a:f6:15:4a" id="3" ip="192.168.1.103" type="LEAF">'+
+				'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="344.6817188995533" y="179.34085944977664"/></mxCell></switch><switch dpid="00:00:72:a7:06:77:4a:48" id="4" ip="192.168.1.102" type="ROOT"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977667" y="10.0"/></mxCell></switch><switch dpid="00:00:72:5b:2d:c5:15:46" id="5" ip="192.168.1.101" type="LEAF"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="9.0" y="179.34085944977662"/></mxCell></switch><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="6" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="3"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:16:d1:61:6a:85:49" dstPort="0" id="7" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="2"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:72:5b:2d:c5:15:46" dstPort="0" id="8" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="5"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="9" srcDpid="00:00:72:5b:2d:c5:15:46" srcPort="0"><mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
+				'</mxCell></link></root></mxGraphModel>'); */
+				var x = doc.getElementsByTagName("switch");
+
+				for (i = 0; i < x.length; i++) {
+					if (x[i].getAttribute("type") == LEAF_TYPE) {
+						var element = document.getElementById("leaf_id");
+						opt = document.createElement("option");
+						opt.value = x[i].getAttribute("dpid");
+						opt.text = x[i].getAttribute("ip");
+						element.appendChild(opt);
+					} else if (x[i].getAttribute("type") == ROOT_TYPE) {
+						var element = document.getElementById("root_id");
+						opt = document.createElement("option");
+						opt.value = x[i].getAttribute("dpid");
+						opt.text = x[i].getAttribute("ip");
+
+						element.appendChild(opt);
 					}
 				}
 				
-				return style;
+				$("#root_id").selectbox({
+					effect : "fade",
+					onChange : function(val, inst) {
+						if (val != -1) {
+							$("#leaf_id").selectbox("enable");
+						} else {
+							$("#leaf_id").selectbox("disable");
+						}
+					}
+				});
+
+				$("#leaf_id").selectbox({
+					onChange : function(val, inst) {
+						if (val != -1) {
+							postPath();
+						}
+					}
+				});
+				$("#leaf_id").selectbox("disable");
+
+			} else {
+				//alert(data.details);
+				showDialog("Errore", data.details);
 			}
-			
-			return null;
+		});
+	}
+
+	function getNetwork() {
+		$.getJSON("VPMPathManager", function(data) {
+			if (data.status == "ok") {
+				xml = data.path;
+				//console.log(xml);
+				var doc = mxUtils.parseXml(xml);
+				var decoder = new mxCodec(doc);
+				decoder.decode(doc.documentElement, graph.getModel());
+
+				var layout = new mxHierarchicalLayout(graph);
+				layout.execute(graph.getDefaultParent());
+			} else {
+				//alert(data.details);
+				showDialog("Errore", data.details);
+			}
+			$("#loadingMaskN").fadeOut("slow", function() {
+				// $("#graph-panel").fadeIn("slow");
+
+				$("#graph-panel").fadeIn("slow");
+				$("#graph-panel").css("visibility", "show");
+
+			});
+
+		});
+	}
+
+	function postPath() {
+		var src = $("#root_id").val();
+		var dst = $("#leaf_id").val();
+		var srcIp = $("#root_id option:selected").text();
+		var dstIp = $("#leaf_id option:selected").text();
+		var req = {
+			src_dpid : src,
+			src_ip : srcIp,
+			dst_dpid : dst,
+			dst_ip : dstIp
 		};
 		
-		//this sets the label to the dpid
-		graph.convertValueToString = function(cell){
-			if (mxUtils.isNode(cell.value)){
-				if (cell.value.nodeName.toLowerCase() == ('switch')){
-					var sw = "<div style=\" margin-top:15px\"><p>"+cell.getAttribute('ip')+"<br />"+cell.getAttribute('dpid')+"</p></div>";
-					return sw;
-				}
-			}
+		$('#graph-panel').css("visibility", "hidden");
+		$("#loadingMaskN").css("visibility", "show");
+		$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
+
+			if (data.status == "ok") {
+				console.log(data.path);
+				
+				xml = data.path;
+				var doc = mxUtils.parseXml(xml);
+				var decoder = new mxCodec(doc);
+				decoder.decode(doc.documentElement, graph.getModel());
+
+				var layout = new mxFastOrtogonalLayout(graph);
+				layout.execute(graph.getDefaultParent());
+				
+			} else
+				showDialog("Errore", data.details);
 			
-			
-			return ''; //returning empty string for edges and other stuff
-		};
-		//setting style for vertexes
-		var vStyle = graph.getStylesheet().getDefaultVertexStyle();
-		vStyle[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE;
-		vStyle[mxConstants.STYLE_IMAGE] = "images/router.png";
-		vStyle[mxConstants.STYLE_VERTICAL_LABEL_POSITION] = mxConstants.ALIGN_BOTTOM;
-		vStyle[mxConstants.STYLE_FONTCOLOR] = "#0099CC";
-		vStyle[mxConstants.STYLE_FONTSIZE] = 12;
-		//vStyle[mxConstants.STYLE_IMAGE_BORDER]="#FF0000";
-		//setting style for edges
-		var eStyle = graph.getStylesheet().getDefaultEdgeStyle();
-		eStyle[mxConstants.STYLE_ENDARROW] = "none";
-		createMenu();
-		getNetwork();
-		document.getElementById("zoom").appendChild(mxUtils.button('+', function()
-		{
-			graph.zoomIn();
-		})).className="btn";
-		document.getElementById("zoom").appendChild(mxUtils.button('-', function()
-		{
-			graph.zoomOut();
-		})).className="btn";
-		
-		
-		$(".btn").css("margin",10);
+			$("#loadingMaskN").fadeOut("slow", function() {
+				// $("#graph-panel").fadeIn("slow");
+				$("#graph-panel").fadeIn("slow");
+				$("#graph-panel").css("visibility", "show");
+
+			});
+		},
+		"json");
 		
 	}
-}
-
-
-function fillOption(){
-	$.getJSON("NetworkTopology",function(data){
-		if(data.status == "ok"){
-			xml=data.graph;
-	//		console.log("xml");
-		var doc = mxUtils.parseXml(xml);
-		/* var doc = mxUtils.parseXml('<mxGraphModel>'+
-		'<root><mxCell id="0"/><mxCell id="1" parent="0"/>'+
-		'<switch dpid="00:00:16:d1:61:6a:85:49" id="2" ip="192.168.1.180" type="LEAF">'+
-		'<mxCell parent="1" vertex="1">'+
-		'<mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977664" y="348.6817188995533"/>'+
-		'</mxCell></switch>'+
-		'<switch dpid="00:00:82:f2:6a:f6:15:4a" id="3" ip="192.168.1.103" type="LEAF">'+
-		'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="344.6817188995533" y="179.34085944977664"/></mxCell></switch><switch dpid="00:00:72:a7:06:77:4a:48" id="4" ip="192.168.1.102" type="ROOT"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977667" y="10.0"/></mxCell></switch><switch dpid="00:00:72:5b:2d:c5:15:46" id="5" ip="192.168.1.101" type="LEAF"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="9.0" y="179.34085944977662"/></mxCell></switch><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="6" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="3"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:16:d1:61:6a:85:49" dstPort="0" id="7" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="2"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:72:5b:2d:c5:15:46" dstPort="0" id="8" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="5"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="9" srcDpid="00:00:72:5b:2d:c5:15:46" srcPort="0"><mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
-		'</mxCell></link></root></mxGraphModel>'); */
-		var x=doc.getElementsByTagName("switch");
-	
-		for (i=0; i<x.length;i++){
-			console.log(x[i]);
-			if(x[i].getAttribute("type")==LEAF_TYPE){
-				var element=document.getElementById("leaf_id");
-				 opt = document.createElement("option");
-	                opt.value = x[i].getAttribute("dpid");
-	                opt.text=x[i].getAttribute("ip");
-	             element.appendChild(opt);
-			}
-			else if(x[i].getAttribute("type")==ROOT_TYPE){
-				var element=document.getElementById("root_id");
-				 opt = document.createElement("option");
-	                opt.value = x[i].getAttribute("dpid");
-	                opt.text=x[i].getAttribute("ip");
-	                
-	             element.appendChild(opt);
-			}
-		}
-		
-			
-	 	}else{
-			//alert(data.details);
-			showDialog("Errore",data.details);
-		}
-	});
-}
-
-function getNetwork(){
-	$.getJSON("VPMPathManager",function(data){
-		if(data.status == "ok"){
-			xml=data.path;
-			//console.log(xml);
-			var doc = mxUtils.parseXml(xml);
-			var decoder = new mxCodec(doc);
-			decoder.decode(doc.documentElement, graph.getModel());
-			
-			var layout = new mxHierarchicalLayout(graph);
-			layout.execute(graph.getDefaultParent());
-		}else{
-			//alert(data.details);
-			showDialog("Errore",data.details);
-		}
-		$("#loadingMaskN").fadeOut("slow", function() {
-           // $("#graph-panel").fadeIn("slow");
-           
-           $("#graph-panel").fadeIn("slow");
-           $("#graph-panel").css("visibility","show");
-           
-        });
-		
-	});
-}
-
-function postPath(){
-	var src=$("#root_id").val();
-	var dst=$("#leaf_id").val();
-	var srcIp=$("#root_id option:selected").text();
-	var dstIp=$("#leaf_id option:selected").text();
-	var req={"src-dpid":src,"src-ip":srcIp,"dst-dpid":dst,"dst-ip":dstIp};
-	$.post("VPMPathManager",{"path":req},function(data){
-	
-	   if(data.status == "ok"){
-		   graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
-		   $("#loadingMaskN").css("visibility","show"); 
-			
-		   $('#graph-panel').css("visibility","hidden");
-			getNetwork();
-	   }else
-		   showDialog("Errore",data.details);
-	});
-}
-
-fillOption();
 </script>
 <style>
-	#network-infopanel {
-		margin: auto;
-		text-align: center;
-		width:90%;
-		padding: 10px;
-		border: 2px solid gray;
-	};
-	#graph-panel {
+#network-infopanel {
+	margin: auto;
+	text-align: center;
+	width: 90%;
+	padding: 10px;
+	border: 2px solid gray;
+}
+
+;
+#graph-panel {
 	margin: auto;
 	text-align: center;
 	width: 700px;
 	height: 490px;
 	padding: 10px;
 	border: 2px solid gray;
-};
+}
+;
 </style>
 <div id="network-infopanel">
-<div class="container">
- 	<div class="row">
- 		<label class="span1">
- 			From:
- 		</label>
- 		<div class="span3">
-	 	<p class="test">
-	 	
-			<select name="root_id" id="root_id" tabindex="1">
-				<option value="-1">-- Select Root --</option>
-									
-			</select>
-		</p>
-		
- 		</div>
- 		<label class="span1">
- 			To:
- 		</label>
- 		<div class="span3">
- 			<p class="test" id="boxCity">
-			<select name="leaf_id" id="leaf_id" tabindex="1">
-				<option value="-1">-- Select Leaf --</option>
-			</select>
-			</p>
- 		</div>
- 		<div class="span3">
- 			<button id="sendPath" class="btn">Crea Path</button>
- 		</div>
- 	</div>
- 	<div class="row">
- 		<!-- Pre Loading... -->
-	<div id="loadingMaskN" style="visibility:hidden; background: none repeat scroll 0% 0% rgb(255, 255, 255); text-align: center;margin: auto; width: inherit; height: inherit;">
-		<img src="images/loading.gif" width="300px">
+	<div class="container">
+		<div class="row">
+			<label class="span1"> From: </label>
+			<div class="span3">
+				<p>
+
+					<select name="root_id" id="root_id" tabindex="1">
+						<option value="-1">-- Select Root --</option>
+
+					</select>
+				</p>
+
+			</div>
+			<label class="span1"> To: </label>
+			<div class="span3">
+				<p>
+					<select name="leaf_id" id="leaf_id" tabindex="1">
+						<option value="-1">-- Select Leaf --</option>
+					</select>
+				</p>
+			</div>
+			<div class="span3">
+				<button id="sendPath" class="btn">Crea Path</button>
+			</div>
+		</div>
+		<div class="row">
+			<!-- Pre Loading... -->
+			<div id="loadingMaskN"
+				style="visibility: hidden; background: none repeat scroll 0% 0% rgb(255, 255, 255); text-align: center; margin: auto; width: inherit; height: inherit;">
+				<img src="images/loading.gif" width="300px">
+			</div>
+			<div class="main">
+				<div id="graph-panel" style="visibility: hidden">
+					<div id="graphContainer"
+						style="width: inherit; height: inherit; overflow: hidden; background: rgb(226, 226, 226); /* Old browsers */ background: -moz-linear-gradient(-45deg, rgba(226, 226, 226, 1) 0%, rgba(219, 219, 219, 1) 50%, rgba(209, 209, 209, 1) 51%, rgba(254, 254, 254, 1) 100%); /* FF3.6+ */ background: -webkit-gradient(linear, left top, right bottom, color-stop(0%, rgba(226, 226, 226, 1)), color-stop(50%, rgba(219, 219, 219, 1)), color-stop(51%, rgba(209, 209, 209, 1)), color-stop(100%, rgba(254, 254, 254, 1))); /* Chrome,Safari4+ */ background: -webkit-linear-gradient(-45deg, rgba(226, 226, 226, 1) 0%, rgba(219, 219, 219, 1) 50%, rgba(209, 209, 209, 1) 51%, rgba(254, 254, 254, 1) 100%);"></div>
+				</div>
+			</div>
+			<div id="zoom" style="text-align: center; padding: 10px"></div>
+		</div>
 	</div>
- 		<div class="main">
- 			<div id="graph-panel" style="visibility:hidden" >
-		<div id="graphContainer" style="width:inherit; height:inherit; overflow:hidden;background: rgb(226,226,226); /* Old browsers */
-	background: -moz-linear-gradient(-45deg, rgba(226,226,226,1) 0%, rgba(219,219,219,1) 50%, rgba(209,209,209,1) 51%, rgba(254,254,254,1) 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,rgba(226,226,226,1)), color-stop(50%,rgba(219,219,219,1)), color-stop(51%,rgba(209,209,209,1)), color-stop(100%,rgba(254,254,254,1))); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(-45deg, rgba(226,226,226,1) 0%,rgba(219,219,219,1) 50%,rgba(209,209,209,1) 51%,rgba(254,254,254,1) 100%); /* Chrome10+,Safari5.1+ */"></div>
-	</div>
- 		</div>
- 		<div id="zoom" style="text-align:center; padding:10px">
-	</div>
- 	</div>
 </div>
-</div>
-<script type="text/javascript" src="tools/Jquery_selected/js/jquery.selectbox-0.2.min.js"></script>
-<script type="text/javascript">
-		$(document).ready(function(){
-			$("#root_id").selectbox({
-				effect: "fade",
-				onChange: function (val,inst){
-					if (val != -1){
-						$("#leaf_id").selectbox("enable");
-					}
-					else {
-						$("#leaf_id").selectbox("disable");
-					}
-				}
-			});
-			
-			$("#leaf_id").selectbox({
-				onChange:function(val,inst){
-					if(val!=-1){
-						postPath();	
-					}	
-				}
-			});
-			$("#leaf_id").selectbox("disable");
-			main(document.getElementById('graphContainer'));
-		});
-		
-		$( "#sendPath" ).button().click(function( event ) {
-			if ($("#root_id").val()!=-1 && $("#leaf_id").val() != -1){		 
-				postPath();
-			}else{
-				showDialog("Errore","Devi selezionare almeno una radice e una foglia");	
-			}
-		});
-</script>

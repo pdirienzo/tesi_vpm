@@ -2,6 +2,7 @@ package org.at.web.network.path;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Iterator;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -68,6 +69,20 @@ public class VPMPathManager extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 	}
+	
+	//TODO stupid workaround
+	private OvsSwitch findOriginal(VPMGraph<OvsSwitch, LinkConnection> graph, OvsSwitch ovs){
+		OvsSwitch found = null;
+		
+		Iterator<OvsSwitch> ves = graph.vertexSet().iterator();
+		while((found == null) && ves.hasNext()){
+			OvsSwitch temp = ves.next();
+			if(temp.equals(ovs))
+				found = temp;
+		}
+		
+		return found;
+	}
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
@@ -76,10 +91,10 @@ public class VPMPathManager extends HttpServlet {
 		response.setContentType("application/json");
 		PrintWriter out = response.getWriter();
 		JSONObject jsResp = new JSONObject();
-
+		
 		JSONObject jsReq = new JSONObject(request.getParameter("path"));
-		String srcDpid = jsReq.getString("src-dpid");
-		String targetdpid = jsReq.getString("dst-dpid");
+		String srcDpid = jsReq.getString("src_dpid");
+		String targetdpid = jsReq.getString("dst_dpid");
 		String pathName = computePathName(srcDpid, targetdpid);
 
 		try{
@@ -95,7 +110,8 @@ public class VPMPathManager extends HttpServlet {
 				
 			
 				DijkstraShortestPath<OvsSwitch, LinkConnection> shortest = new DijkstraShortestPath<OvsSwitch, LinkConnection>(currentGraph,
-						new OvsSwitch(srcDpid,jsReq.getString("src-ip")), new OvsSwitch(targetdpid, jsReq.getString("dst-ip")));
+						findOriginal(currentGraph, new OvsSwitch(srcDpid,jsReq.getString("src_ip"))), 
+						findOriginal(currentGraph, new OvsSwitch(targetdpid, jsReq.getString("dst_ip"))));
 				
 				System.out.println("DEBUG, here's the edge list");
 				
