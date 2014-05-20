@@ -9,52 +9,45 @@
 <script type="text/javascript" src="mxgraph/js/mxClient.js"></script>
 
 <script type="text/javascript">
-	var graph;
-	var keyHandler;
-	var focusedCell;
-	var root = 0;
-	var leaf = 0;
-	var xml;
-
-	$(document).ready(function() {
-		main(document.getElementById('graphContainer'));
-		fillOption();
-		
-		$("#sendPath").button().click(
-				function(event) {
-					if ($("#root_id").val() != -1 && $("#leaf_id").val() != -1) {
-						postPath();
-					} else {
-						showDialog("Errore",
-								"Devi selezionare almeno una radice e una foglia");
-					}
-				});
-	});
+	var graphPath;
+	var rootPath = 0;
+	var leafPath = 0;
+	var xmlPath;
 
 	
 
-	function main(container) {
+	$("#sendPath").button().click(
+			function(event) {
+				if ($("#root_id").val() != -1 && $("#leaf_id").val() != -1) {
+					postPath();
+				} else {
+					showDialog("Errore","Devi selezionare almeno una radice e una foglia");
+				}
+			});
+
+	function mainPath(container) {
 		// Checks if the browser is supported
 		if (!mxClient.isBrowserSupported()) {
 			// Displays an error message if the browser is not supported.
 			mxUtils.error('Browser is not supported!', 200, false);
 		} else {
 			// Creates the graph inside the given container
-			graph = new mxGraph(document.getElementById('graphContainer'));
-			graph.setAllowDanglingEdges(false);
-			graph.setCellsResizable(false);
-			graph.setConnectable(false);
-			graph.multigraph = false;
-			graph.htmlLabels = true;
-			graph.isCellEditable = function(cell) {
+			graphPath = new mxGraph(container);
+			graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
+			graphPath.setAllowDanglingEdges(false);
+			graphPath.setCellsResizable(false);
+			graphPath.setConnectable(false);
+			graphPath.multigraph = false;
+			graphPath.htmlLabels = true;
+			graphPath.isCellEditable = function(cell) {
 				return false;
 			};
-			graph.minFitScale = null;
-			graph.getView().updateStyle = true;
+			graphPath.minFitScale = null;
+			graphPath.getView().updateStyle = true;
 
-			var previous = graph.model.getStyle;
+			var previous = graphPath.model.getStyle;
 
-			graph.model.getStyle = function(cell) {
+			graphPath.model.getStyle = function(cell) {
 				if (cell != null) {
 					var style = previous.apply(this, arguments);
 
@@ -63,9 +56,9 @@
 							var target = this.getTerminal(cell, false);
 
 							if (target != null) {
-								var state = graph.getView().getState(target);
+								var state = graphPath.getView().getState(target);
 								var targetStyle = (state != null) ? state.style
-										: graph.getCellStyle(target);
+										: graphPath.getCellStyle(target);
 								var fill = mxUtils.getValue(targetStyle,
 										mxConstants.STYLE_FILLCOLOR);
 
@@ -79,20 +72,20 @@
 						if (cell.getAttribute("type") != null) {
 							var type = cell.getAttribute("type");
 							if (type == ROOT_TYPE) {
-								root = 1;
+								rootPath = 1;
 								var overlay = new mxCellOverlay(new mxImage(
 										'images/crown.png', 26, 26), 'Root');
-								graph.addCellOverlay(cell, overlay);
+								graphPath.addCellOverlay(cell, overlay);
 
 							} else if (type == LEAF_TYPE) {
-								leaf = 1;
+								leafPath = 1;
 								var overlay = new mxCellOverlay(new mxImage(
 										'images/leaf.png', 26, 26), 'Leaf');
-								graph.addCellOverlay(cell, overlay);
+								graphPath.addCellOverlay(cell, overlay);
 							} else if (type == RELAY_TYPE) {
 								var overlay = new mxCellOverlay(new mxImage(
 										'images/relay.png', 26, 26), 'Relay');
-								graph.addCellOverlay(cell, overlay);
+								graphPath.addCellOverlay(cell, overlay);
 
 							}
 						}
@@ -111,7 +104,7 @@
 			};
 
 			//this sets the label to the dpid
-			graph.convertValueToString = function(cell) {
+			graphPath.convertValueToString = function(cell) {
 				if (mxUtils.isNode(cell.value)) {
 					if (cell.value.nodeName.toLowerCase() == ('switch')) {
 						var sw = "<div style=\" margin-top:15px\"><p>"
@@ -124,7 +117,7 @@
 				return ''; //returning empty string for edges and other stuff
 			};
 			//setting style for vertexes
-			var vStyle = graph.getStylesheet().getDefaultVertexStyle();
+			var vStyle = graphPath.getStylesheet().getDefaultVertexStyle();
 			vStyle[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE;
 			vStyle[mxConstants.STYLE_IMAGE] = "images/router.png";
 			vStyle[mxConstants.STYLE_VERTICAL_LABEL_POSITION] = mxConstants.ALIGN_BOTTOM;
@@ -132,30 +125,36 @@
 			vStyle[mxConstants.STYLE_FONTSIZE] = 12;
 			//vStyle[mxConstants.STYLE_IMAGE_BORDER]="#FF0000";
 			//setting style for edges
-			var eStyle = graph.getStylesheet().getDefaultEdgeStyle();
+			var eStyle = graphPath.getStylesheet().getDefaultEdgeStyle();
 			eStyle[mxConstants.STYLE_ENDARROW] = "none";
 			//createMenu();
 			//getNetwork();
-			document.getElementById("zoom").appendChild(
+			var doc = mxUtils.parseXml('<mxGraphModel>'+
+				'<root><mxCell id="0"/></root></mxGraphModel>');
+			var decoder = new mxCodec(doc);
+			decoder.decode(doc.documentElement, graphPath.getModel());
+			var layout = new mxHierarchicalLayout(graphPath);
+			layout.execute(graphPath.getDefaultParent());
+			document.getElementById("zoomPath").appendChild(
 					mxUtils.button('+', function() {
-						graph.zoomIn();
+						graphPath.zoomIn();
 					})).className = "btn";
-			document.getElementById("zoom").appendChild(
+			document.getElementById("zoomPath").appendChild(
 					mxUtils.button('-', function() {
-						graph.zoomOut();
+						graphPath.zoomOut();
 					})).className = "btn";
 
-			$(".btn").css("margin", 10);
-
+			$(".btn").css("margin-right", 10);
+			console.log("entrato");
 		}
 	}
 
 	function fillOption() {
 		$.getJSON("NetworkTopology", function(data) {
 			if (data.status == "ok") {
-				xml = data.graph;
+				xmlPath = data.graph;
 				//		console.log("xml");
-				var doc = mxUtils.parseXml(xml);
+				var doc = mxUtils.parseXml(xmlPath);
 				/* var doc = mxUtils.parseXml('<mxGraphModel>'+
 				'<root><mxCell id="0"/><mxCell id="1" parent="0"/>'+
 				'<switch dpid="00:00:16:d1:61:6a:85:49" id="2" ip="192.168.1.180" type="LEAF">'+
@@ -214,27 +213,26 @@
 	function getPath() {
 		var src = $("#root_id").val();
 		var dst = $("#leaf_id").val();
-		
-		$("#loadingMaskN").css("visibility", "show");
-		$('#graph-panel').css("visibility", "hidden");
-		
+		$("#loadingMaskP").css("visibility", "show");
+		$('#graph-pnl').css("visibility", "hidden");
 		$.getJSON("VPMPathManager?src_dpid="+src+"&dst_dpid="+dst, function(data) {
 			if (data.status == "ok_path") {
-				xml = data.path;
-				var doc = mxUtils.parseXml(xml);
+				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
+				xmlPath = data.path;
+				var doc = mxUtils.parseXml(xmlPath);
 				var decoder = new mxCodec(doc);
-				decoder.decode(doc.documentElement, graph.getModel());
+				decoder.decode(doc.documentElement, graphPath.getModel());
 
-				var layout = new mxHierarchicalLayout(graph);
-				layout.execute(graph.getDefaultParent());
+				var layout = new mxHierarchicalLayout(graphPath);
+				layout.execute(graphPath.getDefaultParent());
 			} else if(data.status == "ok_no_path"){
-				graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
+				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 			}else if(data.status == "error"){
 				showDialog("Errore", data.details);
 			}
-			$("#loadingMaskN").fadeOut("slow", function() {
-				$("#graph-panel").fadeIn("slow");
-				$("#graph-panel").css("visibility", "show");
+			$("#loadingMaskP").fadeOut("slow", function() {
+				$("#graph-pnl").fadeIn("slow");
+				$("#graph-pnl").css("visibility", "show");
 
 			});
 
@@ -252,30 +250,29 @@
 			dst_dpid : dst,
 			dst_ip : dstIp
 		};
-		
-		$("#loadingMaskN").css("visibility", "show");
-		$('#graph-panel').css("visibility", "hidden");
+		$("#loadingMaskP").css("visibility", "show");
+		$('#graph-pnl').css("visibility", "hidden");
 		$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
 
 			if (data.status == "ok") {
 				console.log(data.path);
-				graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
+				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 				
-				xml = data.path;
-				var doc = mxUtils.parseXml(xml);
+				xmlPath = data.path;
+				var doc = mxUtils.parseXml(xmlPath);
 				var decoder = new mxCodec(doc);
-				decoder.decode(doc.documentElement, graph.getModel());
+				decoder.decode(doc.documentElement, graphPath.getModel());
 
-				var layout = new mxHierarchicalLayout(graph);
-				layout.execute(graph.getDefaultParent());
+				var layout = new mxHierarchicalLayout(graphPath);
+				layout.execute(graphPath.getDefaultParent());
 				
 			} else
 				showDialog("Errore", data.details);
 			
-			$("#loadingMaskN").fadeOut("slow", function() {
-				// $("#graph-panel").fadeIn("slow");
-				$("#graph-panel").fadeIn("slow");
-				$("#graph-panel").css("visibility", "show");
+			$("#loadingMaskP").fadeOut("slow", function() {
+				// $("#graph-pnl").fadeIn("slow");
+				$("#graph-pnl").fadeIn("slow");
+				$("#graph-pnl").css("visibility", "show");
 
 			});
 		},
@@ -284,7 +281,7 @@
 	}
 </script>
 <style>
-#network-infopanel {
+div .network-infopanel {
 	margin: auto;
 	text-align: center;
 	width: 90%;
@@ -293,7 +290,7 @@
 }
 
 ;
-#graph-panel {
+#graph-pnl {
 	margin: auto;
 	text-align: center;
 	width: 700px;
@@ -303,7 +300,7 @@
 }
 ;
 </style>
-<div id="network-infopanel">
+<div class="network-infopanel">
 	<div class="container">
 		<div class="row">
 			<label class="span1"> From: </label>
@@ -331,17 +328,20 @@
 		</div>
 		<div class="row">
 			<!-- Pre Loading... -->
-			<div id="loadingMaskN"
-				style="visibility: hidden; background: none repeat scroll 0% 0% rgb(255, 255, 255); text-align: center; margin: auto; width: inherit; height: inherit;">
-				<img src="images/loading.gif" width="300px">
+			<div id="loadingMaskP"	style="visibility: hidden; background: none repeat scroll 0% 0% rgb(255, 255, 255); text-align: center; margin: auto; width: inherit; height: inherit;">
+				<img src="images/loading.gif" width="150px">
 			</div>
-			<div class="main">
-				<div id="graph-panel" style="visibility: hidden">
-					<div id="graphContainer"
+			<div id="graph-pnl" style="visibility: hidden">
+					<div id="graph-Container"
 						style="width: inherit; height: inherit; overflow: hidden; background: rgb(226, 226, 226); /* Old browsers */ background: -moz-linear-gradient(-45deg, rgba(226, 226, 226, 1) 0%, rgba(219, 219, 219, 1) 50%, rgba(209, 209, 209, 1) 51%, rgba(254, 254, 254, 1) 100%); /* FF3.6+ */ background: -webkit-gradient(linear, left top, right bottom, color-stop(0%, rgba(226, 226, 226, 1)), color-stop(50%, rgba(219, 219, 219, 1)), color-stop(51%, rgba(209, 209, 209, 1)), color-stop(100%, rgba(254, 254, 254, 1))); /* Chrome,Safari4+ */ background: -webkit-linear-gradient(-45deg, rgba(226, 226, 226, 1) 0%, rgba(219, 219, 219, 1) 50%, rgba(209, 209, 209, 1) 51%, rgba(254, 254, 254, 1) 100%);"></div>
-				</div>
 			</div>
-			<div id="zoom" style="text-align: center; padding: 10px"></div>
+			<div id="zoomPath" style="text-align: center; padding: 10px"></div>
 		</div>
 	</div>
 </div>
+<script type="text/javascript">
+$(document).ready(function() {
+	fillOption();
+	mainPath(document.getElementById('graph-Container'));
+});
+</script>
