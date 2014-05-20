@@ -1,0 +1,171 @@
+<!-- Loads and initializes the library -->
+<script type="text/javascript">
+ var mxBasePath = "mxgraph";
+</script>
+<link href="tools/Jquery_selected/css/jquery.selectbox.css" type="text/css" rel="stylesheet" />
+
+<script type="text/javascript" src="mxgraph/js/mxClient.js"></script>
+
+<script type="text/javascript">
+var graph;
+
+function fillOption(){
+	//$.getJSON("NetworkTopology",function(data){
+	//	if(data.status == "ok"){
+	//		xml=data.graph;
+	//		console.log("xml");
+		
+		var doc = mxUtils.parseXml('<mxGraphModel>'+
+		'<root><mxCell id="0"/><mxCell id="1" parent="0"/>'+
+		'<switch dpid="00:00:16:d1:61:6a:85:49" id="2" ip="192.168.1.180" type="LEAF">'+
+		'<mxCell parent="1" vertex="1">'+
+		'<mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977664" y="348.6817188995533"/>'+
+		'</mxCell></switch>'+
+		'<switch dpid="00:00:82:f2:6a:f6:15:4a" id="3" ip="192.168.1.103" type="LEAF">'+
+		'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="344.6817188995533" y="179.34085944977664"/></mxCell></switch><switch dpid="00:00:72:a7:06:77:4a:48" id="4" ip="192.168.1.102" type="ROOT"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977667" y="10.0"/></mxCell></switch><switch dpid="00:00:72:5b:2d:c5:15:46" id="5" ip="192.168.1.101" type="LEAF"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="9.0" y="179.34085944977662"/></mxCell></switch><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="6" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="3"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:16:d1:61:6a:85:49" dstPort="0" id="7" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="2"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:72:5b:2d:c5:15:46" dstPort="0" id="8" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="5"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="9" srcDpid="00:00:72:5b:2d:c5:15:46" srcPort="0"><mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
+		'</mxCell></link></root></mxGraphModel>');
+		var x=doc.getElementsByTagName("switch");
+		for (i=0; i<x.length;i++){
+			if(x[i].getAttribute("type")==LEAF_TYPE){
+				var element=document.getElementById("leaf_id");
+				 opt = document.createElement("option");
+	                opt.value = x[i].getAttribute("dpid");
+	                opt.text=x[i].getAttribute("ip");
+	             element.appendChild(opt);
+			}
+			else if(x[i].getAttribute("type")==ROOT_TYPE){
+				var element=document.getElementById("root_id");
+				 opt = document.createElement("option");
+	                opt.value = x[i].getAttribute("dpid");
+	                opt.text=x[i].getAttribute("ip");
+	             element.appendChild(opt);
+			}
+		}
+		
+			
+	/* 	}else{
+			//alert(data.details);
+			showDialog("Errore",data.details);
+		} */
+	};
+
+fillOption();
+</script>
+<style>
+	#network-infopanel {
+		margin: auto;
+		text-align: center;
+		width:90%;
+		padding: 10px;
+		border: 2px solid gray;
+	};
+	#graph-panel {
+	margin: auto;
+	text-align: center;
+	width: 700px;
+	height: 490px;
+	padding: 10px;
+	border: 2px solid gray;
+};
+</style>
+<div id="network-infopanel">
+<div class="container">
+ 	<div class="row">
+ 		<label class="span1">
+ 			From:
+ 		</label>
+ 		<div class="span3">
+	 	<p class="test">
+	 	
+			<select name="root_id" id="root_id" tabindex="1">
+				<option value="-1">-- Select Root --</option>
+									
+			</select>
+		</p>
+		
+ 		</div>
+ 		<label class="span1">
+ 			To:
+ 		</label>
+ 		<div class="span3">
+ 			<p class="test" id="boxCity">
+			<select name="leaf_id" id="leaf_id" tabindex="1">
+				<option value="-1">-- Select Leaf --</option>
+			</select>
+			</p>
+ 		</div>
+ 		<div class="span3">
+ 			<button id="sendPath" class="btn">Crea Path</button>
+ 		</div>
+ 	</div>
+ 	<div class="row">
+ 		<!-- Pre Loading... -->
+	<div id="loadingMaskN" style="visibility:hidden; background: none repeat scroll 0% 0% rgb(255, 255, 255); text-align: center;margin: auto; width: inherit; height: inherit;">
+		<img src="images/loading.gif" width="300px">
+	</div>
+ 		<div class="main">
+ 			<div id="graph-panel" style="visibility:hidden" >
+		<div id="graphContainer" style="width:inherit; height:inherit; overflow:hidden;background: rgb(226,226,226); /* Old browsers */
+	background: -moz-linear-gradient(-45deg, rgba(226,226,226,1) 0%, rgba(219,219,219,1) 50%, rgba(209,209,209,1) 51%, rgba(254,254,254,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,rgba(226,226,226,1)), color-stop(50%,rgba(219,219,219,1)), color-stop(51%,rgba(209,209,209,1)), color-stop(100%,rgba(254,254,254,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(-45deg, rgba(226,226,226,1) 0%,rgba(219,219,219,1) 50%,rgba(209,209,209,1) 51%,rgba(254,254,254,1) 100%); /* Chrome10+,Safari5.1+ */"></div>
+	</div>
+ 		</div>
+ 	</div>
+</div>
+</div>
+<script type="text/javascript" src="tools/Jquery_selected/js/jquery.selectbox-0.2.min.js"></script>
+<script type="text/javascript">
+		$(document).ready(function(){
+			$("#root_id").selectbox({
+				effect: "fade",
+				onChange: function (val,inst){
+					if (val != -1){
+						$("#leaf_id").selectbox("enable");
+					}
+					else {
+						$("#leaf_id").selectbox("disable");
+					}
+				}
+			});
+			
+			$("#leaf_id").selectbox();
+			$("#leaf_id").selectbox("disable");
+			//main(document.getElementById('graphContainer'));
+		});
+		
+
+
+		$( "#sendPath" ).button().click(function( event ) {
+			if ($("#root_id").val()!=-1 && $("#leaf_id").val() != -1){
+					var src=$("#root_id").val();
+					var dst=$("#leaf_id").val();
+					$("#loadingMaskN").css("visibility","show");
+					/* 
+				$.post("NetworkTopology",{"src-dpid":src;
+										  "dst-dpid":dst;},function(data){
+				}
+					   if(data.status == "ok"){
+						   graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
+						   
+							$('#loadingMaskN').show();
+							$('#command').hide();
+							$('#graph-panel').css("visibility","hidden");
+							getNetwork();
+					   }else
+						   showDialog("Errore",data.details);
+				}); */
+					$("#loadingMaskN").fadeOut("slow", function() {
+				           // $("#graph-panel").fadeIn("slow");
+				           
+				           $("#graph-panel").fadeIn("slow");
+				           $("#graph-panel").css("visibility","show");
+				           
+				        });
+			}else{
+				alert("Devi selezionare almeno una radice e una foglia");	
+			}
+			});
+
+		
+</script>
