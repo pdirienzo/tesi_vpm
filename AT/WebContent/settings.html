@@ -82,7 +82,7 @@
 		port = document.getElementById("set-port").value;
 		$.getJSON("AddController?ip=" + ip + "&port=" + port,
 				function(response) {
-					alert(response.status);
+					showDialog("INFO",response.status);
 					getControllerSettings();
 					$("#set-controller-dialog").dialog("close");
 
@@ -95,7 +95,7 @@
 		port = document.getElementById("addhost-port").value;
 		$.getJSON("AddHypervisor?username=" + username + "&ip=" + host
 				+ "&port=" + port, function(response) {
-			alert(response.status);
+			showDialog("INFO",response.status);
 			$("#add-host-dialog").dialog("close");
 			getHypervisorSettings();
 
@@ -108,7 +108,7 @@
 
 		$.getJSON("DeleteHypervisor?hostname=" + hypervisor,
 				function(response) {
-					alert(response.details);
+					showDialog("INFO",response.details);
 					getHypervisorSettings();
 
 				});

@@ -78,6 +78,10 @@ public class RestRequest {
 		
 		return json;
 	}
+	
+	public static JSONObject postJson(String url, JSONObject data){
+		return new JSONObject(post(url,data.toString()));
+	}
 
 	public static String post(String url, String data) {
 		/* POST Method */

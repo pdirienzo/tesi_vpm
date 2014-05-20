@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.at.db.DatabaseEventDispatcher.DBEvent;
+import org.at.network.types.OvsSwitch;
 
 public class Database {
 	public static final String DEFAULT_DBPATH = "./data/lime.db";
@@ -39,7 +40,7 @@ public class Database {
 			d.close();
 		}
 	}
-	
+
 	public void connect() throws IOException{	
 		//boolean newDb = !((new File(dbPath)).exists());
 
@@ -81,9 +82,14 @@ public class Database {
 
 		Statement s2 = connection.createStatement();
 		s2.execute("create table controller(ip varchar, port varchar);");
-		
+
+		/*Statement s3 = connection.createStatement();
+		s3.execute("create table switches (dpid text primary key," +
+				"type integer not null);");*/
+
 		s1.close();
 		s2.close();
+		//s3.close();
 	}
 
 	/******************* Hypervisor Part ***********************************/
@@ -93,11 +99,11 @@ public class Database {
 			Statement s = connection.createStatement();
 			s.execute("insert into host (nome,ip,port) values(\""+ 
 					h.getName() + "\" ,\"" + h.getHostAddress() +"\" , \"" + h.getPort() +"\");"); 
-			
+
 			ResultSet rs = s.executeQuery("SELECT last_insert_rowid()");
 			rs.next();
 			h.setId(rs.getInt(1));
-			
+
 			rs.close();
 			s.close();
 			DatabaseEventDispatcher.dispatchEvent(DBEvent.hypervisor_insert, h);
@@ -106,8 +112,8 @@ public class Database {
 			throw new IOException(e.getMessage());
 		}
 	}
-	
-	
+
+
 	/**
 	 * Gets an hypervisor object using the id
 	 * @param hostName
@@ -116,7 +122,7 @@ public class Database {
 	public Hypervisor getHypervisorById(String stringId) throws IOException{
 		//removing the "H"
 		int id = Integer.parseInt(stringId.substring(1, stringId.length()));
-		
+
 		Hypervisor h = null;
 		Statement s;
 		try {
@@ -126,7 +132,7 @@ public class Database {
 			while(rs.next()){ //is just one
 				h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4));
 			}
-			
+
 			rs.close();
 			s.close();
 		} catch (SQLException e) {
@@ -152,7 +158,7 @@ public class Database {
 			while(rs.next()){ //is just one
 				h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4));
 			}
-			
+
 			rs.close();
 			s.close();
 		} catch (SQLException e) {
@@ -166,7 +172,7 @@ public class Database {
 	public void deleteHypervisor(String hostAddress) throws IOException{
 		try {
 			Hypervisor h = getHypervisorByIp(hostAddress);
-			
+
 			Statement s = connection.createStatement();
 			s.execute("delete from host where ip = \""+hostAddress+"\";");
 			s.close();
@@ -254,4 +260,23 @@ public class Database {
 		}
 
 	}
+	
+	//************************** switches part **********************************
+	
+	/*public void insertSwitch(OvsSwitch sw) throws IOException{
+		Statement s;
+		try {
+			s = connection.createStatement();
+			s.execute("insert into switches (dpid,type) values ('"
+					+sw.dpid+"',"+sw.type.getValue()+");");
+			s.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}	
+	}
+	
+	public void setSwitchType(OvsSwitch sw) throws IOException{
+		
+	}*/
 }

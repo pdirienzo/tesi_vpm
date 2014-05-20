@@ -3,8 +3,7 @@ package org.at.floodlight;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -13,15 +12,12 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.at.db.Controller;
-import org.at.network.NetworkConverter;
 import org.at.network.types.LinkConnection;
-import org.at.network.types.Port;
 import org.at.network.types.OvsSwitch;
-import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
+import org.at.network.types.Port;
+import org.at.network.types.VPMGraph;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import com.mxgraph.view.mxGraph;
 
 public class FloodlightController {
 
@@ -29,11 +25,72 @@ public class FloodlightController {
 	
 	public FloodlightController(Controller c){
 		this.baseURL = "http://"+c.getHostAddress()
-				+":"+c.getPort();
-		
+				+":"+c.getPort();	
 	}
 	
-	private List<LinkConnection> deleteOpposites(List<LinkConnection> original){
+	private HashMap<String, OvsSwitch> getSwitches() throws IOException{
+	
+		HashMap<String, OvsSwitch> switches = new HashMap<String, OvsSwitch>();
+		
+		for(JSONObject o : RestRequest.getJSonArray(baseURL+"/wm/core/controller/switches/json")){
+			OvsSwitch sw = new OvsSwitch(o.getString("dpid"), o.getString("inetAddress").substring(1).split(":")[0]);
+			switches.put(sw.dpid, sw);
+		}
+		
+		return switches;
+	}
+	
+	public VPMGraph<OvsSwitch, LinkConnection> getTopology() throws IOException{
+		VPMGraph<OvsSwitch, LinkConnection> jgraph = new VPMGraph<OvsSwitch,LinkConnection>(LinkConnection.class);
+		HashMap<String,OvsSwitch> switches = getSwitches();
+		for(String key : switches.keySet())
+			jgraph.addVertex(switches.get(key));
+		
+		//now connections
+		JSONArray result = RestRequest.getJSonArray(baseURL+"/vpm/topology/links/json");
+		for(JSONObject o : result){
+			jgraph.addLinkConnection(switches.get(o.getString("src-switch")),
+					new Port(o.getString("src-port")),switches.get(o.getString("dst-switch")),
+					new Port(o.getString("dst-port")));
+		}
+		return jgraph;
+	}
+	
+	public int getPortNumber(OvsSwitch sw, String portName) throws IOException{
+		JSONObject obj = new JSONObject();
+		obj.put("switch-dpid", sw.dpid);
+		obj.put("port-name", portName);
+		return RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj).getInt("port-number");
+	}
+	
+	private String computePortName(String dpidSrc,String dpidDst){
+		StringBuilder sb = new StringBuilder();
+		sb.append("gre");
+		String[] subs = dpidSrc.split(":");
+		sb.append(subs[subs.length-2]);
+		sb.append(subs[subs.length-1]);
+
+		subs = dpidDst.split(":");
+		sb.append(subs[subs.length-2]);
+		sb.append(subs[subs.length-1]);
+
+		return sb.toString();
+
+	}
+	
+	public VPMGraph<OvsSwitch, LinkConnection> getShortestPath(OvsSwitch src, OvsSwitch target) throws IOException{
+		VPMGraph<OvsSwitch, LinkConnection> jgraph = new VPMGraph<OvsSwitch,LinkConnection>(LinkConnection.class);
+		String srcPort = computePortName(src.dpid, target.dpid);
+		String dstPort = computePortName(target.dpid, src.dpid);
+		RestRequest.getJSonArray(baseURL+"/wm/topology/route/"+src.dpid+"/"+srcPort+"/"+target.dpid+"/"+dstPort+"/json");
+		
+		
+		
+		return jgraph;
+	}
+	
+	
+	/*private List<LinkConnection> deleteOpposites(List<LinkConnection> original){
 		List<LinkConnection> result = new ArrayList<LinkConnection>();
 
 		while(original.size() > 0){
@@ -104,7 +161,7 @@ public class FloodlightController {
 		}
 		
 		return switches;
-	}
+	}*/
 	
 	//TODO
 
@@ -241,12 +298,13 @@ public class FloodlightController {
 		
 		/*for(LinkConnection ovs : f.getSwitchConnections(true))
 			System.out.println(ovs);*/
-		 
-		JSONObject data = new JSONObject()
-		 .put("name", "flow-mod-vm1-swl")
-		.put("switch", "00:00:00:0c:29:4a:ba:96")
+		
+		System.out.println(f.getPortNumber(new OvsSwitch("00:00:16:d1:61:6a:85:49","192.168.1.180"), "col0"));
+		/*JSONObject data = new JSONObject()
+		 //.put("name", "flow-mod-vm1-swl")
+		.put("switch", "00:00:16:d1:61:6a:85:49")
 		//.put("cookie", "5")
-		.put("priority", "20")
+		//.put("priority", "20")
 		//.put("idle_timeout","5")
 		//.put("vlan-id", "1")
 		//.put("ingress-port", "3")
@@ -260,7 +318,7 @@ public class FloodlightController {
 		
 		//JSONObject obj = f.getFlows("00:00:00:24:be:c1:a9:5c");
 		//JSONObject obj = f.deleteFlow("00:00:00:24:be:c1:a9:5c","pleaseWork_out");
-		//System.out.println(obj);
+		//System.out.println(obj);*/
 
 	}
 

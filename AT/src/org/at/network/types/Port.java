@@ -12,6 +12,9 @@ public class Port {
 			String[] spl = s.split("/");
 			name = spl[0];
 			number = Integer.parseInt(spl[1]);
+		}else{
+			name = "";
+			number = 0;
 		}
 	}
 

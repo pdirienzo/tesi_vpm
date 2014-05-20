@@ -7,9 +7,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -23,9 +25,10 @@ import org.at.floodlight.FloodlightController;
 import org.at.network.NetworkConverter;
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
-import org.jgrapht.Graph;
+import org.at.network.types.Port;
+import org.at.network.types.VPMGraph;
+import org.at.network.types.VPMGraphHolder;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
-import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.json.JSONObject;
 import org.opendaylight.ovsdb.lib.notation.OvsDBSet;
 import org.opendaylight.ovsdb.lib.notation.OvsdbOptions;
@@ -45,8 +48,6 @@ import com.mxgraph.view.mxGraph;
 public class NetworkTopology extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String TOPOLOGY_XML = "./topology/topology.xml";
-
-	public static final String VPM_TOPOLOGY = "vpm_topo";
 
 	private String BR_NAME;
 	private int BR_PORT;
@@ -113,18 +114,55 @@ public class NetworkTopology extends HttpServlet {
 
 
 
-	private KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> createTree(ListenableUndirectedWeightedGraph<OvsSwitch,LinkConnection> graph){	
+	private KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> createTree(VPMGraph<OvsSwitch,LinkConnection> graph){	
 
 		KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> k = new KruskalMinimumSpanningTree<OvsSwitch,LinkConnection>(graph);
 
-
-		Iterator<LinkConnection> iterator = k.getMinimumSpanningTreeEdgeSet().iterator();
+		//debug
+		System.out.println("Called kruskal alghoritm with weights:");
+		Iterator<LinkConnection> iterator = graph.edgeSet().iterator();
 
 		while(iterator.hasNext()){
-			iterator.next().isTree = true;
+			LinkConnection l = iterator.next();
+			System.out.println(l.getSource().type.name()+" --> "+l.getTarget().type.name()+" /"+l.getWeight());
+		}
+
+		//
+
+		iterator = k.getMinimumSpanningTreeEdgeSet().iterator();
+
+		while(iterator.hasNext()){
+			LinkConnection l = iterator.next();
+			l.isTree = true;
 		}
 
 		return k;
+	}
+	
+	private void potateRelays(VPMGraph<OvsSwitch, LinkConnection> g){
+		for(OvsSwitch sw : g.vertexSet()){
+			if(sw.type == OvsSwitch.Type.RELAY){
+				boolean hasLeaf = false;
+				boolean hasRootRelay = false;
+				
+				Set<LinkConnection> links = g.edgesOf(sw);
+				for(LinkConnection l : links){
+					if(l.isTree){
+						if( (l.getTarget().type == OvsSwitch.Type.LEAF) || (l.getSource().type == OvsSwitch.Type.LEAF))
+							hasLeaf = true;
+						else if( (l.getTarget().type == OvsSwitch.Type.RELAY || l.getTarget().type == OvsSwitch.Type.ROOT)
+								|| (l.getSource().type == OvsSwitch.Type.RELAY || l.getSource().type == OvsSwitch.Type.ROOT))
+							hasRootRelay = true;
+					}
+				}
+				
+				if(!(hasLeaf && hasRootRelay) ){
+					for(LinkConnection l : g.edgesOf(sw))
+						if(l.isTree)
+							l.isTree = false;
+				}
+			}
+		}
 	}
 
 
@@ -138,15 +176,21 @@ public class NetworkTopology extends HttpServlet {
 		JSONObject jsResp = new JSONObject();
 
 		try{
-			Graph<OvsSwitch, LinkConnection> graph = null;
-			if( (graph = (Graph<OvsSwitch, LinkConnection>)getServletContext().getAttribute(VPM_TOPOLOGY)) == null){ //first time execution
-				//TODO check old topology with actual one
+			VPMGraph<OvsSwitch, LinkConnection> graph = null;
+			VPMGraphHolder holder = (VPMGraphHolder)
+					getServletContext().getAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER);
+
+			if( (graph = holder.getGraph()) == null){ //first time execution or invalid graph
+
 				FloodlightController controller = getController();
 
 				if(controller != null){
-					
+					graph = controller.getTopology();
+					holder.addGraph(graph);
+
 					mxCodec codec = new mxCodec();	
-					String xmlString =  mxXmlUtils.getXml(codec.encode(controller.getMxTopology().getModel()));
+					String xmlString =  mxXmlUtils.getXml(codec.encode(
+							(NetworkConverter.jgraphToMx(graph)).getModel()));
 
 					jsResp.put("status", "ok");
 					jsResp.put("graph", xmlString);
@@ -155,7 +199,7 @@ public class NetworkTopology extends HttpServlet {
 					jsResp.put("status", "error");
 					jsResp.put("details", "No controller set");
 				}
-			
+
 			}else{
 				mxCodec codec = new mxCodec();	
 				String xmlString =  mxXmlUtils.getXml(codec.encode(NetworkConverter.jgraphToMx(graph).getModel()));
@@ -174,24 +218,6 @@ public class NetworkTopology extends HttpServlet {
 		}
 
 	}
-
-	/*private OvsSwitch getSwitchFromDpid(List<OvsSwitch> switches,String dpid){
-		boolean found = false;
-		OvsSwitch sw = null;
-
-		int i=0;
-		while((!found) && (i<switches.size())){
-			if((sw=switches.get(i)).dpid.equals(dpid)){
-				found = true;
-			}else
-				i++;
-		}
-
-		if(found)
-			return sw;
-		else
-			return null;
-	}*/
 
 	/**
 	 * TODO experimental, do it better...it just takes last 2 symbols of dpids
@@ -214,21 +240,6 @@ public class NetworkTopology extends HttpServlet {
 
 	}
 
-	private int linkPresent(LinkConnection l, List<LinkConnection> links){
-		int index = -1;
-		int i = 0;
-
-		while((index==-1) && (i<links.size())){
-			if(links.get(i).src.equals(l.src) && links.get(i).target.equals(l.target) ||
-					links.get(i).src.equals(l.target) && links.get(i).target.equals(l.src))
-				index = i;
-			else
-				i++;
-		}
-
-		return index;
-	}
-
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
@@ -237,103 +248,112 @@ public class NetworkTopology extends HttpServlet {
 		response.setContentType("application/json");
 		JSONObject jResponse = new JSONObject();
 
-		try{
-			//TODO do a comparison with the controller
-			
-			
-			//we get user made topology
-			mxGraph userGraph = new mxGraph();
-			org.w3c.dom.Node node = mxXmlUtils.parseXml(request.getParameter("xml"));
-			mxCodec decoder = new mxCodec(node.getOwnerDocument());
-			decoder.decode(node.getFirstChild(),userGraph.getModel());
-
-			mxCodec codec = new mxCodec();	
-			System.out.println(mxUtils.getPrettyXml(codec.encode(userGraph.getModel())));
-			
-			
-			//saving topology to file
-			topologyToFile(userGraph);
-			
-			//converting
-			ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> jgraph =
-					(ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection>) NetworkConverter.mxToJgraphT(userGraph);
-			
-			//creating tree
-			KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> tree = createTree(jgraph); //it sets isTree=true for tree edges
-			
-			FloodlightController controller = getController();
-
-			//we get link connections
-			List<LinkConnection> links = controller.getSwitchConnections(false);
-			//we get switches
-			//List<OvsSwitch> switches = controller.getSwitches();
-			
-			
-			
-			Iterator<LinkConnection> iterator = jgraph.edgeSet().iterator();
-
-			
-
+		VPMGraphHolder holder = (VPMGraphHolder)getServletContext().getAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER);
+		VPMGraph<OvsSwitch, LinkConnection> currentGraph = holder.getGraph();
 		
-			while(iterator.hasNext()){
-				LinkConnection l = iterator.next();
-				
-				
-				int index = linkPresent(l, links);
-				if(index != -1){ //we simply remove the link from the list: it will not be processed as it existed before and still exists now
-					links.remove(index);
+		FloodlightController controller = getController();
 
-				}else if(l.isTree){//we phisically add the link to the switches
-					
-					//1. starting from source switch
-					DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
-					String ovs = null;
+		if(currentGraph != null){ //if it is still valid
+			try{
+				//we get user made topology
+				mxGraph userGraph = new mxGraph();
+				org.w3c.dom.Node node = mxXmlUtils.parseXml(request.getParameter("xml"));
+				mxCodec decoder = new mxCodec(node.getOwnerDocument());
+				decoder.decode(node.getFirstChild(),userGraph.getModel());
 
-					OvsDBSet<Integer> trunks = new OvsDBSet<Integer>();
-					trunks.add(VLAN_ID);
+				mxCodec codec = new mxCodec();	
+				System.out.println(mxUtils.getPrettyXml(codec.encode(userGraph.getModel())));
 
-					ovs = client.getOvsdbNames()[0];
-					OvsdbOptions opts = new OvsdbOptions();
-					opts.put(OvsdbOptions.REMOTE_IP, l.getTarget().ip);
-					client.addPort(ovs, BR_NAME, computePortName(l.getSource().dpid,l.getTarget().dpid), Interface.Type.gre.name(),0,trunks,opts);
 
-					//2. now the other one
-					client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
-					opts = new OvsdbOptions();
-					opts.put(OvsdbOptions.REMOTE_IP, l.getSource().ip);
-					client.addPort(ovs, BR_NAME, computePortName(l.getTarget().dpid,l.getSource().dpid), Interface.Type.gre.name(),0,trunks,opts);
-					
-					
-					System.out.println("Creating "+computePortName(l.src.dpid,l.target.dpid)+" on "+l.getSource());
-					System.out.println("Creating "+computePortName(l.target.dpid,l.src.dpid)+" on "+l.getTarget());
-					links.remove(l); //removing from links list
+				//saving topology to file
+				topologyToFile(userGraph);
+
+				//converting
+				VPMGraph<OvsSwitch, LinkConnection> jgraph =
+						(VPMGraph<OvsSwitch, LinkConnection>) NetworkConverter.mxToJgraphT(userGraph);
+
+				//creating tree
+				createTree(jgraph); //it sets isTree=true for tree edges
+
+				//potating relays
+				potateRelays(jgraph);
+
+				//we get current link connections
+				List<LinkConnection> currentLinks = new ArrayList<LinkConnection>();
+				for(LinkConnection e : currentGraph.edgeSet())
+					currentLinks.add(e);
+
+				Iterator<LinkConnection> iterator = jgraph.edgeSet().iterator();
+
+				while(iterator.hasNext()){
+					LinkConnection l = iterator.next();
+
+					//we try to remove the link from the list: if it is contained it
+					//will not be processed as it existed before and still exists now
+					boolean removed = currentLinks.remove(l);
+
+					if(!removed && l.isTree){ //if remotion fails it means this link is not currently present 
+
+						// so we phisically add the link to the switches if it is part of a tree
+
+						//1. starting from source switch
+						DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
+						String ovs = null;
+
+						OvsDBSet<Integer> trunks = new OvsDBSet<Integer>();
+						trunks.add(VLAN_ID);
+
+						ovs = client.getOvsdbNames()[0];
+						OvsdbOptions opts = new OvsdbOptions();
+						opts.put(OvsdbOptions.REMOTE_IP, l.getTarget().ip);
+						String srcPortName = computePortName(l.getSource().dpid,l.getTarget().dpid);
+						client.addPort(ovs, BR_NAME, srcPortName, Interface.Type.gre.name(),0,trunks,opts);
+						
+						l.setSourceP(new Port(srcPortName,controller.getPortNumber(l.getSource(), srcPortName)));
+
+						//2. now the other one
+						client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
+						opts = new OvsdbOptions();
+						opts.put(OvsdbOptions.REMOTE_IP, l.getSource().ip);
+						String targetPortName = computePortName(l.getTarget().dpid,l.getSource().dpid);
+						client.addPort(ovs, BR_NAME, targetPortName, Interface.Type.gre.name(),0,trunks,opts);
+
+						l.setTargetP(new Port(targetPortName,controller.getPortNumber(l.getTarget(), targetPortName)));
+						System.out.println("Creating "+computePortName(l.getSource().dpid,l.getTarget().dpid)+" on "+l.getSource());
+						System.out.println("Creating "+computePortName(l.getTarget().dpid,l.getSource().dpid)+" on "+l.getTarget());
+
+
+					} //if it is not part of a tree we don't do anything
 				}
 
-			}
+				if(currentLinks.size() > 0){ //user deleted some link
+					for(LinkConnection l : currentLinks){
+						System.out.println("To delete " + l);
+						DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
+						String ovs = client.getOvsdbNames()[0];
+						//1.
+						client.deletePort(ovs, BR_NAME,l.getSrcPort().name);
 
-			if(links.size() > 0){ //user deleted some link
-				for(LinkConnection l : links){
-					System.out.println("To delete "+l);
-					DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
-					String ovs = client.getOvsdbNames()[0];
-					//1.
-					client.deletePort(ovs, BR_NAME,l.srcPort.name);
+						//2.
+						client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
+						client.deletePort(ovs, BR_NAME,l.getTargetPort().name);
 
-					//2.
-					client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
-					client.deletePort(ovs, BR_NAME,l.targetPort.name);
-
+					}
 				}
-			}
-			
-			getServletContext().setAttribute(VPM_TOPOLOGY, jgraph);
-	
-			jResponse.put("status", "ok");
 
-		}catch(IOException | OvsdbException ex){
+				holder.addGraph(jgraph);
+
+				jResponse.put("status", "ok");
+
+			}catch(IOException | OvsdbException ex){
+				jResponse.put("status", "error");
+				jResponse.put("details", ex.getMessage());
+				ex.printStackTrace();
+			}
+
+		}else{
 			jResponse.put("status", "error");
-			jResponse.put("details", ex.getMessage());
-			ex.printStackTrace();
+			jResponse.put("details", "Something changed in the topology, please check again");
 		}
 
 		out.println(jResponse.toString());

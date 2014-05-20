@@ -8,6 +8,8 @@ import javax.servlet.ServletContextListener;
 
 import org.at.db.Database;
 import org.at.db.DatabaseEventDispatcher;
+import org.at.network.types.VPMGraphHolder;
+import org.at.web.network.path.PathHolder;
 
 import java.util.Properties;
 
@@ -25,6 +27,10 @@ public class LimeContextServerListener implements ServletContextListener {
 			Properties props = new Properties();
 			props.loadFromXML(new FileInputStream(PROPERTIES_PATH));
 			c.getServletContext().setAttribute("properties", props);
+			
+			c.getServletContext().setAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER, 
+					new VPMGraphHolder());
+			c.getServletContext().setAttribute(PathHolder.VPM_PATHS, new PathHolder());
 			
 			Database.initialize(Database.DEFAULT_DBPATH);
 			HypervisorConnectionManager manager = new HypervisorConnectionManager(MANAGER_RETRY_TIME,props.getProperty("network_name"),

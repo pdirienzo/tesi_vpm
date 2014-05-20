@@ -71,20 +71,20 @@
 							if(cell.getAttribute("type")!=null){
 								var type=cell.getAttribute("type");
 								if (type==ROOT_TYPE){
-
-									var overlay = new mxCellOverlay(new mxImage('images/root.png', 26, 26),
+									root=1;
+									var overlay = new mxCellOverlay(new mxImage('images/crown.png', 26, 26),
 										'Root');
 									graph.addCellOverlay(cell, overlay);
 								
 								}
 								else if (type==LEAF_TYPE){
+									leaf=1;
 									var overlay = new mxCellOverlay(new mxImage('images/leaf.png', 26, 26),
 									'Leaf');
 									graph.addCellOverlay(cell, overlay);
-								
 								}
-								else{
-									var overlay = new mxCellOverlay(new mxImage('images/Relay.png', 26, 26),
+								else if (type == RELAY_TYPE){
+									var overlay = new mxCellOverlay(new mxImage('images/relay.png', 26, 26),
 									'Relay');
 								graph.addCellOverlay(cell, overlay);
 							
@@ -96,7 +96,7 @@
 							if (geometry != null &&
 								geometry.width > 80)
 							{
-								style += ';fillColor=green';
+								style += ';fillColor=#00de56';
 							}
 						}
 						
@@ -142,10 +142,11 @@
 				    if(result == false){
 				    	var doc = mxUtils.createXmlDocument();
 					    var linkEl = doc.createElement('link');
-					    linkEl.setAttribute("srcDpid", source.value.getAttribute("dpid"));
-					    linkEl.setAttribute("dstDpid", target.value.getAttribute("dpid"));
+					    /*linkEl.setAttribute("srcDpid", source.value.getAttribute("dpid"));
+					    linkEl.setAttribute("dstDpid", target.value.getAttribute("dpid"));*/
 					    linkEl.setAttribute("srcPort", 0);
 					    linkEl.setAttribute("dstPort", 0);
+					    linkEl.setAttribute("isTree","false");
 					    value = linkEl;
 				      
 					    return mxConnectionHandlerInsertEdge.apply(this, arguments);
@@ -299,6 +300,7 @@
 			$.getJSON("NetworkTopology",function(data){
 				if(data.status == "ok"){
 					xml=data.graph;
+					console.log(xml);
 					var doc = mxUtils.parseXml(xml);
 					var decoder = new mxCodec(doc);
 					decoder.decode(doc.documentElement, graph.getModel());
