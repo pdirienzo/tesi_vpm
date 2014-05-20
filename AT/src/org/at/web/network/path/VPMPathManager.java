@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.at.db.Controller;
 import org.at.db.Database;
 import org.at.floodlight.FloodlightController;
+import org.at.network.NetworkConverter;
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
 import org.at.network.types.VPMGraph;
@@ -82,11 +83,10 @@ public class VPMPathManager extends HttpServlet {
 		String pathName = computePathName(srcDpid, targetdpid);
 
 		try{
-			mxGraph pathToClient = ((PathHolder)getServletContext().getAttribute(PathHolder.VPM_PATHS)).get(pathName);
+			PathHolder pathHolder = (PathHolder)getServletContext().getAttribute(PathHolder.VPM_PATHS);
+			mxGraph pathToClient = pathHolder.get(pathName);
 
 			if(pathToClient == null){ //no path was saved
-				pathToClient = new mxGraph();
-				
 				VPMGraphHolder holder = (VPMGraphHolder)getServletContext().getAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER);
 				VPMGraph<OvsSwitch, LinkConnection> currentGraph = holder.getGraph();
 
@@ -97,10 +97,15 @@ public class VPMPathManager extends HttpServlet {
 				DijkstraShortestPath<OvsSwitch, LinkConnection> shortest = new DijkstraShortestPath<OvsSwitch, LinkConnection>(currentGraph,
 						new OvsSwitch(srcDpid,jsReq.getString("src-ip")), new OvsSwitch(targetdpid, jsReq.getString("dst-ip")));
 				
+				System.out.println("DEBUG, here's the edge list");
+				
 				for(LinkConnection l : shortest.getPathEdgeList()){
 					System.out.println(l);
 				}
-
+				
+				pathToClient = NetworkConverter.jgraphToMx((VPMGraph<OvsSwitch,LinkConnection>)shortest.getPath().getGraph());
+				pathHolder.put(pathName, pathToClient);
+				
 			}
 
 			jsResp.put("status", "ok");
