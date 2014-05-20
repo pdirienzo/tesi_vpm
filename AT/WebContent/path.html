@@ -198,7 +198,7 @@
 				$("#leaf_id").selectbox({
 					onChange : function(val, inst) {
 						if (val != -1) {
-							postPath();
+							getPath();//postPath();
 						}
 					}
 				});
@@ -211,24 +211,28 @@
 		});
 	}
 
-	function getNetwork() {
-		$.getJSON("VPMPathManager", function(data) {
-			if (data.status == "ok") {
+	function getPath() {
+		var src = $("#root_id").val();
+		var dst = $("#leaf_id").val();
+		
+		$("#loadingMaskN").css("visibility", "show");
+		$('#graph-panel').css("visibility", "hidden");
+		
+		$.getJSON("VPMPathManager?src_dpid="+src+"&dst_dpid="+dst, function(data) {
+			if (data.status == "ok_path") {
 				xml = data.path;
-				//console.log(xml);
 				var doc = mxUtils.parseXml(xml);
 				var decoder = new mxCodec(doc);
 				decoder.decode(doc.documentElement, graph.getModel());
 
 				var layout = new mxHierarchicalLayout(graph);
 				layout.execute(graph.getDefaultParent());
-			} else {
-				//alert(data.details);
+			} else if(data.status == "ok_no_path"){
+				graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
+			}else if(data.status == "error"){
 				showDialog("Errore", data.details);
 			}
 			$("#loadingMaskN").fadeOut("slow", function() {
-				// $("#graph-panel").fadeIn("slow");
-
 				$("#graph-panel").fadeIn("slow");
 				$("#graph-panel").css("visibility", "show");
 
@@ -249,8 +253,8 @@
 			dst_ip : dstIp
 		};
 		
-		$('#graph-panel').css("visibility", "hidden");
 		$("#loadingMaskN").css("visibility", "show");
+		$('#graph-panel').css("visibility", "hidden");
 		$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
 
 			if (data.status == "ok") {
@@ -261,7 +265,7 @@
 				var decoder = new mxCodec(doc);
 				decoder.decode(doc.documentElement, graph.getModel());
 
-				var layout = new mxFastOrtogonalLayout(graph);
+				var layout = new mxHierarchicalLayout(graph);
 				layout.execute(graph.getDefaultParent());
 				
 			} else

@@ -62,27 +62,51 @@ public class VPMPathManager extends HttpServlet {
 
 		return sb.toString();
 	}
-
-	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-	}
 	
 	//TODO stupid workaround
-	private OvsSwitch findOriginal(VPMGraph<OvsSwitch, LinkConnection> graph, OvsSwitch ovs){
-		OvsSwitch found = null;
-		
-		Iterator<OvsSwitch> ves = graph.vertexSet().iterator();
-		while((found == null) && ves.hasNext()){
-			OvsSwitch temp = ves.next();
-			if(temp.equals(ovs))
-				found = temp;
+		private OvsSwitch findOriginal(VPMGraph<OvsSwitch, LinkConnection> graph, OvsSwitch ovs){
+			OvsSwitch found = null;
+			
+			Iterator<OvsSwitch> ves = graph.vertexSet().iterator();
+			while((found == null) && ves.hasNext()){
+				OvsSwitch temp = ves.next();
+				if(temp.equals(ovs))
+					found = temp;
+			}
+			
+			return found;
 		}
+
+	/**
+	 * @throws IOException 
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+		response.setContentType("application/json");
+		PrintWriter out = response.getWriter();
+		JSONObject jsResp = new JSONObject();
 		
-		return found;
+		String srcDpid = request.getParameter("src_dpid");
+		String targetdpid = request.getParameter("dst_dpid");
+		String pathName = computePathName(srcDpid, targetdpid);
+		
+		PathHolder pathHolder = (PathHolder)getServletContext().getAttribute(PathHolder.VPM_PATHS);
+		mxGraph pathToClient = pathHolder.get(pathName);
+
+		if(pathToClient != null){
+			jsResp.put("status", "ok_path");
+			mxCodec codec = new mxCodec();	
+			String xmlString =  mxXmlUtils.getXml(codec.encode(
+					(pathToClient).getModel()));
+			jsResp.put("path", xmlString);
+		}else
+			jsResp.put("status", "ok_no_path");
+		
+		out.println(jsResp.toString());
+		out.close();
 	}
+	
+	
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
@@ -113,13 +137,7 @@ public class VPMPathManager extends HttpServlet {
 						findOriginal(currentGraph, new OvsSwitch(srcDpid,jsReq.getString("src_ip"))), 
 						findOriginal(currentGraph, new OvsSwitch(targetdpid, jsReq.getString("dst_ip"))));
 				
-				System.out.println("DEBUG, here's the edge list");
-				
-				for(LinkConnection l : shortest.getPathEdgeList()){
-					System.out.println(l);
-				}
-				
-				pathToClient = NetworkConverter.jgraphToMx((VPMGraph<OvsSwitch,LinkConnection>)shortest.getPath().getGraph());
+				pathToClient = NetworkConverter.jpathToMx(shortest.getPath());
 				pathHolder.put(pathName, pathToClient);
 				
 			}

@@ -9,6 +9,7 @@ import org.at.network.types.OvsSwitch.Type;
 import org.at.network.types.Port;
 import org.at.network.types.VPMGraph;
 import org.jgrapht.GraphPath;
+import org.jgrapht.Graphs;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -105,14 +106,24 @@ public final class NetworkConverter {
 
 	}
 	
-	public mxGraph jpathTomx(GraphPath<OvsSwitch, LinkConnection> jpath){
+	public static mxGraph jpathToMx(GraphPath<OvsSwitch, LinkConnection> jpath){
 		mxGraph graph = new mxGraph();
 		try{
 			graph.getModel().beginUpdate();
 			org.w3c.dom.Document doc = mxDomUtils.createDocument();
 			
 			HashMap<String, mxCell> vertexes = new HashMap<String, mxCell>();
-			//graph.insertVertex(arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+			//switches...
+			for(OvsSwitch o : Graphs.getPathVertexList(jpath)){
+				vertexes.put(o.dpid, (mxCell)graph.insertVertex(graph.getDefaultParent(),null, 
+						switchToDom(doc,o), 10, 10, 100, 50));
+			}
+			
+			//now edges
+			for(LinkConnection l : jpath.getEdgeList()){
+				graph.insertEdge(graph.getDefaultParent(), null, linkToDom(doc,l), vertexes.get(l.getSource().dpid), 
+						vertexes.get(l.getTarget().dpid));
+			}
 			
 		}finally{
 			graph.getModel().endUpdate();
@@ -153,16 +164,14 @@ public final class NetworkConverter {
 		DijkstraShortestPath<OvsSwitch, LinkConnection> dj = new DijkstraShortestPath<OvsSwitch, LinkConnection>(myGraph, 
 				b1, d1);
 		
-		
-		for(LinkConnection l : dj.getPathEdgeList()){
-			System.out.println(l);
-		}
+		mxGraph dx = NetworkConverter.jpathToMx(dj.getPath());
+		mxCodec codec = new mxCodec();	
+		System.out.println(mxUtils.getPrettyXml(codec.encode(dx.getModel())));
 		
 		mxGraph mx = NetworkConverter.jgraphToMx(myGraph);
-		mxCodec codec = new mxCodec();	
 		//System.out.println(mxUtils.getPrettyXml(codec.encode(mx.getModel())));
 		
-		VPMGraph<OvsSwitch, LinkConnection> anotherJ = NetworkConverter.mxToJgraphT(mx);
+		
 		//System.out.println(anotherJ.toString());
 	}
 	
