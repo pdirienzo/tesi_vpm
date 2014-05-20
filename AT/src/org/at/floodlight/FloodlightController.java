@@ -78,16 +78,6 @@ public class FloodlightController {
 
 	}
 	
-	public VPMGraph<OvsSwitch, LinkConnection> getShortestPath(OvsSwitch src, OvsSwitch target) throws IOException{
-		VPMGraph<OvsSwitch, LinkConnection> jgraph = new VPMGraph<OvsSwitch,LinkConnection>(LinkConnection.class);
-		String srcPort = computePortName(src.dpid, target.dpid);
-		String dstPort = computePortName(target.dpid, src.dpid);
-		RestRequest.getJSonArray(baseURL+"/wm/topology/route/"+src.dpid+"/"+srcPort+"/"+target.dpid+"/"+dstPort+"/json");
-		
-		
-		
-		return jgraph;
-	}
 	
 	
 	/*private List<LinkConnection> deleteOpposites(List<LinkConnection> original){
@@ -211,7 +201,7 @@ public class FloodlightController {
 		return json;
 	}
 
-	public JSONObject addFlow(JSONObject data) throws IOException{
+	public JSONObject addStaticFlow(JSONObject data) throws IOException{
 		JSONObject result = null;
 
 		HttpClient client = HttpClients.createDefault();

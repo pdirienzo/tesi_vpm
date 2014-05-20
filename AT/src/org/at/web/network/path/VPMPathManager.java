@@ -3,6 +3,8 @@ package org.at.web.network.path;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -18,6 +20,8 @@ import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
 import org.at.network.types.VPMGraph;
 import org.at.network.types.VPMGraphHolder;
+import org.jgrapht.GraphPath;
+import org.jgrapht.Graphs;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.json.JSONObject;
 
@@ -106,6 +110,42 @@ public class VPMPathManager extends HttpServlet {
 		out.close();
 	}
 	
+	private void setupFlows(GraphPath<OvsSwitch,LinkConnection> jpath) throws IOException{
+		FloodlightController controller = getController();
+		List<OvsSwitch> nodes = Graphs.getPathVertexList(jpath);
+		for(int i=0;i<nodes.size()-1;i++){
+			OvsSwitch ovsSrc = nodes.get(i);
+			OvsSwitch ovsDst = nodes.get(i+1);
+			String path = computePathName(ovsSrc.dpid, ovsDst.dpid);
+			
+			JSONObject data = new JSONObject()
+			.put("name", "flow-stream-"+path)
+			.put("switch", ovsSrc.dpid)
+			.put("cookie", (new Random()).nextInt())
+			.put("priority", "100")
+			.put("dst-ip", "10.0.0.255")
+			//.put("ingress-port", "3")
+			.put("ether-type", "0x0800")
+			.put("active", "true")
+			.put("actions", "output="+controller.getPortNumber(ovsSrc, "gre"+path));
+			controller.addStaticFlow(data);
+		}
+		
+		OvsSwitch endNode = nodes.get(nodes.size()-1);
+		//the final flow to output it on the physical network
+		JSONObject data = new JSONObject()
+		.put("name", "flow-stream-"+endNode.dpid+"patch")
+		.put("switch", endNode.dpid)
+		.put("cookie", (new Random()).nextInt())
+		.put("priority", "100")
+		.put("dst-ip", "10.0.0.255")
+		//.put("ingress-port", "3")
+		.put("ether-type", "0x0800")
+		.put("active", "true")
+		.put("actions", "set-dst-ip=255.255.255.255,output="+controller.getPortNumber(endNode, "patch1"));//need to know original network
+		controller.addStaticFlow(data);
+	}
+	
 	
 
 	/**
@@ -137,6 +177,7 @@ public class VPMPathManager extends HttpServlet {
 						findOriginal(currentGraph, new OvsSwitch(srcDpid,jsReq.getString("src_ip"))), 
 						findOriginal(currentGraph, new OvsSwitch(targetdpid, jsReq.getString("dst_ip"))));
 				
+				setupFlows(shortest.getPath());
 				pathToClient = NetworkConverter.jpathToMx(shortest.getPath());
 				pathHolder.put(pathName, pathToClient);
 				
