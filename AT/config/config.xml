@@ -8,6 +8,7 @@
 	
 	<entry key="image_server_addr">alessandro-Optiplex</entry>
 	<entry key="image_server_port">8123</entry>	
+	
 	<!-- tresholds -->
 	<entry key="warning_treshold">60.0</entry>
 	<entry key="danger_treshold">90.0</entry>
