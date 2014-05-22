@@ -16,14 +16,13 @@
 
 	
 
-	$("#sendPath").button().click(
-			function(event) {
+	function sendPath() {
 				if ($("#root_id").val() != -1 && $("#leaf_id").val() != -1) {
 					postPath();
 				} else {
 					showDialog("Errore","Devi selezionare almeno una radice e una foglia");
 				}
-			});
+			};
 
 	function mainPath(container) {
 		// Checks if the browser is supported
@@ -145,7 +144,6 @@
 					})).className = "btn";
 
 			$(".btn").css("margin-right", 10);
-			console.log("entrato");
 		}
 	}
 
@@ -215,6 +213,7 @@
 		var dst = $("#leaf_id").val();
 		$("#loadingMaskP").css("visibility", "show");
 		$('#graph-pnl').css("visibility", "hidden");
+		$("#dPath").css("visibility","hidden");
 		$.getJSON("VPMPathManager?src_dpid="+src+"&dst_dpid="+dst, function(data) {
 			if (data.status == "ok_path") {
 				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
@@ -222,7 +221,7 @@
 				var doc = mxUtils.parseXml(xmlPath);
 				var decoder = new mxCodec(doc);
 				decoder.decode(doc.documentElement, graphPath.getModel());
-
+				$("#dPath").css("visibility","show");
 				var layout = new mxHierarchicalLayout(graphPath);
 				layout.execute(graphPath.getDefaultParent());
 			} else if(data.status == "ok_no_path"){
@@ -245,6 +244,7 @@
 		var srcIp = $("#root_id option:selected").text();
 		var dstIp = $("#leaf_id option:selected").text();
 		var req = {
+			op: "add",
 			src_dpid : src,
 			src_ip : srcIp,
 			dst_dpid : dst,
@@ -265,7 +265,8 @@
 
 				var layout = new mxHierarchicalLayout(graphPath);
 				layout.execute(graphPath.getDefaultParent());
-				
+				$("#dPath").css("visibility","show");
+
 			} else
 				showDialog("Errore", data.details);
 			
@@ -279,6 +280,50 @@
 		"json");
 		
 	}
+	
+	function deletePath() {
+		var src = $("#root_id").val();
+		var dst = $("#leaf_id").val();
+		var srcIp = $("#root_id option:selected").text();
+		var dstIp = $("#leaf_id option:selected").text();
+		var req = {
+			src_dpid : src,
+			src_ip : srcIp,
+			dst_dpid : dst,
+			dst_ip : dstIp
+		};
+		$("#loadingMaskP").css("visibility", "show");
+		$('#graph-pnl').css("visibility", "hidden");
+		$.post("VPMPathManager", {"delete-path" : JSON.stringify(req)}, function(data) {
+
+			if (data.status == "ok") {
+				console.log(data.path);
+				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
+				
+				xmlPath = data.path;
+				var doc = mxUtils.parseXml(xmlPath);
+				var decoder = new mxCodec(doc);
+				decoder.decode(doc.documentElement, graphPath.getModel());
+
+				var layout = new mxHierarchicalLayout(graphPath);
+				layout.execute(graphPath.getDefaultParent());
+				$("#dPath").css("visibility","hidden");
+
+			} else
+				showDialog("Errore", data.details);
+			
+			$("#loadingMaskP").fadeOut("slow", function() {
+				// $("#graph-pnl").fadeIn("slow");
+				$("#graph-pnl").fadeIn("slow");
+				$("#graph-pnl").css("visibility", "show");
+
+			});
+		},
+		"json");
+		
+	}
+	
+		
 </script>
 <style>
 div .network-infopanel {
@@ -322,8 +367,11 @@ div .network-infopanel {
 					</select>
 				</p>
 			</div>
-			<div class="span3">
-				<button id="sendPath" class="btn">Crea Path</button>
+			<div class="span2">
+				<button type="button" id="sPath" class="btn btn-success" onclick="sendPath(this)">Create</button>
+			</div>
+			<div class="span2">
+				<button type="button" id="dPath" class="btn btn-danger" style="visibility:hidden" onclick="deletePath(this)">Delete</button>
 			</div>
 		</div>
 		<div class="row">
