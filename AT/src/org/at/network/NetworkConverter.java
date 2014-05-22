@@ -2,6 +2,7 @@ package org.at.network;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
@@ -11,6 +12,7 @@ import org.at.network.types.VPMGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
 import org.jgrapht.alg.DijkstraShortestPath;
+import org.jgrapht.alg.KruskalMinimumSpanningTree;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -62,7 +64,7 @@ public final class NetworkConverter {
 			OvsSwitch target = switches.get(((Element)cell.getTarget().getValue()).getAttribute("dpid"));
 			
 			LinkConnection link = myGraph.addLinkConnection(source, new Port(((Element)cell.getValue()).getAttribute("srcPort")), target, 
-					new Port(((Element)cell.getValue()).getAttribute("dstPort")), Boolean.valueOf(((Element)cell.getValue()).getAttribute("isTree")));
+					new Port(((Element)cell.getValue()).getAttribute("dstPort")));//, Boolean.valueOf(((Element)cell.getValue()).getAttribute("isTree")));
 		
 			myGraph.setEdgeWeight(link, link.getSource().type.getValue() + link.getTarget().type.getValue());
 		}
@@ -131,26 +133,93 @@ public final class NetworkConverter {
 		return graph;
 	}
 	
+	//TODO ********************** remove this shit **********************************************************************
+	private static KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> createTree(VPMGraph<OvsSwitch,LinkConnection> graph){	
+
+		KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> k = new KruskalMinimumSpanningTree<OvsSwitch,LinkConnection>(graph);
+
+		//debug
+		System.out.println("Called kruskal alghoritm with weights:");
+		Iterator<LinkConnection> iterator = graph.edgeSet().iterator();
+
+		while(iterator.hasNext()){
+			LinkConnection l = iterator.next();
+			System.out.println(l.getSource().type.name()+" --> "+l.getTarget().type.name()+" /"+l.getWeight());
+		}
+
+		//
+
+		iterator = k.getMinimumSpanningTreeEdgeSet().iterator();
+
+		while(iterator.hasNext()){
+			LinkConnection l = iterator.next();
+			l.isTree = true;
+			graph.setEdgeWeight(l, 0); //setting tree's weight to zero so that minimum shortest path alghoritm just inspects tree edges
+		}
+
+		return k;
+	}
+	
+	private static void potateRelays(VPMGraph<OvsSwitch, LinkConnection> g){
+		for(OvsSwitch sw : g.vertexSet()){
+			if(sw.type == OvsSwitch.Type.RELAY || sw.type == OvsSwitch.Type.NULL){
+				boolean hasLeaf = false;
+				boolean hasRootRelay = false;
+				
+				Set<LinkConnection> links = g.edgesOf(sw);
+				for(LinkConnection l : links){
+					if(l.isTree){
+						if( (l.getTarget().type == OvsSwitch.Type.LEAF) || l.getSource().type == OvsSwitch.Type.LEAF )
+							hasLeaf = true;
+						else if( (l.getTarget().type == OvsSwitch.Type.RELAY || l.getTarget().type == OvsSwitch.Type.ROOT)
+								|| (l.getSource().type == OvsSwitch.Type.RELAY || l.getSource().type == OvsSwitch.Type.ROOT))
+							hasRootRelay = true;
+					}
+				}
+				
+				if(!(hasLeaf && hasRootRelay) ){
+					for(LinkConnection l : g.edgesOf(sw))
+						if(l.isTree)
+							l.isTree = false;
+				}
+			}
+		}
+	}
+	
+	//****************************************************************************************
+	
 	public static void main(String[] args){
 		VPMGraph<OvsSwitch, LinkConnection> myGraph = new VPMGraph<>(LinkConnection.class);
 		
-		OvsSwitch a = new OvsSwitch("a","1");
-		OvsSwitch b = new OvsSwitch("b","2");
-		OvsSwitch c = new OvsSwitch("c","3");
-		OvsSwitch d = new OvsSwitch("d","4");
+		OvsSwitch a = new OvsSwitch("a","1",OvsSwitch.Type.ROOT);
+		OvsSwitch b = new OvsSwitch("b","2", OvsSwitch.Type.RELAY);
+		OvsSwitch c = new OvsSwitch("c","3", OvsSwitch.Type.LEAF);
+		OvsSwitch d = new OvsSwitch("d","4", OvsSwitch.Type.RELAY);
+		OvsSwitch e = new OvsSwitch("e","5",OvsSwitch.Type.RELAY);
+		OvsSwitch f = new OvsSwitch("f","6",OvsSwitch.Type.RELAY);
+		OvsSwitch g = new OvsSwitch("g","7",OvsSwitch.Type.RELAY);
+		OvsSwitch h = new OvsSwitch("h","8",OvsSwitch.Type.RELAY);
 		
 		myGraph.addVertex(a);
 		myGraph.addVertex(b);
 		myGraph.addVertex(c);
 		myGraph.addVertex(d);
+		myGraph.addVertex(e);
+		myGraph.addVertex(f);
+		myGraph.addVertex(g);
+		myGraph.addVertex(h);
 		
-		LinkConnection[] conns = new LinkConnection[4];
+		LinkConnection[] conns = new LinkConnection[8];
 		conns[0] = myGraph.addLinkConnection(a, new Port("p1",1),b,new Port("p2",2));
-		conns[1] = myGraph.addLinkConnection(b, new Port("p2",2),c,new Port("p3",1));
-		conns[2] = myGraph.addLinkConnection(c, new Port("p3",1),d,new Port("p4",2),true);
-		conns[3] = myGraph.addLinkConnection(a, new Port("p1",4),c,new Port("p2",1));
+		conns[1] = myGraph.addLinkConnection(c, new Port("p2",2),b,new Port("p3",1));
+		conns[2] = myGraph.addLinkConnection(b, new Port("p3",1),d,new Port("p4",2));
+		conns[3] = myGraph.addLinkConnection(d, new Port("p1",4),e,new Port("p2",1));
+		conns[4] = myGraph.addLinkConnection(f, new Port("p1",4),b,new Port("p2",1));
+		conns[5] = myGraph.addLinkConnection(a, new Port("p5",5),f,new Port("p5",2));
+		conns[6] = myGraph.addLinkConnection(d, new Port("p6",7),g,new Port("p3",1));
+		conns[7] = myGraph.addLinkConnection(g, new Port("p6",7),h,new Port("p3",1));
 		
-		OvsSwitch b1 = new OvsSwitch("b","2");
+		/*OvsSwitch b1 = new OvsSwitch("b","2");
 		OvsSwitch d1 = new OvsSwitch("d","4");
 		
 		for(OvsSwitch o : myGraph.vertexSet()){
@@ -158,18 +227,24 @@ public final class NetworkConverter {
 				b1 = o;
 			else if(o.equals(d1))
 				d1 = o;
+		}*/
+		
+		createTree(myGraph);
+		potateRelays(myGraph);
+		for(LinkConnection l : myGraph.edgeSet()){
+			if(l.isTree)
+				System.out.println(l);
 		}
 		
-		
-		DijkstraShortestPath<OvsSwitch, LinkConnection> dj = new DijkstraShortestPath<OvsSwitch, LinkConnection>(myGraph, 
+		/*DijkstraShortestPath<OvsSwitch, LinkConnection> dj = new DijkstraShortestPath<OvsSwitch, LinkConnection>(myGraph, 
 				b1, d1);
 		
-		mxGraph dx = NetworkConverter.jpathToMx(dj.getPath());
-		mxCodec codec = new mxCodec();	
-		System.out.println(mxUtils.getPrettyXml(codec.encode(dx.getModel())));
 		
-		mxGraph mx = NetworkConverter.jgraphToMx(myGraph);
-		//System.out.println(mxUtils.getPrettyXml(codec.encode(mx.getModel())));
+		mxGraph dx = NetworkConverter.jpathToMx(dj.getPath());*/
+		mxCodec codec = new mxCodec();	
+		//System.out.println(mxUtils.getPrettyXml(codec.encode(dx.getModel())));//
+		
+		
 		
 		
 		//System.out.println(anotherJ.toString());

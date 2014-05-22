@@ -1,6 +1,7 @@
 package org.at.network.types;
 
 import org.jgrapht.WeightedGraph;
+import org.jgrapht.graph.ListenableDirectedWeightedGraph;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 
 public class VPMGraph<V, E extends LinkConnection> extends 
