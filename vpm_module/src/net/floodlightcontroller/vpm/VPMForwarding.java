@@ -36,6 +36,7 @@ import org.openflow.protocol.OFMatch;
 import org.openflow.protocol.OFMessage;
 import org.openflow.protocol.OFPacketIn;
 import org.openflow.protocol.OFType;
+import org.openflow.protocol.OFPacketIn.OFPacketInReason;
 import org.openflow.protocol.action.OFAction;
 import org.openflow.protocol.action.OFActionOutput;
 import org.openflow.util.HexString;
@@ -147,7 +148,6 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 
 		while ( (device == null) && (g.hasNext())){
 			IDevice dev = g.next();
-			System.out.println(macAddress+","+dev.getMACAddress());
 			if (dev.getMACAddress()==macAddress){
 				device=dev;
 			}
@@ -166,28 +166,35 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 		if(!sw.getPort(pi.getInPort()).getName().equals("patch1")){
 
 			if(match.getNetworkProtocol() == IPv4.PROTOCOL_UDP){
-
+				
 				if (isDhcpRequest(match.getTransportSource(),match.getTransportDestination())){
+					log.info(sw.getStringId()+": DHCP REQUEST ");
 					List<OFAction> list = new ArrayList<OFAction>();
 					for (ImmutablePort p : sw.getPorts()){
 						if (!p.getName().equals("patch1") && (p.getPortNumber() != pi.getInPort() && !p.getName().equals("br0"))){
-							log.info(sw.getStringId()+" Outputting to Port: "+p.getName());
+							//log.info(sw.getStringId()+" Outputting to Port: "+p.getName());
 							OFActionOutput ofaction = new OFActionOutput((short) p.getPortNumber());
 							list.add(ofaction);
 						}
 					}
 					if (list.size()>0){
+						OFMatch my_match= new OFMatch();
+						my_match.setDataLayerDestination(match.getDataLayerDestination());
+						my_match.setDataLayerSource(match.getDataLayerSource());
+						my_match.setTransportSource(match.getTransportSource());
+						my_match.setTransportDestination(match.getTransportDestination());
+						my_match.setNetworkDestination(match.getNetworkDestination());
+						my_match.setNetworkSource(match.getNetworkSource());
+						
 						OFFlowMod fm = (OFFlowMod) floodlightProvider.getOFMessageFactory().getMessage(OFType.FLOW_MOD);
 						fm.setCookie(AppCookie.makeCookie(FORWARDING_APP_ID, 0))
-						.setIdleTimeout((short)5)
-						.setMatch(match)
+						.setMatch(my_match)
 						.setActions(list);
 						staticFlowPusher.addFlow("TEST"+sw.getId(), fm, sw.getStringId());
-						//	messageDamper.write(sw, fm, cntx);
 					}
 				}
 				else if (isDhcpResponse(match.getTransportSource(),match.getTransportDestination())){
-					System.out.println("RESPONSE FROM: "+sw.getStringId()+","+match);
+					log.info(sw.getStringId()+": DHCP RESPONSE ");
 					long macSrc = Ethernet.toLong(match.getDataLayerSource());
 					long macDst = Ethernet.toLong(match.getDataLayerDestination());
 					IDevice devSrc = findDevice(macSrc);
@@ -199,45 +206,61 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 								(short) dstId.getPort(), FORWARDING_APP_ID, true).getPath();
 						short firstPort = match.getInputPort();
 						for (int i=np.size()-1;i>=0;i=i-2){
-							log.info("ID: "+np.get(i).getNodeId()+" : "+np.get(i).getPortId());
+							//log.info("ID: "+np.get(i).getNodeId()+" : "+np.get(i).getPortId());
 							List<OFAction> list = new ArrayList<OFAction>();
 							OFActionOutput ofaction = new OFActionOutput((short) np.get(i).getPortId());
 							list.add(ofaction);
-
-							OFFlowMod fm = (OFFlowMod) floodlightProvider.getOFMessageFactory().getMessage(OFType.FLOW_MOD);
-							fm.setCookie(AppCookie.makeCookie(FORWARDING_APP_ID, 0))
-							.setIdleTimeout((short)5)
-							.setPriority((short)20)
-							.setMatch(match)
-							.setActions(list);
+							OFMatch my_match= new OFMatch();
+							my_match.setDataLayerDestination(match.getDataLayerDestination());
+							my_match.setDataLayerSource(match.getDataLayerSource());
+							my_match.setTransportSource(match.getTransportSource());
+							my_match.setTransportDestination(match.getTransportDestination());
+							my_match.setNetworkDestination(match.getNetworkDestination());
+							my_match.setNetworkSource(match.getNetworkSource());
 							if(i>1){
-								match.setInputPort(np.get(i-1).getPortId());
+								my_match.setInputPort(np.get(i-1).getPortId());
 							}
 							else{
-								match.setInputPort(firstPort);
+								my_match.setInputPort(firstPort);
 							}
-							log.info("MATCH: "+fm);
+						
+							OFFlowMod fm = (OFFlowMod) floodlightProvider.getOFMessageFactory().getMessage(OFType.FLOW_MOD);
+							fm.setCookie(AppCookie.makeCookie(FORWARDING_APP_ID, 0))
+							//.setIdleTimeout((short)5)
+							.setPriority((short)20)
+							.setMatch(my_match)
+							.setActions(list);
+							
+							//log.info("MATCH: "+fm);
 							staticFlowPusher.addFlow("DHCP_OUT"+np.get(i).getNodeId(), fm, HexString.toHexString(np.get(i).getNodeId()));
 						}
 					}
 				}
 
 			}else if(isArpRequest(match)){
-				log.info("ARP REQUEST: "+HexString.toHexString(match.getDataLayerSource())+" to "
-						+HexString.toHexString(match.getDataLayerDestination()));
+				//log.info("ARP REQUEST: "+HexString.toHexString(match.getDataLayerSource())+" to "
+				//		+HexString.toHexString(match.getDataLayerDestination()));
+				log.info(sw.getStringId()+": ARP REQUEST ");
 				List<OFAction> list = new ArrayList<OFAction>();
 				for (ImmutablePort p : sw.getPorts()){
 					if (!p.getName().equals("patch1") && (p.getPortNumber() != pi.getInPort() && !p.getName().equals("br0"))){
-						log.info(sw.getStringId()+" Outputting to Port: "+p.getName());
+						//log.info(sw.getStringId()+" Outputting to Port: "+p.getName());
 						OFActionOutput ofaction = new OFActionOutput((short) p.getPortNumber());
 						list.add(ofaction);
 					}
 				}
 				if (list.size()>0){
+					OFMatch my_match= new OFMatch();
+					my_match.setDataLayerDestination(match.getDataLayerDestination());
+					my_match.setDataLayerSource(match.getDataLayerSource());
+					my_match.setTransportSource(match.getTransportSource());
+					my_match.setTransportDestination(match.getTransportDestination());
+					my_match.setNetworkDestination(match.getNetworkDestination());
+					my_match.setNetworkSource(match.getNetworkSource());
 					OFFlowMod fm = (OFFlowMod) floodlightProvider.getOFMessageFactory().getMessage(OFType.FLOW_MOD);
 					fm.setCookie(AppCookie.makeCookie(FORWARDING_APP_ID, 0))
-					.setIdleTimeout((short)5)
-					.setMatch(match)
+					//.setIdleTimeout((short)5)
+					.setMatch(my_match)
 					.setActions(list);
 					staticFlowPusher.addFlow("TEST_ARP"+sw.getId(), fm, sw.getStringId());
 					//	messageDamper.write(sw, fm, cntx);
@@ -245,8 +268,9 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 
 			}
 			else if(isArpResponse(match)){
-				log.info("ARP RESPONSE: "+HexString.toHexString(match.getDataLayerSource())+" to "
-						+HexString.toHexString(match.getDataLayerDestination()));
+				log.info(sw.getStringId()+": ARP RESPONSE ");
+//				log.info("ARP RESPONSE: "+HexString.toHexString(match.getDataLayerSource())+" to "
+//						+HexString.toHexString(match.getDataLayerDestination()));
 				long macSrc = Ethernet.toLong(match.getDataLayerSource());
 				long macDst = Ethernet.toLong(match.getDataLayerDestination());
 				IDevice devSrc = findDevice(macSrc);
@@ -258,24 +282,31 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 							(short) dstId.getPort(), FORWARDING_APP_ID, true).getPath();
 					short firstPort = match.getInputPort();
 					for (int i=np.size()-1;i>=0;i=i-2){
-						log.info("ID: "+np.get(i).getNodeId()+" : "+np.get(i).getPortId());
+						//log.info("ID: "+np.get(i).getNodeId()+" : "+np.get(i).getPortId());
 						List<OFAction> list = new ArrayList<OFAction>();
 						OFActionOutput ofaction = new OFActionOutput((short) np.get(i).getPortId());
 						list.add(ofaction);
-
-						OFFlowMod fm = (OFFlowMod) floodlightProvider.getOFMessageFactory().getMessage(OFType.FLOW_MOD);
-						fm.setCookie(AppCookie.makeCookie(FORWARDING_APP_ID, 0))
-						.setIdleTimeout((short)5)
-						.setPriority((short)20)
-						.setMatch(match)
-						.setActions(list);
+						OFMatch my_match= new OFMatch();
+						my_match.setDataLayerDestination(match.getDataLayerDestination());
+						my_match.setDataLayerSource(match.getDataLayerSource());
+						my_match.setTransportSource(match.getTransportSource());
+						my_match.setTransportDestination(match.getTransportDestination());
+						my_match.setNetworkDestination(match.getNetworkDestination());
+						my_match.setNetworkSource(match.getNetworkSource());
 						if(i>1){
-							match.setInputPort(np.get(i-1).getPortId());
+							my_match.setInputPort(np.get(i-1).getPortId());
 						}
 						else{
-							match.setInputPort(firstPort);
+							my_match.setInputPort(firstPort);
 						}
-						log.info("MATCH: "+fm);
+						OFFlowMod fm = (OFFlowMod) floodlightProvider.getOFMessageFactory().getMessage(OFType.FLOW_MOD);
+						fm.setCookie(AppCookie.makeCookie(FORWARDING_APP_ID, 0))
+						//.setIdleTimeout((short)5)
+						.setPriority((short)20)
+						.setMatch(my_match)
+						.setActions(list);
+						
+						//log.info("MATCH: "+fm);
 						staticFlowPusher.addFlow("ARP_RESPONSE"+np.get(i).getNodeId(), fm, HexString.toHexString(np.get(i).getNodeId()));
 					}
 				}
@@ -294,25 +325,31 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 							(short) dstId.getPort(), FORWARDING_APP_ID, true).getPath();
 					short firstPort = match.getInputPort();
 					for (int i=np.size()-1;i>=0;i=i-2){
-						log.info("ID: "+np.get(i).getNodeId()+" : "+np.get(i).getPortId());
+						//log.info("ID: "+np.get(i).getNodeId()+" : "+np.get(i).getPortId());
 						List<OFAction> list = new ArrayList<OFAction>();
 						OFActionOutput ofaction = new OFActionOutput((short) np.get(i).getPortId());
 						list.add(ofaction);
-
-						OFFlowMod fm = (OFFlowMod) floodlightProvider.getOFMessageFactory().getMessage(OFType.FLOW_MOD);
-						fm.setCookie(AppCookie.makeCookie(FORWARDING_APP_ID, 0))
-						.setIdleTimeout((short)5)
-						.setPriority((short)20)
-						.setMatch(match)
-						.setActions(list);
+						OFMatch my_match= new OFMatch();
+						my_match.setDataLayerDestination(match.getDataLayerDestination());
+						my_match.setDataLayerSource(match.getDataLayerSource());
+						my_match.setTransportSource(match.getTransportSource());
+						my_match.setTransportDestination(match.getTransportDestination());
+						my_match.setNetworkDestination(match.getNetworkDestination());
+						my_match.setNetworkSource(match.getNetworkSource());
 						if(i>1){
-							match.setInputPort(np.get(i-1).getPortId());
+							my_match.setInputPort(np.get(i-1).getPortId());
 						}
 						else{
-							match.setInputPort(firstPort);
+							my_match.setInputPort(firstPort);
 						}
-						log.info("MATCH: "+fm);
-						staticFlowPusher.addFlow("ICMP"+np.get(i).getNodeId()+match.getNetworkDestination(), fm, HexString.toHexString(np.get(i).getNodeId()));
+						OFFlowMod fm = (OFFlowMod) floodlightProvider.getOFMessageFactory().getMessage(OFType.FLOW_MOD);
+						fm.setCookie(AppCookie.makeCookie(FORWARDING_APP_ID, 0))
+						//.setIdleTimeout((short)5)
+						.setPriority((short)20)
+						.setMatch(my_match)
+						.setActions(list);
+						//log.info("MATCH: "+fm);
+						staticFlowPusher.addFlow("ICMP"+np.get(i).getNodeId()+my_match.getNetworkDestination(), fm, HexString.toHexString(np.get(i).getNodeId()));
 					}
 				}
 			}
