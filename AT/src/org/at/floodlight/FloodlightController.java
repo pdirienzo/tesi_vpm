@@ -273,6 +273,10 @@ public class FloodlightController {
 		return result;
 	}
 	
+	public void deleteAllFlowsForAllSwitches() throws IOException{
+		deleteAllFlows("all");
+	}
+	
 	public void deleteAllFlows(String dpid) throws IOException{
 		HttpClient client = HttpClients.createDefault();
 		HttpGet getRequest = new HttpGet(

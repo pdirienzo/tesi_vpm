@@ -109,47 +109,64 @@ public class VPMPathManager extends HttpServlet {
 		out.println(jsResp.toString());
 		out.close();
 	}
+	
+	private void deleteRelayFlow(OvsSwitchInfo info, int port, FloodlightController controller) throws IOException{
+		info.removeOutputPort(port);
+		info.decrementCounter();
+
+		if(info.getCounter() > 0){
+			JSONObject data = new JSONObject()
+			.put("name", "VPM_RTP_"+info.sw.dpid.hashCode())
+			.put("switch", info.sw.dpid)
+			.put("cookie", (new Random()).nextInt())
+			.put("priority", "100")
+			.put("dst-ip", "10.0.0.255")
+			//.put("ingress-port", "3")
+			.put("ether-type", "0x0800")
+			.put("active", "true")
+			.put("actions", info.getCurrentOutputActionString());
+
+			try{
+				controller.addStaticFlow(data);
+			}catch(IOException ex){
+				info.incrementCounter();
+				throw ex;
+			}
+		}else{
+			controller.deleteFlow(info.sw.dpid,"VPM_RTP_"+info.sw.dpid.hashCode());
+		}
+	}
+	
+	private void deleteLeafFlow(OvsSwitchInfo info, FloodlightController controller) throws IOException{
+		controller.deleteFlow(info.sw.dpid, "VPM_RTP_P_"+info.sw.dpid.hashCode() );
+	}
 
 	private void deleteFlows(VPMGraph<OvsSwitch,LinkConnection> jpath) throws IOException{
 		FloodlightController controller = getController();
 		VPMSwitchInfoHolder vsHolder = (VPMSwitchInfoHolder)getServletContext().
 				getAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER);
 
-		Iterator<LinkConnection> switches = jpath.edgeSet().iterator();
+		Iterator<LinkConnection> edges = jpath.edgeSet().iterator();
 		LinkConnection cl = null;
 
-		while(switches.hasNext()){
-			cl = switches.next();
-			OvsSwitchInfo info = vsHolder.get(cl.getSource().dpid);
-			info.removeOutputPort(cl.getSrcPort().number);
-			info.decrementCounter();
-
-			if(info.getCounter() > 0){
-				JSONObject data = new JSONObject()
-				.put("name", "VPM_RTP_"+info.sw.dpid.hashCode())
-				.put("switch", info.sw.dpid)
-				.put("cookie", (new Random()).nextInt())
-				.put("priority", "100")
-				.put("dst-ip", "10.0.0.255")
-				//.put("ingress-port", "3")
-				.put("ether-type", "0x0800")
-				.put("active", "true")
-				.put("actions", info.getCurrentOutputActionString());
-
-				try{
-					controller.addStaticFlow(data);
-				}catch(IOException ex){
-					info.incrementCounter();
-					throw ex;
-				}
+		while(edges.hasNext()){
+			cl = edges.next();
+			OvsSwitchInfo infoSrc = vsHolder.get(cl.getSource().dpid);
+			OvsSwitchInfo infoTarget = vsHolder.get(cl.getTarget().dpid);
+			
+			if(infoSrc.sw.type == OvsSwitch.Type.LEAF ){
+				deleteLeafFlow(infoSrc, controller);
 			}else{
-				controller.deleteFlow(info.sw.dpid,"VPM_RTP_"+info.sw.dpid.hashCode());
+				deleteRelayFlow(infoSrc, cl.getSrcPort().number, controller);
 			}
+			
+			if(infoTarget.sw.type == OvsSwitch.Type.LEAF ){
+				deleteLeafFlow(infoTarget, controller);
+			}else{
+				deleteRelayFlow(infoTarget, cl.getTargetPort().number, controller);
+			}		
 		}
-
-		OvsSwitchInfo info = vsHolder.get(cl.getTarget().dpid);
-		controller.deleteFlow(info.sw.dpid, "VPM_RTP_P_"+info.sw.dpid.hashCode() );
-
+	
 	}
 
 	private void addFlows(GraphPath<OvsSwitch,LinkConnection> jpath) throws IOException{
@@ -210,7 +227,8 @@ public class VPMPathManager extends HttpServlet {
 		//.put("ingress-port", "3")
 		.put("ether-type", "0x0800")
 		.put("active", "true")
-		.put("actions", "set-dst-ip=255.255.255.255,output="+controller.getPortNumber(infos.sw, "patch1"));//need to know original network
+		.put("actions", "set-dst-ip="+infos.sw.ip+",output="+controller.getPortNumber(infos.sw, "patch1")); //TODO testing only
+		//.put("actions", "set-dst-ip=255.255.255.255,output="+controller.getPortNumber(infos.sw, "patch1"));//need to know original network
 		controller.addStaticFlow(data);
 	}
 

@@ -40,7 +40,7 @@ public class OvsSwitchInfo {
 	public String getCurrentOutputActionString(){
 		StringBuilder sb = new StringBuilder();
 		for(int i=0;i<outputPorts.size()-1;i++)
-			sb.append("output="+outputPorts.get(i)+";");
+			sb.append("output="+outputPorts.get(i)+",");
 		
 		sb.append("output="+outputPorts.get(outputPorts.size()-1));
 		
