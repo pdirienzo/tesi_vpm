@@ -4,7 +4,6 @@
 </script>
 <link href="tools/Jquery_selected/css/jquery.selectbox.css"
 	type="text/css" rel="stylesheet" />
-
 <script type="text/javascript" src="tools/Jquery_selected/js/jquery.selectbox-0.2.min.js"></script>
 <script type="text/javascript" src="mxgraph/js/mxClient.js"></script>
 
@@ -247,8 +246,10 @@
 		var dst = $("#leaf_id").val();
 		var srcIp = $("#root_id option:selected").text();
 		var dstIp = $("#leaf_id option:selected").text();
+		var isAtest=$('#test_vpm input').switchButton("option","checked");
 		var req = {
 			op: "add",
+			test: isAtest,
 			src_dpid : src,
 			src_ip : srcIp,
 			dst_dpid : dst,
@@ -348,13 +349,11 @@ div .network-infopanel {
 		<div class="row">
 			<label class="span1"> From: </label>
 			<div class="span3">
-				<p>
-
+				
 					<select name="root_id" id="root_id" tabindex="1">
 						<option value="-1">-- Select Root --</option>
 
 					</select>
-				</p>
 
 			</div>
 			<label class="span1"> To: </label>
@@ -365,12 +364,16 @@ div .network-infopanel {
 					</select>
 				</p>
 			</div>
-			<div class="span2">
+			<div class="span1">
 				<button type="button" id="sPath" class="btn btn-success" onclick="sendPath(this)">Create</button>
 			</div>
-			<div class="span2">
+			<div class="span1">
 				<button type="button" id="dPath" class="btn btn-danger disable" onclick="deletePath(this)" disabled>Delete</button>
 			</div>
+			<div id="test_vpm" class="span2">
+					<label style="text-align:left">Testing:</label>
+					<input type="checkbox" value="0" checked>
+				</div>
 		</div>
 		<div class="row">
 			<!-- Pre Loading... -->
@@ -389,5 +392,6 @@ div .network-infopanel {
 $(document).ready(function() {
 	fillOption();
 	mainPath(document.getElementById('graph-Container'));
+	$("#test_vpm input").switchButton();
 });
 </script>
