@@ -301,17 +301,10 @@
 		$('#graph-pnl').css("visibility", "hidden");
 		$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
 
-			if (data.status == "ok_deleted") {
+			if (data.status == "ok") {
 				console.log(data.path);
 				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 				
-				xmlPath = data.path;
-				var doc = mxUtils.parseXml(xmlPath);
-				var decoder = new mxCodec(doc);
-				decoder.decode(doc.documentElement, graphPath.getModel());
-
-				var layout = new mxHierarchicalLayout(graphPath);
-				layout.execute(graphPath.getDefaultParent());
 				$("#dPath").addClass("disabled");
 				$("#dPath").prop('disabled',true);
 			} else
