@@ -35,6 +35,7 @@
 			graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 			graphPath.setAllowDanglingEdges(false);
 			graphPath.setCellsResizable(false);
+			graphPath.resizeContainer=false;
 			graphPath.setConnectable(false);
 			graphPath.multigraph = false;
 			graphPath.htmlLabels = true;
@@ -213,7 +214,8 @@
 		var dst = $("#leaf_id").val();
 		$("#loadingMaskP").css("visibility", "show");
 		$('#graph-pnl').css("visibility", "hidden");
-		$("#dPath").css("visibility","hidden");
+		$("#dPath").addClass("disabled");
+		$("#dPath").prop("disabled",true);
 		$.getJSON("VPMPathManager?src_dpid="+src+"&dst_dpid="+dst, function(data) {
 			if (data.status == "ok_path") {
 				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
@@ -221,7 +223,9 @@
 				var doc = mxUtils.parseXml(xmlPath);
 				var decoder = new mxCodec(doc);
 				decoder.decode(doc.documentElement, graphPath.getModel());
-				$("#dPath").css("visibility","show");
+				$("#dPath").removeClass("disabled");
+				$("#dPath").prop('disabled',false);
+
 				var layout = new mxHierarchicalLayout(graphPath);
 				layout.execute(graphPath.getDefaultParent());
 			} else if(data.status == "ok_no_path"){
@@ -265,8 +269,8 @@
 
 				var layout = new mxHierarchicalLayout(graphPath);
 				layout.execute(graphPath.getDefaultParent());
-				$("#dPath").css("visibility","show");
-
+				$("#dPath").removeClass("disabled");
+				$("#dPath").prop('disabled',false);
 			} else
 				showDialog("Errore", data.details);
 			
@@ -287,6 +291,7 @@
 		var srcIp = $("#root_id option:selected").text();
 		var dstIp = $("#leaf_id option:selected").text();
 		var req = {
+			op: "del",
 			src_dpid : src,
 			src_ip : srcIp,
 			dst_dpid : dst,
@@ -294,9 +299,9 @@
 		};
 		$("#loadingMaskP").css("visibility", "show");
 		$('#graph-pnl').css("visibility", "hidden");
-		$.post("VPMPathManager", {"delete-path" : JSON.stringify(req)}, function(data) {
+		$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
 
-			if (data.status == "ok") {
+			if (data.status == "ok_deleted") {
 				console.log(data.path);
 				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 				
@@ -307,8 +312,8 @@
 
 				var layout = new mxHierarchicalLayout(graphPath);
 				layout.execute(graphPath.getDefaultParent());
-				$("#dPath").css("visibility","hidden");
-
+				$("#dPath").addClass("disabled");
+				$("#dPath").prop('disabled',true);
 			} else
 				showDialog("Errore", data.details);
 			
@@ -371,7 +376,7 @@ div .network-infopanel {
 				<button type="button" id="sPath" class="btn btn-success" onclick="sendPath(this)">Create</button>
 			</div>
 			<div class="span2">
-				<button type="button" id="dPath" class="btn btn-danger" style="visibility:hidden" onclick="deletePath(this)">Delete</button>
+				<button type="button" id="dPath" class="btn btn-danger disable" onclick="deletePath(this)" disabled>Delete</button>
 			</div>
 		</div>
 		<div class="row">
