@@ -12,7 +12,7 @@ public class Test {
 		
 		//System.out.println(d.getID());
 		d.destroyWithFlags(Domain.DestroyFlags.DESTROY_GRACEFUL);
-		//System.out.println(String.format("%.2f",v));
+		System.out.println(String.format("%.2f",d));
 		conn.close();
 
 	}
