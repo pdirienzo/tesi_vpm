@@ -100,8 +100,8 @@
 					<li><a href="new_dashboard.html">Dashboard</a></li>
 					<li><a href="migration.html">Migration</a></li>
 					<li><a href="ovs_network.html">Networking</a></li>
-					<li><a href="settings.html">Settings</a></li>
 					<li><a href="path.html">Path</a></li>
+					<li><a href="settings.html">Settings</a></li>
 				</ul>
 			</div>
 		</div>
