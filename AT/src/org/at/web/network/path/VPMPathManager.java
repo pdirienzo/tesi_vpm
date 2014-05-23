@@ -110,6 +110,48 @@ public class VPMPathManager extends HttpServlet {
 		out.close();
 	}
 
+	private void deleteFlows(VPMGraph<OvsSwitch,LinkConnection> jpath) throws IOException{
+		FloodlightController controller = getController();
+		VPMSwitchInfoHolder vsHolder = (VPMSwitchInfoHolder)getServletContext().
+				getAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER);
+
+		Iterator<LinkConnection> switches = jpath.edgeSet().iterator();
+		LinkConnection cl = null;
+
+		while(switches.hasNext()){
+			cl = switches.next();
+			OvsSwitchInfo info = vsHolder.get(cl.getSource().dpid);
+			info.removeOutputPort(cl.getSrcPort().number);
+			info.decrementCounter();
+
+			if(info.getCounter() > 0){
+				JSONObject data = new JSONObject()
+				.put("name", "VPM_RTP_"+info.sw.dpid.hashCode())
+				.put("switch", info.sw.dpid)
+				.put("cookie", (new Random()).nextInt())
+				.put("priority", "100")
+				.put("dst-ip", "10.0.0.255")
+				//.put("ingress-port", "3")
+				.put("ether-type", "0x0800")
+				.put("active", "true")
+				.put("actions", info.getCurrentOutputActionString());
+
+				try{
+					controller.addStaticFlow(data);
+				}catch(IOException ex){
+					info.incrementCounter();
+					throw ex;
+				}
+			}else{
+				controller.deleteFlow(info.sw.dpid,"VPM_RTP_"+info.sw.dpid.hashCode());
+			}
+		}
+
+		OvsSwitchInfo info = vsHolder.get(cl.getTarget().dpid);
+		controller.deleteFlow(info.sw.dpid, "VPM_RTP_P_"+info.sw.dpid.hashCode() );
+
+	}
+
 	private void addFlows(GraphPath<OvsSwitch,LinkConnection> jpath) throws IOException{
 
 		VPMSwitchInfoHolder vsHolder = (VPMSwitchInfoHolder)getServletContext().
@@ -157,7 +199,7 @@ public class VPMPathManager extends HttpServlet {
 			infos = new OvsSwitchInfo(nodes.get(nodes.size()-1));
 			vsHolder.put(infos.sw.dpid, infos);
 		}
-		
+
 		//the final flow to output it on the physical network
 		JSONObject data = new JSONObject()
 		.put("name", "VPM_RTP_P_"+infos.sw.dpid.hashCode())
@@ -200,7 +242,7 @@ public class VPMPathManager extends HttpServlet {
 					VPMGraph<OvsSwitch, LinkConnection> currentGraph = holder.getGraph();
 
 					if(currentGraph == null)
-						currentGraph = getController().getTopology();
+						throw new IOException("You need to setup a tree before asking for a path");
 
 
 					DijkstraShortestPath<OvsSwitch, LinkConnection> shortest = new DijkstraShortestPath<OvsSwitch, LinkConnection>(currentGraph,
@@ -208,19 +250,25 @@ public class VPMPathManager extends HttpServlet {
 							findOriginal(currentGraph, new OvsSwitch(targetdpid, jsReq.getString("dst_ip"))));
 
 					addFlows(shortest.getPath());
+
 					pathToClient = NetworkConverter.jpathToMx(shortest.getPath());
 					pathHolder.put(pathName, pathToClient);
-
 				}
+				
+				mxCodec codec = new mxCodec();	
+				String xmlString =  mxXmlUtils.getXml(codec.encode(
+						(pathToClient).getModel()));
+				jsResp.put("path", xmlString);
+				
 			}else if(op.equals("del")){
-
+				if(pathToClient != null){ //if there is no path the request makes no sense
+					deleteFlows(NetworkConverter.mxToJgraphT(pathToClient));
+					pathHolder.remove(pathName);
+				}else
+					throw new IOException("You are trying to delete a non existent path");
 			}
 
 			jsResp.put("status", "ok");
-			mxCodec codec = new mxCodec();	
-			String xmlString =  mxXmlUtils.getXml(codec.encode(
-					(pathToClient).getModel()));
-			jsResp.put("path", xmlString);
 
 		}catch(IOException ex){
 			System.err.println(ex.getMessage());
