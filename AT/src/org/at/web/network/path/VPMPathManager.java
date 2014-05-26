@@ -37,6 +37,7 @@ public class VPMPathManager extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 
+	private boolean test = false;
 
 	private FloodlightController getController() throws IOException{
 		Database d = new Database();
@@ -226,9 +227,11 @@ public class VPMPathManager extends HttpServlet {
 		.put("dst-ip", "10.0.0.255")
 		//.put("ingress-port", "3")
 		.put("ether-type", "0x0800")
-		.put("active", "true")
-		.put("actions", "set-dst-ip="+infos.sw.ip+",output="+controller.getPortNumber(infos.sw, "patch1")); //TODO testing only
-		//.put("actions", "set-dst-ip=255.255.255.255,output="+controller.getPortNumber(infos.sw, "patch1"));//need to know original network
+		.put("active", "true");
+		if(test)
+			data.put("actions", "set-dst-ip="+infos.sw.ip+",output="+controller.getPortNumber(infos.sw, "patch1")); //TODO testing only
+		else
+			data.put("actions", "set-dst-ip=255.255.255.255,output="+controller.getPortNumber(infos.sw, "patch1"));//need to know original network
 		controller.addStaticFlow(data);
 	}
 
@@ -255,6 +258,7 @@ public class VPMPathManager extends HttpServlet {
 			mxGraph pathToClient = pathHolder.get(pathName);
 
 			if(op.equals("add")){
+				test = jsReq.getBoolean("test");
 				if(pathToClient == null){ //no path was saved
 					VPMGraphHolder holder = (VPMGraphHolder)getServletContext().getAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER);
 					VPMGraph<OvsSwitch, LinkConnection> currentGraph = holder.getGraph();

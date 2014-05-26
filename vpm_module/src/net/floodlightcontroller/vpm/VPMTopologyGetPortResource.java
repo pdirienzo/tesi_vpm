@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.floodlightcontroller.core.IFloodlightProviderService;
+import net.floodlightcontroller.core.ImmutablePort;
+
 import org.openflow.util.HexString;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
@@ -15,6 +17,14 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 public class VPMTopologyGetPortResource extends ServerResource {
+	
+	private IFloodlightProviderService ifps;
+	
+	public VPMTopologyGetPortResource(){
+		
+		ifps = (IFloodlightProviderService)getContext().getAttributes().
+                get(IFloodlightProviderService.class.getCanonicalName());
+	}
 	/**
 	 * Return the port number given the switch-dpid and the port-name
 	 * @param Json
@@ -24,17 +34,24 @@ public class VPMTopologyGetPortResource extends ServerResource {
 	public String getPortInfo(String fmJson){
 		String response="";
 		Map<String,String> mp=null;
-		IFloodlightProviderService ifps = null;
 		try {
 			mp=jsonToStorageEntry(fmJson);
-			ifps=(IFloodlightProviderService)getContext().getAttributes().
-                    get(IFloodlightProviderService.class.getCanonicalName());
-			response=String.valueOf(ifps.getSwitch(HexString.toLong(mp.get("switch-dpid")))
-					.getPort(mp.get("port-name")).getPortNumber());
+		
+			if(mp.get("port-name").equals("vnetx")){ // user wants every vnet port
+				StringBuilder sb = new StringBuilder();
+				sb.append("{");
+				for(ImmutablePort port : ifps.getSwitch(HexString.toLong(mp.get("switch-dpid"))).getPorts()){
+					sb.append("{\"port-name\":\""+port.getName()+"\",");
+					sb.append("\"port-number\":\""+port.getPortNumber()+"\"}");
+				}
+				sb.append("}");
+			}else
+				response = "{\"port-number\":\""+String.valueOf(ifps.getSwitch(HexString.toLong(mp.get("switch-dpid")))
+					.getPort(mp.get("port-name")).getPortNumber())+"\"}";
 		} catch (IOException | NullPointerException e) {
 			response="-1";
 		}
-		return "{\"port-number\":\""+response+"\"}";
+		return response;
 	}
 	
 	public static Map<String, String> jsonToStorageEntry(String fmJson) throws IOException {

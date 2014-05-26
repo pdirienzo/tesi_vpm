@@ -340,9 +340,10 @@ public class NetworkTopology extends HttpServlet {
 
 					}
 				}
-
+				
+				controller.resetAllFlowsForAllSwitches(); //resetting flows
+				
 				holder.addGraph(jgraph);
-
 				jResponse.put("status", "ok");
 
 			}catch(IOException | OvsdbException ex){

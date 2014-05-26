@@ -63,21 +63,6 @@ public class FloodlightController {
 		return RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj).getInt("port-number");
 	}
 	
-	private String computePortName(String dpidSrc,String dpidDst){
-		StringBuilder sb = new StringBuilder();
-		sb.append("gre");
-		String[] subs = dpidSrc.split(":");
-		sb.append(subs[subs.length-2]);
-		sb.append(subs[subs.length-1]);
-
-		subs = dpidDst.split(":");
-		sb.append(subs[subs.length-2]);
-		sb.append(subs[subs.length-1]);
-
-		return sb.toString();
-
-	}
-	
 	
 	
 	/*private List<LinkConnection> deleteOpposites(List<LinkConnection> original){
@@ -153,8 +138,6 @@ public class FloodlightController {
 		return switches;
 	}*/
 	
-	//TODO
-
 	public JSONObject getStaticFlows(String dpid) throws IOException{
 		JSONObject json = null;
 
@@ -273,8 +256,11 @@ public class FloodlightController {
 		return result;
 	}
 	
-	public void deleteAllFlowsForAllSwitches() throws IOException{
-		deleteAllFlows("all");
+	public void resetAllFlowsForAllSwitches() throws IOException{
+		HttpClient client = HttpClients.createDefault();
+		HttpGet getRequest = new HttpGet(
+				baseURL+"/vpm/topology/forwarding/reset");
+		client.execute(getRequest);
 	}
 	
 	public void deleteAllFlows(String dpid) throws IOException{

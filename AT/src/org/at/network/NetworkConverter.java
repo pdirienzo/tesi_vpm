@@ -11,6 +11,7 @@ import org.at.network.types.Port;
 import org.at.network.types.VPMGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
 import org.w3c.dom.Document;
@@ -190,6 +191,8 @@ public final class NetworkConverter {
 	
 	public static void main(String[] args){
 		VPMGraph<OvsSwitch, LinkConnection> myGraph = new VPMGraph<>(LinkConnection.class);
+		ConnectivityInspector<OvsSwitch, LinkConnection> cIsp = new ConnectivityInspector<>(myGraph);
+		myGraph.addGraphListener(cIsp);
 		
 		OvsSwitch a = new OvsSwitch("a","1",OvsSwitch.Type.ROOT);
 		OvsSwitch b = new OvsSwitch("b","2", OvsSwitch.Type.RELAY);
@@ -236,6 +239,13 @@ public final class NetworkConverter {
 				System.out.println(l);
 		}
 		
+		
+		System.out.println("Is connected: "+cIsp.isGraphConnected());
+		myGraph.removeEdge(conns[5]);
+		myGraph.removeEdge(conns[4]);
+		
+		//cIsp = new ConnectivityInspector<>(myGraph);
+		System.out.println("Is connected: "+cIsp.isGraphConnected());
 		/*DijkstraShortestPath<OvsSwitch, LinkConnection> dj = new DijkstraShortestPath<OvsSwitch, LinkConnection>(myGraph, 
 				b1, d1);
 		
