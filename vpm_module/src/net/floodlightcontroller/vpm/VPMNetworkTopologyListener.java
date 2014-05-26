@@ -1,31 +1,31 @@
 package net.floodlightcontroller.vpm;
 
-import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 import net.floodlightcontroller.core.IFloodlightProviderService;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
 
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
 import org.openflow.util.HexString;
 
-import com.google.common.net.HttpHeaders;
 
 public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 
 	private static final String CALLBACK_URI = "http://192.168.1.179:8081/VPM/VPMToleranceManager";
-	
+	private static final int TIMEOUT = 3000;
+
 	private IFloodlightProviderService ifps = null;
 	public VPMNetworkTopologyListener(
 			IFloodlightProviderService floodlightProvider) {
@@ -60,41 +60,71 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 		}
 		return ld;
 	}
+	private final static HttpClient client = createHttpClient();
+
+	private static HttpClient createHttpClient(){
+		RequestConfig config = RequestConfig.custom()
+			    .setSocketTimeout(TIMEOUT)
+			    .setConnectTimeout(TIMEOUT)
+			    .build();
+		
+		HttpClientBuilder hcBuilder = HttpClients.custom();
+		hcBuilder.setDefaultRequestConfig(config);
+		
+		return hcBuilder.build();
+	}
+
+
+	public static String post(String url, String data) {
+		/* POST Method */
+		final HttpPost post = new HttpPost(url);
+		try {
+			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+			nameValuePairs.add(new BasicNameValuePair("data", data));
+			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+			return EntityUtils.toString(client.execute(post).getEntity());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 	
 	private void sendPost(String content){
-		HttpRequest httpReq= new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, CALLBACK_URI);
-		httpReq.setHeader(HttpHeaders.CONTENT_TYPE,"application/json");     
-		//String params="";
-		ChannelBuffer cb=ChannelBuffers.copiedBuffer(content,Charset.defaultCharset());
-		httpReq.setHeader(HttpHeaders.CONTENT_LENGTH,cb.readableBytes());
-		httpReq.setContent(cb);
+//		HttpRequest httpReq= new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, CALLBACK_URI);
+//		httpReq.setHeader(HttpHeaders.CONTENT_TYPE,"application/json");     
+//		//String params="";
+//		ChannelBuffer cb=ChannelBuffers.copiedBuffer(content,Charset.defaultCharset());
+//		httpReq.setHeader(HttpHeaders.CONTENT_LENGTH,cb.readableBytes());
+//		httpReq.setContent(cb);
+//		
+//		ClientBootstrap client = new ClientBootstrap(
+//				new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
+//						Executors.newCachedThreadPool()));
+//		Channel channel = client.connect(new InetSocketAddress("192.168.1.179", 8081)).awaitUninterruptibly()
+//				.getChannel();
+//		
+//		channel.write(httpReq);
+//		channel.close();
+//		client.releaseExternalResources();
 		
-		ClientBootstrap client = new ClientBootstrap(
-				new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
-						Executors.newCachedThreadPool()));
-		Channel channel = client.connect(new InetSocketAddress("192.168.1.179", 8081)).awaitUninterruptibly()
-				.getChannel();
-		
-		channel.write(httpReq);
-		channel.close();
-		client.releaseExternalResources();
 	}
 
 	@Override
 	public void linkDiscoveryUpdate(List<LDUpdate> updateList) {
 		// TODO Auto-generated method stub
 		StringBuilder sb = new StringBuilder();
+		boolean send = false;
 		//updateList = findDuplicate(updateList);
 		sb.append("{ \"result\": [");
-		for (LDUpdate upd : updateList){
+		
+		for (int i=0; i< updateList.size(); i++){
+			LDUpdate upd = updateList.get(i);
 			if (upd.getOperation() == UpdateOperation.LINK_REMOVED){
 				sb.append("{");
 				String srcIP= ifps.getSwitch(upd.getSrc()).getInetAddress().toString();
 				String dstIP= ifps.getSwitch(upd.getDst()).getInetAddress().toString();
-				String srcPortName= ifps.getSwitch(upd.getSrc()).getPort(upd.getSrcPort()).getName();
-				String dstPortName= ifps.getSwitch(upd.getDst()).getPort(upd.getDstPort()).getName();
-				srcPortName = srcPortName + "/" + upd.getSrcPort();
-				dstPortName = dstPortName + "/" + upd.getDstPort();
+				String srcPortName = "" + upd.getSrcPort();
+				String dstPortName = "" + upd.getDstPort();
 				String dstDpid = HexString.toHexString(upd.getDst());
 				String srcDpid = HexString.toHexString(upd.getSrc());
 				sb.append("\"src-ip\":\""+srcIP+"\",");
@@ -103,13 +133,18 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 				sb.append("\"dst-port\":\""+dstPortName+"\",");
 				sb.append("\"src-dpid\":\""+srcDpid+"\",");
 				sb.append("\"dst-dpid\":\""+dstDpid+"\"");
-				sb.append("}");
+				sb.append("},");
+				send = true;
 			}
 		}
+		sb.deleteCharAt(sb.length()-1);
 		sb.append("]}");
-		 
-		System.out.println("LDUPDATE: "+sb);
-		sendPost(sb.toString());
+		 if (send){
+			 
+			 System.out.println("LDUPDATE: "+sb);
+				post(CALLBACK_URI,sb.toString());
+		 }
+		
 	}
 
 }
