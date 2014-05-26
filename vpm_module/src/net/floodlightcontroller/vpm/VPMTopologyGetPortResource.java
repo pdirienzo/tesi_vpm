@@ -8,6 +8,9 @@ import net.floodlightcontroller.core.IFloodlightProviderService;
 import net.floodlightcontroller.core.ImmutablePort;
 
 import org.openflow.util.HexString;
+import org.restlet.Context;
+import org.restlet.Request;
+import org.restlet.Response;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
@@ -20,11 +23,15 @@ public class VPMTopologyGetPortResource extends ServerResource {
 	
 	private IFloodlightProviderService ifps;
 	
-	public VPMTopologyGetPortResource(){
-		
+	@Override
+	public void init(Context arg0, Request arg1, Response arg2) {
+		// TODO Auto-generated method stub
+		super.init(arg0, arg1, arg2);
 		ifps = (IFloodlightProviderService)getContext().getAttributes().
                 get(IFloodlightProviderService.class.getCanonicalName());
 	}
+	
+	
 	/**
 	 * Return the port number given the switch-dpid and the port-name
 	 * @param Json
@@ -41,8 +48,10 @@ public class VPMTopologyGetPortResource extends ServerResource {
 				StringBuilder sb = new StringBuilder();
 				sb.append("{");
 				for(ImmutablePort port : ifps.getSwitch(HexString.toLong(mp.get("switch-dpid"))).getPorts()){
-					sb.append("{\"port-name\":\""+port.getName()+"\",");
-					sb.append("\"port-number\":\""+port.getPortNumber()+"\"}");
+					if (port.getName().startsWith("vnet")){
+						sb.append("{\"port-name\":\""+port.getName()+"\",");
+						sb.append("\"port-number\":\""+port.getPortNumber()+"\"}");	
+					}
 				}
 				sb.append("}");
 				
