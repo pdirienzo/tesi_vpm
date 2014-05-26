@@ -2,6 +2,9 @@ package net.floodlightcontroller.vpm;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.locks.ReentrantLock;
 
 import net.floodlightcontroller.core.IFloodlightProviderService;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
@@ -11,12 +14,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.openflow.util.HexString;
 
@@ -24,13 +24,25 @@ import org.openflow.util.HexString;
 public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 
 	private static final String CALLBACK_URI = "http://192.168.1.179:8081/VPM/VPMToleranceManager";
-	private static final int TIMEOUT = 3000;
+	private static final int TIMEOUT = 1000;
 
 	private IFloodlightProviderService ifps = null;
+	private Timer timer;
+	private StringBuilder linkUpdate;
+	private boolean firstRequest;
+	private int nRequests;
+	
+	private final ReentrantLock lock;
+	
 	public VPMNetworkTopologyListener(
 			IFloodlightProviderService floodlightProvider) {
-		// TODO Auto-generated constructor stub
+		
+		this.firstRequest = true;
+		this.nRequests = 0;
 		this.ifps= floodlightProvider;
+		this.timer = new Timer();
+		this.linkUpdate = new StringBuilder();
+		this.lock = new ReentrantLock();
 	}
 
 	@Override
@@ -43,7 +55,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 		
 	}
 	
-	public List<LDUpdate> findDuplicate (List<LDUpdate> lupd){
+	/*public List<LDUpdate> findDuplicate (List<LDUpdate> lupd){
 		List<LDUpdate> ld = new ArrayList<LDUpdate>();
 		while (lupd.size()>0){
 			LDUpdate l = lupd.remove(0);
@@ -59,35 +71,9 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 			ld.add(l);
 		}
 		return ld;
-	}
-	private final static HttpClient client = createHttpClient();
-
-	private static HttpClient createHttpClient(){
-		RequestConfig config = RequestConfig.custom()
-			    .setSocketTimeout(TIMEOUT)
-			    .setConnectTimeout(TIMEOUT)
-			    .build();
-		
-		HttpClientBuilder hcBuilder = HttpClients.custom();
-		hcBuilder.setDefaultRequestConfig(config);
-		
-		return hcBuilder.build();
-	}
-
-
-	public static String post(String url, String data) {
-		/* POST Method */
-		final HttpPost post = new HttpPost(url);
-		try {
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-			nameValuePairs.add(new BasicNameValuePair("data", data));
-			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-			return EntityUtils.toString(client.execute(post).getEntity());
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+	}*/
+	
+	
 	
 	private void sendPost(String content){
 //		HttpRequest httpReq= new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, CALLBACK_URI);
@@ -111,39 +97,100 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 
 	@Override
 	public void linkDiscoveryUpdate(List<LDUpdate> updateList) {
-		// TODO Auto-generated method stub
-		StringBuilder sb = new StringBuilder();
-		boolean send = false;
-		//updateList = findDuplicate(updateList);
-		sb.append("{ \"result\": [");
+		
+		synchronized(lock){
+			lock.lock();
+		}
+		
+		if(firstRequest){
+			linkUpdate.append("{ \"result\": [");
+			timer.schedule(new FaultSender(), TIMEOUT);
+		}
 		
 		for (int i=0; i< updateList.size(); i++){
 			LDUpdate upd = updateList.get(i);
 			if (upd.getOperation() == UpdateOperation.LINK_REMOVED){
-				sb.append("{");
+				nRequests++;
+				
+				linkUpdate.append("{");
 				String srcIP= ifps.getSwitch(upd.getSrc()).getInetAddress().toString();
 				String dstIP= ifps.getSwitch(upd.getDst()).getInetAddress().toString();
 				String srcPortName = "" + upd.getSrcPort();
 				String dstPortName = "" + upd.getDstPort();
 				String dstDpid = HexString.toHexString(upd.getDst());
 				String srcDpid = HexString.toHexString(upd.getSrc());
-				sb.append("\"src-ip\":\""+srcIP+"\",");
-				sb.append("\"dst-ip\":\""+dstIP+"\",");
-				sb.append("\"src-port\":\""+srcPortName+"\",");
-				sb.append("\"dst-port\":\""+dstPortName+"\",");
-				sb.append("\"src-dpid\":\""+srcDpid+"\",");
-				sb.append("\"dst-dpid\":\""+dstDpid+"\"");
-				sb.append("},");
-				send = true;
+				linkUpdate.append("\"src-ip\":\""+srcIP+"\",");
+				linkUpdate.append("\"dst-ip\":\""+dstIP+"\",");
+				linkUpdate.append("\"src-port\":\""+srcPortName+"\",");
+				linkUpdate.append("\"dst-port\":\""+dstPortName+"\",");
+				linkUpdate.append("\"src-dpid\":\""+srcDpid+"\",");
+				linkUpdate.append("\"dst-dpid\":\""+dstDpid+"\"");
+				linkUpdate.append("},");
 			}
 		}
-		sb.deleteCharAt(sb.length()-1);
-		sb.append("]}");
-		 if (send){
-			 
-			 System.out.println("LDUPDATE: "+sb);
-				post(CALLBACK_URI,sb.toString());
-		 }
+		
+		synchronized(lock){
+			lock.unlock();
+		}
+		
+	}
+	
+	private class FaultSender extends TimerTask{
+
+		private final HttpClient client = createHttpClient();
+
+		private HttpClient createHttpClient(){
+			RequestConfig config = RequestConfig.custom()
+				    .setSocketTimeout(TIMEOUT)
+				    .setConnectTimeout(TIMEOUT)
+				    .build();
+			
+			HttpClientBuilder hcBuilder = HttpClients.custom();
+			hcBuilder.setDefaultRequestConfig(config);
+			
+			return hcBuilder.build();
+		}
+
+
+		private String post(String url, String data) {
+			/* POST Method */
+			final HttpPost post = new HttpPost(url);
+			try {
+				List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+				nameValuePairs.add(new BasicNameValuePair("data", data));
+				post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+				return EntityUtils.toString(client.execute(post).getEntity());
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		
+		@Override
+		public void run() {
+			
+			synchronized(lock){
+				lock.lock();
+			}
+			
+			linkUpdate.deleteCharAt(linkUpdate.length()-1);
+			linkUpdate.append("]}");
+			
+			if( nRequests > 0 ){ //sometimes we just get notifies about link creation 
+				System.out.println("LDUPDATE: "+linkUpdate);
+				post(CALLBACK_URI,linkUpdate.toString());
+			}else
+				System.out.println("it will not be sent as does not contain destruction of links");
+			
+				//resetting status
+			linkUpdate = new StringBuilder();
+			firstRequest = true;
+			nRequests = 0;
+			
+			synchronized(lock){
+				lock.unlock();
+			}
+		}
 		
 	}
 
