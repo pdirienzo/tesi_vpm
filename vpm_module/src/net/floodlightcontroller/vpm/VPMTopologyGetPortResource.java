@@ -45,6 +45,8 @@ public class VPMTopologyGetPortResource extends ServerResource {
 					sb.append("\"port-number\":\""+port.getPortNumber()+"\"}");
 				}
 				sb.append("}");
+				
+				response = sb.toString();
 			}else
 				response = "{\"port-number\":\""+String.valueOf(ifps.getSwitch(HexString.toLong(mp.get("switch-dpid")))
 					.getPort(mp.get("port-name")).getPortNumber())+"\"}";
