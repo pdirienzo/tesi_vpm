@@ -1,18 +1,26 @@
 package net.floodlightcontroller.vpm;
 
-import java.net.Inet4Address;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jboss.netty.container.osgi.NettyBundleActivator;
-import org.openflow.util.HexString;
-import org.restlet.engine.adapter.HttpRequest;
 
 import net.floodlightcontroller.core.IFloodlightProviderService;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
 
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.openflow.util.HexString;
+
+import com.google.common.net.HttpHeaders;
+
 public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 
+	private static final String CALLBACK_URI = "http://192.168.1.179:8081/VPM/VPMToleranceManager";
+	
 	private IFloodlightProviderService ifps = null;
 	public VPMNetworkTopologyListener(
 			IFloodlightProviderService floodlightProvider) {
@@ -47,6 +55,16 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 		}
 		return ld;
 	}
+	
+	private void sendPost(String content){
+		HttpRequest httpReq= new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, CALLBACK_URI);
+		httpReq.setHeader(HttpHeaders.CONTENT_TYPE,"application/json");     
+		//String params="";
+		ChannelBuffer cb=ChannelBuffers.copiedBuffer(content,Charset.defaultCharset());
+		httpReq.setHeader(HttpHeaders.CONTENT_LENGTH,cb.readableBytes());
+		httpReq.setContent(cb);
+				
+	}
 
 	@Override
 	public void linkDiscoveryUpdate(List<LDUpdate> updateList) {
@@ -77,7 +95,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 		sb.append("]}");
 		 
 		System.out.println("LDUPDATE: "+sb);
-		
+		sendPost(sb.toString());
 	}
 
 }
