@@ -1,7 +1,9 @@
 package net.floodlightcontroller.vpm;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.floodlightcontroller.core.IFloodlightProviderService;
@@ -46,14 +48,18 @@ public class VPMTopologyGetPortResource extends ServerResource {
 		
 			if(mp.get("port-name").equals("vnetx")){ // user wants every vnet port
 				StringBuilder sb = new StringBuilder();
-				sb.append("{");
-				for(ImmutablePort port : ifps.getSwitch(HexString.toLong(mp.get("switch-dpid"))).getPorts()){
+				sb.append("{\"result\":[");
+				Object[] ports = ifps.getSwitch(HexString.toLong(mp.get("switch-dpid"))).getPorts().toArray();
+				for(int i=0;i<ports.length;i++){
+					ImmutablePort port = (ImmutablePort)ports[i];
 					if (port.getName().startsWith("vnet")){
 						sb.append("{\"port-name\":\""+port.getName()+"\",");
-						sb.append("\"port-number\":\""+port.getPortNumber()+"\"}");	
+						sb.append("\"port-number\":\""+port.getPortNumber()+"\"}");
+						if(i<ports.length-1)
+							sb.append(",");
 					}
 				}
-				sb.append("}");
+				sb.append("]}");
 				
 				response = sb.toString();
 			}else
