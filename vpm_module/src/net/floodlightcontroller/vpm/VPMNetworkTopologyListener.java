@@ -1,14 +1,19 @@
 package net.floodlightcontroller.vpm;
 
+import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import net.floodlightcontroller.core.IFloodlightProviderService;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
 
+import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -63,7 +68,16 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 		ChannelBuffer cb=ChannelBuffers.copiedBuffer(content,Charset.defaultCharset());
 		httpReq.setHeader(HttpHeaders.CONTENT_LENGTH,cb.readableBytes());
 		httpReq.setContent(cb);
-				
+		
+		ClientBootstrap client = new ClientBootstrap(
+				new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
+						Executors.newCachedThreadPool()));
+		Channel channel = client.connect(new InetSocketAddress("192.168.1.179", 8081)).awaitUninterruptibly()
+				.getChannel();
+		
+		channel.write(httpReq);
+		channel.close();
+		client.releaseExternalResources();
 	}
 
 	@Override
