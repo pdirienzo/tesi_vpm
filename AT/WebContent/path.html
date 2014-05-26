@@ -6,14 +6,13 @@
 	type="text/css" rel="stylesheet" />
 <script type="text/javascript" src="tools/Jquery_selected/js/jquery.selectbox-0.2.min.js"></script>
 <script type="text/javascript" src="mxgraph/js/mxClient.js"></script>
+<script type="text/javascript" src="tools/JQuery_IP/jquery.input-ip-address-control.js"></script>
 
 <script type="text/javascript">
 	var graphPath;
 	var rootPath = 0;
 	var leafPath = 0;
 	var xmlPath;
-
-	
 
 	function sendPath() {
 				if ($("#root_id").val() != -1 && $("#leaf_id").val() != -1) {
@@ -246,44 +245,56 @@
 		var dst = $("#leaf_id").val();
 		var srcIp = $("#root_id option:selected").text();
 		var dstIp = $("#leaf_id option:selected").text();
-		var isAtest=$('#test_vpm input').switchButton("option","checked");
-		var req = {
-			op: "add",
-			test: isAtest,
-			src_dpid : src,
-			src_ip : srcIp,
-			dst_dpid : dst,
-			dst_ip : dstIp
-		};
-		$("#loadingMaskP").css("visibility", "show");
-		$('#graph-pnl').css("visibility", "hidden");
-		$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
+		var isAtest=$('#chkTest').switchButton("option","checked");
+		var ipBroadcast = $("#ipv6");
+		if (ipBroadcast.val() != "___.___.___.___"){
+			var req = {
+					op: "add",
+					test: isAtest,
+					src_dpid : src,
+					src_ip : srcIp,
+					dst_dpid : dst,
+					dst_ip : dstIp,
+					broadcast: ipBroadcast
+				};
 
-			if (data.status == "ok") {
-				console.log(data.path);
-				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
-				
-				xmlPath = data.path;
-				var doc = mxUtils.parseXml(xmlPath);
-				var decoder = new mxCodec(doc);
-				decoder.decode(doc.documentElement, graphPath.getModel());
-
-				var layout = new mxHierarchicalLayout(graphPath);
-				layout.execute(graphPath.getDefaultParent());
-				$("#dPath").removeClass("disabled");
-				$("#dPath").prop('disabled',false);
-			} else
-				showDialog("Errore", data.details);
 			
-			$("#loadingMaskP").fadeOut("slow", function() {
-				// $("#graph-pnl").fadeIn("slow");
-				$("#graph-pnl").fadeIn("slow");
-				$("#graph-pnl").css("visibility", "show");
+			$("#loadingMaskP").css("visibility", "show");
+			$('#graph-pnl').css("visibility", "hidden");
+			$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
 
-			});
-		},
-		"json");
+				if (data.status == "ok") {
+					console.log(data.path);
+					graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
+					
+					xmlPath = data.path;
+					var doc = mxUtils.parseXml(xmlPath);
+					var decoder = new mxCodec(doc);
+					decoder.decode(doc.documentElement, graphPath.getModel());
+
+					var layout = new mxHierarchicalLayout(graphPath);
+					layout.execute(graphPath.getDefaultParent());
+					$("#dPath").removeClass("disabled");
+					$("#dPath").prop('disabled',false);
+				} else
+					showDialog("Errore", data.details);
+				
+				$("#loadingMaskP").fadeOut("slow", function() {
+					// $("#graph-pnl").fadeIn("slow");
+					$("#graph-pnl").fadeIn("slow");
+					$("#graph-pnl").css("visibility", "show");
+
+				});
+			},
+			"json");
+
+		}
+		else {
+			
+			showDialog("Errore","Please Fill Broadcast");
+		}
 		
+				
 	}
 	
 	function deletePath() {
@@ -332,8 +343,6 @@ div .network-infopanel {
 	padding: 10px;
 	border: 2px solid gray;
 }
-
-;
 #graph-pnl {
 	margin: auto;
 	text-align: center;
@@ -342,7 +351,6 @@ div .network-infopanel {
 	padding: 10px;
 	border: 2px solid gray;
 }
-;
 </style>
 <div class="network-infopanel">
 	<div class="container">
@@ -370,10 +378,17 @@ div .network-infopanel {
 			<div class="span1">
 				<button type="button" id="dPath" class="btn btn-danger disable" onclick="deletePath(this)" disabled>Delete</button>
 			</div>
-			<div id="test_vpm" class="span2">
-					<label style="text-align:left">Testing:</label>
-					<input type="checkbox" value="0" checked>
-				</div>
+			
+		</div>
+		<div class="row">
+			<div id="test_vpm" class="span3">
+				<label style="text-align:left" class="span1">Testing:</label>
+				<input type="checkbox" value="0" id="chkTest" class="span2" checked>
+			</div>
+			<div class="span4">
+				<label class="span2">BroadCast</label>
+				<input type="text" name="ipv" id="ipv6" class="span2 form-control">
+			</div>
 		</div>
 		<div class="row">
 			<!-- Pre Loading... -->
@@ -392,6 +407,9 @@ div .network-infopanel {
 $(document).ready(function() {
 	fillOption();
 	mainPath(document.getElementById('graph-Container'));
-	$("#test_vpm input").switchButton();
+	$("#chkTest").switchButton();
+	$("#ipv6").ipAddress();
+	$("#ipvDirect").ipAddress();
+	
 });
 </script>
