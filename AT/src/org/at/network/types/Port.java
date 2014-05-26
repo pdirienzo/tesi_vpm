@@ -25,7 +25,7 @@ public class Port {
 
 	public boolean equals(Object o){
 		Port p = (Port)o;
-		return (p.name.equals(this.name) && (p.number == this.number));
+		return (/*p.name.equals(this.name) &&*/ (p.number == this.number));
 	}
 	
 	public String toString(){

@@ -12,6 +12,8 @@ import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
 import org.at.network.types.VPMGraph;
 import org.at.network.types.VPMGraphHolder;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Servlet implementation class VPMToleranceManager
@@ -42,6 +44,11 @@ public class VPMToleranceManager extends HttpServlet {
 		VPMGraph<OvsSwitch, LinkConnection> graph = ((VPMGraphHolder)getServletContext().getAttribute(
 				VPMGraphHolder.VPM_GRAPH_HOLDER)).getGraph();
 		
+		System.out.println(request.getParameter("data"));
+		
+		JSONArray result = (new JSONObject(request.getParameter("data"))).getJSONArray("result");
+		/*for(JSONObject o : result)
+			System.out.println(o);*/
 	}
 
 }
