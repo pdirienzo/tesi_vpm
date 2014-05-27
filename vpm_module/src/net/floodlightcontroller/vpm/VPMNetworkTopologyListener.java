@@ -106,6 +106,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 			if(firstRequest){
 				linkUpdate.append("{ \"result\": [");
 				timer.schedule(new FaultSender(), TIMEOUT);
+				firstRequest = false;
 			}
 
 			for (int i=0; i< updateList.size(); i++){
@@ -190,7 +191,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 				linkUpdate = new StringBuilder();
 				firstRequest = true;
 				nRequests = 0;
-
+				timer = new Timer();
 			}finally{
 				synchronized(lock){
 					lock.unlock();
