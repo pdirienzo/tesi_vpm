@@ -66,6 +66,12 @@ public class LinkConnection extends DefaultWeightedEdge {
 		return "OvsLink from "+getSource()+"["+sourceP+"] to "+getTarget()+"["+targetP+"]";
 	}
 	
+	@Override
+	public int hashCode() {
+		
+		return "42".hashCode();
+	}
+	
 	
 	
 	/*

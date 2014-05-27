@@ -1,5 +1,6 @@
 package org.at.network;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -14,6 +15,8 @@ import org.jgrapht.Graphs;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
+import org.jgrapht.experimental.equivalence.EquivalenceComparator;
+import org.jgrapht.experimental.equivalence.EquivalenceComparatorChainBase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -222,6 +225,36 @@ public final class NetworkConverter {
 		conns[6] = myGraph.addLinkConnection(d, new Port("p6",7),g,new Port("p3",1));
 		conns[7] = myGraph.addLinkConnection(g, new Port("p6",7),h,new Port("p3",1));
 		
+		
+		VPMGraph<OvsSwitch, LinkConnection> myGraph2 = new VPMGraph<>(LinkConnection.class);
+		
+		OvsSwitch copy = new OvsSwitch("a","1",OvsSwitch.Type.ROOT);
+		OvsSwitch copy2 = new OvsSwitch("b","2", OvsSwitch.Type.RELAY);
+		
+		myGraph2.addVertex(copy);
+		myGraph2.addVertex(b);
+		myGraph2.addVertex(c);
+		myGraph2.addVertex(d);
+		myGraph2.addVertex(e);
+		myGraph2.addVertex(f);
+		myGraph2.addVertex(g);
+		myGraph2.addVertex(h);
+		
+		LinkConnection[] conns2 = new LinkConnection[8];
+	    conns2[0] = myGraph2.addLinkConnection(copy, new Port("p1",1),copy2,new Port("p2",2));
+		conns2[1] = myGraph2.addLinkConnection(c, new Port("p2",2),b,new Port("p3",1));
+		conns2[2] = myGraph2.addLinkConnection(b, new Port("p3",1),d,new Port("p4",2));
+		conns2[3] = myGraph2.addLinkConnection(d, new Port("p1",4),e,new Port("p2",1));
+		conns2[4] = myGraph2.addLinkConnection(f, new Port("p1",4),b,new Port("p2",1));
+		conns2[5] = myGraph2.addLinkConnection(a, new Port("p5",5),f,new Port("p5",2));
+	//	conns2[6] = myGraph2.addLinkConnection(d, new Port("p6",7),g,new Port("p3",1));
+		conns2[7] = myGraph2.addLinkConnection(g, new Port("p6",7),h,new Port("p3",1));		
+		
+
+		
+		
+		myGraph2.equals(myGraph);
+		System.out.print(myGraph.equals(myGraph2)+" ");
 		/*OvsSwitch b1 = new OvsSwitch("b","2");
 		OvsSwitch d1 = new OvsSwitch("d","4");
 		
@@ -232,7 +265,9 @@ public final class NetworkConverter {
 				d1 = o;
 		}*/
 		
-		createTree(myGraph);
+		
+		
+		/*createTree(myGraph);
 		potateRelays(myGraph);
 		for(LinkConnection l : myGraph.edgeSet()){
 			if(l.isTree)
@@ -242,16 +277,16 @@ public final class NetworkConverter {
 		
 		System.out.println("Is connected: "+cIsp.isGraphConnected());
 		myGraph.removeEdge(conns[5]);
-		myGraph.removeEdge(conns[4]);
+		myGraph.removeEdge(conns[4]);*/
 		
 		//cIsp = new ConnectivityInspector<>(myGraph);
-		System.out.println("Is connected: "+cIsp.isGraphConnected());
+		//System.out.println("Is connected: "+cIsp.isGraphConnected());
 		/*DijkstraShortestPath<OvsSwitch, LinkConnection> dj = new DijkstraShortestPath<OvsSwitch, LinkConnection>(myGraph, 
 				b1, d1);
 		
 		
 		mxGraph dx = NetworkConverter.jpathToMx(dj.getPath());*/
-		mxCodec codec = new mxCodec();	
+		//mxCodec codec = new mxCodec();	
 		//System.out.println(mxUtils.getPrettyXml(codec.encode(dx.getModel())));//
 		
 		

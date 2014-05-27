@@ -44,11 +44,9 @@ public class VPMToleranceManager extends HttpServlet {
 		VPMGraph<OvsSwitch, LinkConnection> graph = ((VPMGraphHolder)getServletContext().getAttribute(
 				VPMGraphHolder.VPM_GRAPH_HOLDER)).getGraph();
 		
-		System.out.println(request.getParameter("data"));
-		
 		JSONArray result = (new JSONObject(request.getParameter("data"))).getJSONArray("result");
-		/*for(JSONObject o : result)
-			System.out.println(o);*/
+		for(JSONObject o : result)
+			System.out.println(o);
 	}
 
 }

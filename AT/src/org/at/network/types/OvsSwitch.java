@@ -51,6 +51,11 @@ public class OvsSwitch {
 		return (s.ip.equals(this.ip)) && (s.dpid.equals(this.dpid));
 	}
 	
+	@Override
+	public int hashCode() {
+		return (this.ip.hashCode()+this.dpid.hashCode());
+	}
+	
 	public static void main(String[] args){
 		System.out.println(OvsSwitch.Type.ROOT.name());
 	}

@@ -3,7 +3,9 @@ package org.at.floodlight;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -61,6 +63,18 @@ public class FloodlightController {
 		obj.put("switch-dpid", sw.dpid);
 		obj.put("port-name", portName);
 		return RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj).getInt("port-number");
+	}
+	
+	public List<Port> getVnetPorts(OvsSwitch sw){
+		JSONObject obj = new JSONObject();
+		obj.put("switch-dpid", sw.dpid);
+		obj.put("port-name", "all");
+		JSONObject res = RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj);
+		List<Port> vnets = new ArrayList<Port>();
+		for(JSONObject o : res.getJSONArray("result"))
+			vnets.add(new Port(o.getString("port-name"),o.getInt("port-number")));
+		
+		return vnets;
 	}
 	
 	

@@ -18,6 +18,7 @@ import org.at.floodlight.FloodlightController;
 import org.at.network.NetworkConverter;
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
+import org.at.network.types.Port;
 import org.at.network.types.VPMGraph;
 import org.at.network.types.VPMGraphHolder;
 import org.jgrapht.GraphPath;
@@ -122,7 +123,6 @@ public class VPMPathManager extends HttpServlet {
 			.put("cookie", (new Random()).nextInt())
 			.put("priority", "100")
 			.put("dst-ip", "10.0.0.255")
-			//.put("ingress-port", "3")
 			.put("ether-type", "0x0800")
 			.put("active", "true")
 			.put("actions", info.getCurrentOutputActionString());
@@ -134,6 +134,9 @@ public class VPMPathManager extends HttpServlet {
 				throw ex;
 			}
 		}else{
+			//this one covers vm ports too. If there is still a route passing by this switch
+			//then it is right to not delete output=<vm ports>. If no more route pass then
+			//you just remove the entire rule
 			controller.deleteFlow(info.sw.dpid,"VPM_RTP_"+info.sw.dpid.hashCode());
 		}
 	}
@@ -170,7 +173,7 @@ public class VPMPathManager extends HttpServlet {
 	
 	}
 
-	private void addFlows(GraphPath<OvsSwitch,LinkConnection> jpath) throws IOException{
+	private void addFlows(GraphPath<OvsSwitch,LinkConnection> jpath, String externalBcast) throws IOException{
 
 		VPMSwitchInfoHolder vsHolder = (VPMSwitchInfoHolder)getServletContext().
 				getAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER);
@@ -178,6 +181,7 @@ public class VPMPathManager extends HttpServlet {
 
 		FloodlightController controller = getController();
 		List<OvsSwitch> nodes = Graphs.getPathVertexList(jpath);
+		
 		for(int i=0;i<nodes.size()-1;i++){
 			OvsSwitchInfo infos = vsHolder.get(nodes.get(i).dpid);
 			if(infos == null){
@@ -187,9 +191,14 @@ public class VPMPathManager extends HttpServlet {
 
 			OvsSwitch ovsDst = nodes.get(i+1);
 			String path = computePathName(infos.sw.dpid, ovsDst.dpid);
-
+			//this is the gre tunnel
 			infos.addOutputPort(controller.getPortNumber(infos.sw, "gre"+path));
-			infos.incrementCounter();
+			//next we search for any virtual machine attached to this openvswitch
+			List<Port> vnets = controller.getVnetPorts(infos.sw);
+			for(Port vnet : vnets)
+				infos.addOutputPort(vnet.number);
+			
+			infos.incrementCounter(); //on this switch we have a new route passing by
 
 			try{
 				JSONObject data = new JSONObject()
@@ -203,6 +212,12 @@ public class VPMPathManager extends HttpServlet {
 				.put("active", "true")
 				.put("actions", infos.getCurrentOutputActionString());
 				controller.addStaticFlow(data);
+				
+				//now if there is some vm on this switch it will receive the bcast traffic too
+				//there is no need to add a specific rule for vm's response traffic as the previous
+				//is good (we don't specify the ingress port so it is ok as vm response will also
+				//match that flow rule)
+				
 			}catch(IOException ex){
 				//this way if any exception occurs we make sure to decrement the counter so to have
 				//a consistent data structure
@@ -228,10 +243,11 @@ public class VPMPathManager extends HttpServlet {
 		//.put("ingress-port", "3")
 		.put("ether-type", "0x0800")
 		.put("active", "true");
+		
 		if(test)
 			data.put("actions", "set-dst-ip="+infos.sw.ip+",output="+controller.getPortNumber(infos.sw, "patch1")); //TODO testing only
 		else
-			data.put("actions", "set-dst-ip=255.255.255.255,output="+controller.getPortNumber(infos.sw, "patch1"));//need to know original network
+			data.put("actions", "set-dst-ip="+externalBcast+",output="+controller.getPortNumber(infos.sw, "patch1"));
 		controller.addStaticFlow(data);
 	}
 
@@ -271,7 +287,7 @@ public class VPMPathManager extends HttpServlet {
 							findOriginal(currentGraph, new OvsSwitch(srcDpid,jsReq.getString("src_ip"))), 
 							findOriginal(currentGraph, new OvsSwitch(targetdpid, jsReq.getString("dst_ip"))));
 
-					addFlows(shortest.getPath());
+					addFlows(shortest.getPath(), jsReq.getString("broadcast"));
 
 					pathToClient = NetworkConverter.jpathToMx(shortest.getPath());
 					pathHolder.put(pathName, pathToClient);
