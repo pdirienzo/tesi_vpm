@@ -10,12 +10,11 @@ public class LinkConnection extends DefaultWeightedEdge {
 	
 	private Port sourceP;
 	private Port targetP;
-	public boolean isTree;
-	
+	public boolean isTree;	
 	
 	//these setters can be called just by classes belonging to the same package
 	public void setSourceP(Port source){
-		this.sourceP = source;
+		this.sourceP = source;	
 	}
 	
 	public void setTargetP(Port target){
@@ -60,6 +59,7 @@ public class LinkConnection extends DefaultWeightedEdge {
 		else 
 			return(this.getSource().equals(l.getTarget())) && (this.getTarget().equals(l.getSource())) && 
 					this.sourceP.equals(l.targetP) && this.targetP.equals(l.sourceP);
+		
 	}
 	
 	public String toString(){
@@ -67,9 +67,8 @@ public class LinkConnection extends DefaultWeightedEdge {
 	}
 	
 	@Override
-	public int hashCode() {
-		
-		return "42".hashCode();
+	public int hashCode() {	
+		return ("42".hashCode());
 	}
 	
 	

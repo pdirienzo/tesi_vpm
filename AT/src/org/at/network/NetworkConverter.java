@@ -1,6 +1,5 @@
 package org.at.network;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -13,17 +12,12 @@ import org.at.network.types.VPMGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
 import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
-import org.jgrapht.experimental.equivalence.EquivalenceComparator;
-import org.jgrapht.experimental.equivalence.EquivalenceComparatorChainBase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.mxgraph.io.mxCodec;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.util.mxDomUtils;
-import com.mxgraph.util.mxUtils;
 import com.mxgraph.view.mxGraph;
 
 public final class NetworkConverter {
@@ -50,7 +44,16 @@ public final class NetworkConverter {
 		return linkEl;
 	}
 	
-	public static VPMGraph<OvsSwitch,LinkConnection> mxToJgraphT(mxGraph graph){
+	/**
+	 * Converts an mx representation of a graph to a jgraphT one.
+	 * 
+	 * @param graph mxGraph instance to be converted
+	 * @param markTreeLinks this will allow you to ignore tree links (ie. if a link is marked as tree it will not be marked
+	 * as such in the jgraphT instance). This can be useful when the resulting jgraphT instance has to be passed to a tree
+	 * calculator alghoritm, this way you don't have to manually reset those links.
+	 * @return
+	 */
+	public static VPMGraph<OvsSwitch,LinkConnection> mxToJgraphT(mxGraph graph, boolean markTreeLinks){
 		VPMGraph<OvsSwitch, LinkConnection> myGraph = new VPMGraph<OvsSwitch, LinkConnection>(LinkConnection.class);
 		
 		HashMap<String, OvsSwitch> switches = new HashMap<String, OvsSwitch>();
@@ -67,14 +70,28 @@ public final class NetworkConverter {
 			OvsSwitch source = switches.get(((Element)cell.getSource().getValue()).getAttribute("dpid"));
 			OvsSwitch target = switches.get(((Element)cell.getTarget().getValue()).getAttribute("dpid"));
 			
-			LinkConnection link = myGraph.addLinkConnection(source, new Port(((Element)cell.getValue()).getAttribute("srcPort")), target, 
-					new Port(((Element)cell.getValue()).getAttribute("dstPort")));//, Boolean.valueOf(((Element)cell.getValue()).getAttribute("isTree")));
-		
+			LinkConnection link = null;
+			if(markTreeLinks)
+				link = myGraph.addLinkConnection(source, new Port(((Element)cell.getValue()).getAttribute("srcPort")), target, 
+					new Port(((Element)cell.getValue()).getAttribute("dstPort")), Boolean.valueOf(((Element)cell.getValue()).getAttribute("isTree")));
+			else
+				link = myGraph.addLinkConnection(source, new Port(((Element)cell.getValue()).getAttribute("srcPort")), target, 
+						new Port(((Element)cell.getValue()).getAttribute("dstPort")));
+			
 			myGraph.setEdgeWeight(link, link.getSource().type.getValue() + link.getTarget().type.getValue());
 		}
 		
 		return myGraph;
 	}
+	
+	/**
+	 * Convenience method which returns an exactly identical representation of the graph
+	 * @param graph
+	 * @return
+	 */
+	/*public static VPMGraph<OvsSwitch,LinkConnection> mxToJgraphT(mxGraph graph){
+		return mxToJgraphT(graph,true);
+	}*/
 	
 	public static mxGraph jgraphToMx(VPMGraph<OvsSwitch, LinkConnection> graph){
 		mxGraph myGraph = new mxGraph();
@@ -228,7 +245,7 @@ public final class NetworkConverter {
 		
 		VPMGraph<OvsSwitch, LinkConnection> myGraph2 = new VPMGraph<>(LinkConnection.class);
 		
-		OvsSwitch copy = new OvsSwitch("a","1",OvsSwitch.Type.ROOT);
+		OvsSwitch copy = new OvsSwitch("a","1");
 		OvsSwitch copy2 = new OvsSwitch("b","2", OvsSwitch.Type.RELAY);
 		
 		myGraph2.addVertex(copy);
@@ -247,14 +264,14 @@ public final class NetworkConverter {
 		conns2[3] = myGraph2.addLinkConnection(d, new Port("p1",4),e,new Port("p2",1));
 		conns2[4] = myGraph2.addLinkConnection(f, new Port("p1",4),b,new Port("p2",1));
 		conns2[5] = myGraph2.addLinkConnection(a, new Port("p5",5),f,new Port("p5",2));
-	//	conns2[6] = myGraph2.addLinkConnection(d, new Port("p6",7),g,new Port("p3",1));
+	    conns2[6] = myGraph2.addLinkConnection(d, new Port("p6",7),g,new Port("p3",1));
 		conns2[7] = myGraph2.addLinkConnection(g, new Port("p6",7),h,new Port("p3",1));		
 		
 
 		
 		
-		myGraph2.equals(myGraph);
-		System.out.print(myGraph.equals(myGraph2)+" ");
+		//myGraph2.equals(myGraph);
+		System.out.print(myGraph2.containsEdge(b, c));
 		/*OvsSwitch b1 = new OvsSwitch("b","2");
 		OvsSwitch d1 = new OvsSwitch("d","4");
 		

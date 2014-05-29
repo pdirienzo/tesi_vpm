@@ -2,9 +2,7 @@ package org.at.web.network.path;
 
 import java.util.HashMap;
 
-import com.mxgraph.view.mxGraph;
-
-public class PathHolder extends HashMap<String, mxGraph>{
+public class VPMPathHolder extends HashMap<String, VPMPathInfo>{
 
 	/**
 	 * 

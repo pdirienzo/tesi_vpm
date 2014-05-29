@@ -28,6 +28,11 @@ public class Port {
 		return (/*p.name.equals(this.name) &&*/ (p.number == this.number));
 	}
 	
+	@Override
+	public int hashCode() {
+		return (this.name.hashCode()+this.number);
+	}
+	
 	public String toString(){
 		return this.name+"/"+this.number;
 	}

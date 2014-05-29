@@ -53,7 +53,7 @@ public class FloodlightController {
 		for(JSONObject o : result){
 			jgraph.addLinkConnection(switches.get(o.getString("src-switch")),
 					new Port(o.getString("src-port")),switches.get(o.getString("dst-switch")),
-					new Port(o.getString("dst-port")));
+					new Port(o.getString("dst-port")),true); //if they are visible by the controller it means they are tree edges
 		}
 		return jgraph;
 	}
@@ -62,13 +62,18 @@ public class FloodlightController {
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
 		obj.put("port-name", portName);
-		return RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj).getInt("port-number");
+		int res = RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj).getInt("port-number");
+		
+		if(res < 0)
+			throw new IOException("port "+portName+" not found on switch "+sw);
+		
+		return res;
 	}
 	
 	public List<Port> getVnetPorts(OvsSwitch sw){
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
-		obj.put("port-name", "all");
+		obj.put("port-name", "vnetx");
 		JSONObject res = RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj);
 		List<Port> vnets = new ArrayList<Port>();
 		for(JSONObject o : res.getJSONArray("result"))

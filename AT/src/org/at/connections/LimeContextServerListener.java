@@ -10,7 +10,7 @@ import org.at.db.Database;
 import org.at.db.DatabaseEventDispatcher;
 import org.at.network.types.VPMGraphHolder;
 import org.at.web.network.NetworkTopology;
-import org.at.web.network.path.PathHolder;
+import org.at.web.network.path.VPMPathHolder;
 import org.at.web.network.path.VPMSwitchInfoHolder;
 
 import java.util.Properties;
@@ -32,12 +32,10 @@ public class LimeContextServerListener implements ServletContextListener {
 			
 			c.getServletContext().setAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER, 
 					new VPMGraphHolder());
-			c.getServletContext().setAttribute(PathHolder.VPM_PATHS, new PathHolder());
+			c.getServletContext().setAttribute(VPMPathHolder.VPM_PATHS, new VPMPathHolder());
 			
 			c.getServletContext().setAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER, 
 					new VPMSwitchInfoHolder());
-			
-			c.getServletContext().setAttribute(NetworkTopology.FIRST_TIME, new Boolean(true));
 			
 			Database.initialize(Database.DEFAULT_DBPATH);
 			HypervisorConnectionManager manager = new HypervisorConnectionManager(MANAGER_RETRY_TIME,props.getProperty("network_name"),

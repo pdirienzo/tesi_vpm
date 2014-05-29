@@ -88,7 +88,8 @@ public class RestRequest {
 		final HttpPost post = new HttpPost(url);
 		try {
 			post.setEntity(new StringEntity(data));
-			return EntityUtils.toString(client.execute(post).getEntity());
+			String res = EntityUtils.toString(client.execute(post).getEntity());
+			return res;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
