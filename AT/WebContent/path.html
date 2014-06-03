@@ -255,10 +255,10 @@
 					src_ip : srcIp,
 					dst_dpid : dst,
 					dst_ip : dstIp,
-					broadcast: ipBroadcast
+					broadcast: ipBroadcast.val()
 				};
 
-			
+			console.log(req);
 			$("#loadingMaskP").css("visibility", "show");
 			$('#graph-pnl').css("visibility", "hidden");
 			$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
@@ -383,7 +383,7 @@ div .network-infopanel {
 		<div class="row">
 			<div id="test_vpm" class="span3">
 				<label style="text-align:left" class="span1">Testing:</label>
-				<input type="checkbox" value="0" id="chkTest" class="span2" checked>
+				<input type="checkbox" value="0" id="chkTest" class="span2">
 			</div>
 			<div class="span4">
 				<label class="span2">BroadCast</label>

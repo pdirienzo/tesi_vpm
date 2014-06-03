@@ -1,7 +1,5 @@
 <link href="css/drop.css" rel="stylesheet" />
-
 <script src="js/jquery.dialogextend.js"></script>
-<script src="js/jquery.dialogextend.min.js"></script>
 <style type="text/css">
 .content {
 	margin: auto;
@@ -48,7 +46,8 @@
 	
 	$(document).ready(function(){
 	 	getList(); //populates the hypervisor list
-	 	
+	 	$("#migration-status-box").empty();
+		
 	 	$( "#migrationButton" ).button().click(function( event ) {
 	 		if(jobList["length"] > 0)
 	 			showMigrationBox();
@@ -82,6 +81,8 @@
 	        "buttons" : {
 	            "Close" : function() {
 	                $("#wrapper .ui-widget-overlay").remove();
+					$(this).empty();
+					location.reload(true);
 	                $(this).dialog("close");
 	                //window.location.refresh("true");
 	            }
