@@ -1,4 +1,4 @@
-package org.at.web.network.path;
+package org.at.web.network.path.types;
 
 import java.util.ArrayList;
 import java.util.HashMap;

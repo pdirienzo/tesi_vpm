@@ -10,12 +10,13 @@ import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
+import org.libvirt.Domain;
 import org.libvirt.LibvirtException;
 
 public class TryDomainOps {
 	private static final String XML_NETWORK_FILEPATH = "xml_definitions/network_template.xml";
 	private static final String XML_VM_FILEPATH = "xml_definitions/test_vm.xml";
-	private static final String NETWORK_NAME = "test-network";
+	private static final String NETWORK_NAME = "ovs-network";
 	private static final String BRIDGE_NAME = "br0";
 	
 	private static String getNetworkDescription() throws IOException{
@@ -38,11 +39,14 @@ public class TryDomainOps {
 
 	public static void main(String[] args) throws IOException, LibvirtException, JDOMException {
 		NetHypervisorConnection hc = NetHypervisorConnection.getConnectionWithTimeout(
-				new Hypervisor("pasquale", "pasquale-PC",
+				new Hypervisor("platino", "platino1",
 						16514), NETWORK_NAME,getNetworkDescription(), 3000);
+		Domain stream = hc.domainLookupByName("stream1");
 		
-		hc.shutdownDomain("test");
-		System.out.println(hc.getNetwork().getName()+ " "+hc.getNetwork().getBridgeName());
+		for(String s : hc.listInterfaces())
+			System.out.println(s);
+		
+		System.out.println(hc.getNetwork().getName()+ hc.interfaceLookupByName("eth0").getMACString());
 		//hc.bootDomain("test");
 		//hc.migrate("test", new Hypervisor("pasquale", "pasquale-PC", 16514));
 		hc.close();

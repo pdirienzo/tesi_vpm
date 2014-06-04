@@ -1,7 +1,9 @@
 package org.at.network;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.at.network.types.LinkConnection;
@@ -13,6 +15,7 @@ import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
+import org.jgrapht.graph.GraphPathImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -127,6 +130,21 @@ public final class NetworkConverter {
 		}
 		return myGraph;
 
+	}
+	
+	public static GraphPath<OvsSwitch,LinkConnection> mxToJpath(mxGraph graph){
+		VPMGraph<OvsSwitch, LinkConnection> jgraph = mxToJgraphT(graph, true);
+		
+		List<LinkConnection> edgeList = new ArrayList<LinkConnection>();
+		for(LinkConnection l : jgraph.edgeSet())
+			edgeList.add(l);
+		
+		
+		
+		return new GraphPathImpl<OvsSwitch, LinkConnection>(jgraph,
+				jgraph.getEdgeSource(edgeList.get(0)),
+				jgraph.getEdgeTarget(edgeList.get(edgeList.size()-1)),
+				edgeList, 2);
 	}
 	
 	public static mxGraph jpathToMx(GraphPath<OvsSwitch, LinkConnection> jpath){

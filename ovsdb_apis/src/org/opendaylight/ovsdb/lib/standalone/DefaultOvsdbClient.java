@@ -129,6 +129,36 @@ public class DefaultOvsdbClient /*implements OvsdbClient*/ {
 		return r.getResult().get(0).getRows();
 
 	}
+	
+	/**
+	 * Given a bridge name returns its dpid
+	 * @param ovs
+	 * @param bridge
+	 * @return
+	 * @throws IOException
+	 * @throws OvsdbException
+	 */
+	public String getBridgeDpid(String ovs, String bridge) throws IOException, OvsdbException{
+		List<Condition> where = new ArrayList<Condition>();
+		List<String> columns = new ArrayList<String>();
+		columns.add(Bridge.Column.datapath_id.name());
+		where.add(new Condition(Bridge.Column.name.name(), Function.EQUALS, bridge));
+		List<OvsdbRow> result = select(ovs, Bridge.NAME.getName(), columns, where);
+		
+		if(result.size() == 0)
+			throw new OvsdbException("Can't find bridge "+bridge);
+		StringBuilder mac = new StringBuilder();
+		char[] rawMac = ((String)result.get(0).getColumn(Bridge.Column.datapath_id.name())).toCharArray();
+		for(int i=0; i<rawMac.length; i++){
+			if(i%2 == 0)
+				mac.append(':');
+			
+			mac.append(rawMac[i]);
+		}
+		
+		return mac.deleteCharAt(0).toString();
+		
+	}
 
 
 	private UUID getUUIDFromName(String ovs,String table,String name) throws OvsdbException, IOException{
@@ -398,6 +428,7 @@ public class DefaultOvsdbClient /*implements OvsdbClient*/ {
 
 	public void addPort(String ovs,String bridgeName,String portName,String portType,int tag,OvsDBSet<Integer> trunks,OvsdbOptions options) throws IOException, OvsdbException{
 		List<Object> params = new ArrayList<Object>();
+		
 		params.add(ovs);
 
 		//in order to add a port we have to do three calls

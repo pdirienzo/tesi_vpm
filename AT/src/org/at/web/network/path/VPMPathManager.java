@@ -21,6 +21,10 @@ import org.at.network.types.OvsSwitch;
 import org.at.network.types.Port;
 import org.at.network.types.VPMGraph;
 import org.at.network.types.VPMGraphHolder;
+import org.at.web.network.path.types.OvsSwitchInfo;
+import org.at.web.network.path.types.VPMPathHolder;
+import org.at.web.network.path.types.VPMPathInfo;
+import org.at.web.network.path.types.VPMSwitchInfoHolder;
 import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
 import org.jgrapht.alg.DijkstraShortestPath;
@@ -97,14 +101,16 @@ public class VPMPathManager extends HttpServlet {
 		String pathName = computePathName(srcDpid, targetdpid);
 
 		VPMPathHolder pathHolder = (VPMPathHolder)getServletContext().getAttribute(VPMPathHolder.VPM_PATHS);
-		mxGraph pathToClient = pathHolder.get(pathName).path;
-		String externalAddr = pathHolder.get(pathName).externalAddress;
+		VPMPathInfo pathInfo = pathHolder.get(pathName);
 
-		if(pathToClient != null){
+
+		if(pathInfo != null){
+			GraphPath<OvsSwitch, LinkConnection> pathToClient = pathInfo.path;
+			String externalAddr = pathHolder.get(pathName).externalAddress;
 			jsResp.put("status", "ok_path");
 			mxCodec codec = new mxCodec();	
 			String xmlString =  mxXmlUtils.getXml(codec.encode(
-					(pathToClient).getModel()));
+					(NetworkConverter.jpathToMx(pathToClient)).getModel()));
 			jsResp.put("path", xmlString);
 			jsResp.put("external", externalAddr);
 		}else
@@ -194,9 +200,102 @@ public class VPMPathManager extends HttpServlet {
 
 	}
 
-	private void deleteFlows(VPMGraph<OvsSwitch,LinkConnection> jpath) throws IOException{
-		for(OvsSwitch sw: jpath.vertexSet())
-			System.out.println("YOLO :"+ sw);
+	private void deleteFlows(GraphPath<OvsSwitch,LinkConnection> jpath) throws IOException{
+		VPMSwitchInfoHolder vsHolder = (VPMSwitchInfoHolder)getServletContext().
+				getAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER);
+
+
+		FloodlightController controller = getController();
+		List<OvsSwitch> nodes = Graphs.getPathVertexList(jpath);
+
+		for(int i=0;i<nodes.size()-1;i++){
+			OvsSwitchInfo infos = vsHolder.get(nodes.get(i).dpid);
+
+			try{
+				OvsSwitch ovsDst = nodes.get(i+1);
+				String path = computePathName(infos.sw.dpid, ovsDst.dpid);
+				//this is the gre tunnel
+				infos.removeOutputPort(controller.getPortNumber(infos.sw, "gre"+path));
+				infos.decrementCounter(); 
+
+				JSONObject data = new JSONObject()
+				.put("name", "VPM_RTP_"+infos.sw.dpid.hashCode())
+				.put("switch", infos.sw.dpid)
+				.put("cookie", (new Random()).nextInt())
+				.put("priority", "100")
+				.put("dst-ip", "10.0.0.255")
+				.put("ether-type", "0x0800")
+				.put("active", "true");
+
+
+				if(i>0){//middle nodes, just if this is the first flow
+
+					//we search for any virtual machine attached to this openvswitch
+					List<Port> vnets = controller.getVnetPorts(infos.sw);
+
+					if(vnets.size() > 0){ //if there is a vm we send the traffic to it
+						if(infos.getCounter()== 0){ //this was the only route present
+							controller.deleteFlow(infos.sw.dpid, data.getString("name"));
+							for(Port vnet : vnets){
+								controller.deleteFlow(infos.sw.dpid,"VPM_RTP_VNET"+vnet.number+"_"+infos.sw.dpid.hashCode());	
+							}
+						}else{
+							//now for traffic from vm
+							data.put("actions", infos.getCurrentOutputActionString());
+							for(Port vnet : vnets){
+								data.put("name", "VPM_RTP_VNET"+vnet.number+"_"+infos.sw.dpid.hashCode());
+								data.put("ingress-port", vnet.number);
+								controller.addStaticFlow(data);
+							}
+						}
+
+					}else{ //if no vms we act like root node
+						if(infos.getCounter() > 0){
+							data.put("actions", infos.getCurrentOutputActionString());
+							controller.addStaticFlow(data);
+						}else
+							controller.deleteFlow(infos.sw.dpid, data.getString("name"));
+					}
+					//} //else any flow has already been installed
+
+				}else{ //root node just outputs to gre tunnels
+					if(infos.getCounter() > 0){ //there are still some rules so we just rewrite the rule
+						data.put("actions", infos.getCurrentOutputActionString());
+						controller.addStaticFlow(data);
+					}else
+						controller.deleteFlow(infos.sw.dpid, data.getString("name")); //we remove the flow
+				}
+				//now if there is some vm on this switch it will receive the bcast traffic too
+				//there is no need to add a specific rule for vm's response traffic as the previous
+				//is good (we don't specify the ingress port so it is ok as vm response will also
+				//match that flow rule)
+
+			}catch(IOException ex){
+				//this way if any exception occurs we make sure to decrement the counter so to have
+				//a consistent data structure
+				infos.incrementCounter();
+				throw ex;
+			}
+
+		}
+
+		//last node
+		OvsSwitchInfo infos = vsHolder.get( nodes.get(nodes.size()-1).dpid);
+		infos.decrementCounter();
+
+		List<Port> vnets = controller.getVnetPorts(infos.sw);
+		if(vnets.size() > 0){ //if there is a vm we send the traffic to it
+			if(infos.getCounter() == 0 ){
+				controller.deleteFlow(infos.sw.dpid, "VPM_RTP_P"+infos.sw.dpid.hashCode());
+				for(Port vnet : vnets){
+					controller.deleteFlow(infos.sw.dpid, "VPM_RTP_PVNET"+vnet.number+"_"+infos.sw.dpid.hashCode());
+				}
+			}
+
+		}else{
+			controller.deleteFlow(infos.sw.dpid, "VPM_RTP_P"+infos.sw.dpid.hashCode());
+		}
+
 		/*
 		FloodlightController controller = getController();
 		VPMSwitchInfoHolder vsHolder = (VPMSwitchInfoHolder)getServletContext().
@@ -227,7 +326,7 @@ public class VPMPathManager extends HttpServlet {
 
 	}
 
-	
+
 	private void addFlows(GraphPath<OvsSwitch,LinkConnection> jpath, String externalBcast) throws IOException{
 
 		VPMSwitchInfoHolder vsHolder = (VPMSwitchInfoHolder)getServletContext().
@@ -238,7 +337,6 @@ public class VPMPathManager extends HttpServlet {
 		List<OvsSwitch> nodes = Graphs.getPathVertexList(jpath);
 
 		for(int i=0;i<nodes.size()-1;i++){
-			System.out.println("YOLO "+nodes.get(i));
 			OvsSwitchInfo infos = vsHolder.get(nodes.get(i).dpid);
 			if(infos == null){
 				infos = new OvsSwitchInfo(nodes.get(i));
@@ -350,7 +448,6 @@ public class VPMPathManager extends HttpServlet {
 			}
 
 		}else{
-			data.put("name", "VPM_RTP_P_"+infos.sw.dpid.hashCode());
 			if(test)
 				data.put("actions", "set-dst-ip="+infos.sw.ip+",output="+controller.getPortNumber(infos.sw, "patch1")); //TODO testing only
 			else
@@ -358,7 +455,7 @@ public class VPMPathManager extends HttpServlet {
 			controller.addStaticFlow(data);
 		}
 	}
-	 
+
 
 
 
@@ -380,11 +477,14 @@ public class VPMPathManager extends HttpServlet {
 		try{
 
 			VPMPathHolder pathHolder = (VPMPathHolder)getServletContext().getAttribute(VPMPathHolder.VPM_PATHS);
-			mxGraph pathToClient = pathHolder.get(pathName).path;
+			VPMPathInfo pathToClientInfo = pathHolder.get(pathName);
+			GraphPath<OvsSwitch, LinkConnection> pathToClient = null;
+			if(pathToClientInfo != null)
+				pathToClient = pathToClientInfo.path;
 
 			if(op.equals("add")){
 				test = jsReq.getBoolean("test");
-				if(pathToClient == null){ //no path was saved
+				if(pathToClientInfo == null){ //no path was saved
 					VPMGraphHolder holder = (VPMGraphHolder)getServletContext().getAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER);
 					VPMGraph<OvsSwitch, LinkConnection> currentGraph = holder.getGraph();
 
@@ -395,21 +495,21 @@ public class VPMPathManager extends HttpServlet {
 					DijkstraShortestPath<OvsSwitch, LinkConnection> shortest = new DijkstraShortestPath<OvsSwitch, LinkConnection>(currentGraph,
 							findOriginal(currentGraph, new OvsSwitch(srcDpid,jsReq.getString("src_ip"))), 
 							findOriginal(currentGraph, new OvsSwitch(targetdpid, jsReq.getString("dst_ip"))));
-					
+
 					addFlows(shortest.getPath(), jsReq.getString("broadcast"));
 
-					pathToClient = NetworkConverter.jpathToMx(shortest.getPath());
-					pathHolder.put(pathName, new VPMPathInfo(pathToClient,jsReq.getString("broadcast")));
+					pathHolder.put(pathName, new VPMPathInfo(shortest.getPath(),jsReq.getString("broadcast")));
+					pathToClient = shortest.getPath();
 				}
 
 				mxCodec codec = new mxCodec();	
 				String xmlString =  mxXmlUtils.getXml(codec.encode(
-						(pathToClient).getModel()));
+						(NetworkConverter.jpathToMx(pathToClient)).getModel()));
 				jsResp.put("path", xmlString);
 
 			}else if(op.equals("del")){
 				if(pathToClient != null){ //if there is no path the request makes no sense
-					deleteFlows(NetworkConverter.mxToJgraphT(pathToClient, false));
+					deleteFlows(pathToClient);
 					pathHolder.remove(pathName);
 				}else
 					throw new IOException("You are trying to delete a non existent path");

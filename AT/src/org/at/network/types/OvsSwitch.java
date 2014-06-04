@@ -53,7 +53,7 @@ public class OvsSwitch {
 	
 	@Override
 	public int hashCode() {
-		return (this.ip.hashCode()+this.dpid.hashCode());
+		return (this.ip+this.dpid).hashCode();
 	}
 	
 	public static void main(String[] args){

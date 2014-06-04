@@ -1,5 +1,6 @@
 package org.at.libvirt;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -8,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.at.db.Hypervisor;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
 import org.libvirt.CPUStatistic;
 import org.libvirt.Connect;
 import org.libvirt.Domain;
@@ -160,6 +164,28 @@ public class HypervisorConnection extends Connect{
 			domains.add(super.domainLookupByID(ids[i]));
 
 		return domains;
+	}
+	
+	/**
+	 * This function returns the mac address associated to the eth0 nic, supposing it exists in the passed domain
+	 * @param d
+	 * @return
+	 * @throws LibvirtException 
+	 */
+	public String getDomainMacAddress(Domain d) throws LibvirtException{
+		SAXBuilder builder = new SAXBuilder();
+		String result = null;
+		
+		try {
+			Element networkNode = builder.build(new ByteArrayInputStream(d.getXMLDesc(2).getBytes())).getDocument().getRootElement()
+					.getChild("devices").getChild("interface");
+			result = networkNode.getChild("mac").getAttributeValue("address");
+		} catch (JDOMException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return result;
 	}
 	
 	// ********************* managment apis ***************************

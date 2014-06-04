@@ -220,6 +220,7 @@
 				xmlPath = data.path;
 				var doc = mxUtils.parseXml(xmlPath);
 				var decoder = new mxCodec(doc);
+				$("#ipv6").val(data.external);
 				decoder.decode(doc.documentElement, graphPath.getModel());
 				$("#dPath").removeClass("disabled");
 				$("#dPath").prop('disabled',false);
@@ -291,7 +292,7 @@
 		}
 		else {
 			
-			showDialog("Errore","Please Fill Broadcast");
+			showDialog("Errore","Please Fill External IP field");
 		}
 		
 				
@@ -386,7 +387,7 @@ div .network-infopanel {
 				<input type="checkbox" value="0" id="chkTest" class="span2">
 			</div>
 			<div class="span4">
-				<label class="span2">BroadCast</label>
+				<label class="span2">External destination IP</label>
 				<input type="text" name="ipv" id="ipv6" class="span2 form-control">
 			</div>
 		</div>

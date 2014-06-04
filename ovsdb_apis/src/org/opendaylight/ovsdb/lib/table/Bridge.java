@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Bridge extends Table<Bridge> {
     public static final Name<Bridge> NAME = new Name<Bridge>("Bridge"){};
-    public enum Column implements org.opendaylight.ovsdb.lib.table.internal.Column<Bridge>{_uuid,controller, fail_mode, name, ports}
+    public enum Column implements org.opendaylight.ovsdb.lib.table.internal.Column<Bridge>{_uuid,controller, fail_mode, datapath_id, name, ports}
 
     private String name;
     private OvsDBSet<UUID> ports;

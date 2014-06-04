@@ -45,8 +45,9 @@ public class VPMToleranceManager extends HttpServlet {
 				VPMGraphHolder.VPM_GRAPH_HOLDER)).getGraph();
 		
 		JSONArray result = (new JSONObject(request.getParameter("data"))).getJSONArray("result");
-		for(JSONObject o : result)
-			System.out.println(o);
+		/*for(JSONObject o : result)
+			System.out.println(o);*/
+		
 	}
 
 }

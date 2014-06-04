@@ -10,8 +10,8 @@ import org.at.db.Database;
 import org.at.db.DatabaseEventDispatcher;
 import org.at.network.types.VPMGraphHolder;
 import org.at.web.network.NetworkTopology;
-import org.at.web.network.path.VPMPathHolder;
-import org.at.web.network.path.VPMSwitchInfoHolder;
+import org.at.web.network.path.types.VPMPathHolder;
+import org.at.web.network.path.types.VPMSwitchInfoHolder;
 
 import java.util.Properties;
 

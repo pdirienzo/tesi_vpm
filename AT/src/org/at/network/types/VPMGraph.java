@@ -21,12 +21,22 @@ ListenableUndirectedWeightedGraph<V, E>{
 
 	public LinkConnection addLinkConnection(V sourceVertex, Port sourcePort, 
 			V targetVertex, Port targetPort){
+		
 		LinkConnection l = (LinkConnection)super.addEdge(sourceVertex, targetVertex);
 		l.setSourceP(sourcePort);
 		l.setTargetP(targetPort);
 		l.isTree = false;
-
+		
 		return l;
+		/*LinkConnection l = new LinkConnection(sourceVertex, targetVertex, sourcePort, 
+				targetPort);
+		
+		@SuppressWarnings("unchecked")
+		boolean added = super.addEdge(sourceVertex, targetVertex, (E)l);
+		if(added) 
+			return l;
+		else 
+			return null;*/
 	}
 
 	public LinkConnection addLinkConnection(V sourceVertex, Port sourcePort, 

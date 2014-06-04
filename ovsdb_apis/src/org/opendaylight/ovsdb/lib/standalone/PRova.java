@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.opendaylight.ovsdb.lib.message.TransactResponse;
 import org.opendaylight.ovsdb.lib.notation.Condition;
 import org.opendaylight.ovsdb.lib.notation.Function;
 import org.opendaylight.ovsdb.lib.notation.OvsDBSet;
@@ -20,24 +21,26 @@ public class PRova {
 
 	public static void main(String[] args) throws IOException, OvsdbException {
 		
-		DefaultOvsdbClient client = new DefaultOvsdbClient("127.0.0.1", 6640);
+		DefaultOvsdbClient client = new DefaultOvsdbClient("192.168.1.179", 6640);
 		client.setDebugMode(true);
 		String[] names = client.getOvsdbNames();
 		
-		OvsdbOptions opts = new OvsdbOptions();
+		/*OvsdbOptions opts = new OvsdbOptions();
 		opts.put(OvsdbOptions.REMOTE_IP, "143.225.229.197");
 		
 		OvsDBSet<Integer> trunks = new OvsDBSet<Integer>();
 		trunks.add(1);
 		trunks.add(2);
-		trunks.add(3);
+		trunks.add(3);*/
 		
-		for(String s : client.listPorts(names[0],"br0")){
+		System.out.println(client.getBridgeDpid(names[0], "br0"));
+		
+		/*for(String s : client.listPorts(names[0], "br0")){
 			System.out.println(s);
-		}
+		}*/
 		//client.deleteBridge(names[0], "br1");
 		//client.addBridge(names[0], "br1");
-		//client.addPort(names[0], "br1", "cool0", Interface.Type.gre.name(),2,trunks,opts);
+		//client.addPort(names[0], "br0", "cool0", Interface.Type.gre.name(),2,trunks,opts);
 		//client.addPort(names[0], "br1", "cool1", Interface.Type.gre.name(),2,trunks,opts);
 		//client.deletePort(names[0],"br0","cool0");
 		
