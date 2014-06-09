@@ -28,8 +28,7 @@ import org.at.network.types.OvsSwitch;
 import org.at.network.types.Port;
 import org.at.network.types.VPMGraph;
 import org.at.network.types.VPMGraphHolder;
-import org.at.web.network.path.types.VPMPathHolder;
-import org.at.web.network.path.types.VPMSwitchInfoHolder;
+import org.at.web.network.path.VPMPathManager;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
 import org.json.JSONObject;
 import org.opendaylight.ovsdb.lib.notation.OvsDBSet;
@@ -391,8 +390,10 @@ public class NetworkTopology extends HttpServlet {
 				}
 
 				controller.resetAllFlowsForAllSwitches(); //resetting flows
-				getServletContext().setAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER, new VPMSwitchInfoHolder());//resetting switches
-				getServletContext().setAttribute(VPMPathHolder.VPM_PATHS, new VPMPathHolder()); //and path variables
+				
+				/*getServletContext().setAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER, new VPMSwitchInfoHolder());//resetting switches
+				getServletContext().setAttribute(VPMPathInfoHolder.VPM_PATHS, new VPMPathInfoHolder()); //and path variables*/
+				getServletContext().setAttribute(VPMPathManager.VPM_PATH_MANAGER, new VPMPathManager());
 
 				holder.addGraph(jgraph);
 				jResponse.put("status", "ok");
