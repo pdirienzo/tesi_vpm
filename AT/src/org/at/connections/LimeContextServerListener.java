@@ -2,23 +2,36 @@ package org.at.connections;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Properties;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.at.db.Controller;
 import org.at.db.Database;
 import org.at.db.DatabaseEventDispatcher;
+import org.at.floodlight.FloodlightController;
 import org.at.network.types.VPMGraphHolder;
-import org.at.web.network.NetworkTopology;
-import org.at.web.network.path.types.VPMPathHolder;
-import org.at.web.network.path.types.VPMSwitchInfoHolder;
-
-import java.util.Properties;
+import org.at.web.network.path.VPMPathManager;
 
 public class LimeContextServerListener implements ServletContextListener {
 
 	private static final int MANAGER_RETRY_TIME = 5000;	
 	private static final String PROPERTIES_PATH = "config/config.xml";
+	
+	private FloodlightController getController() throws IOException{
+		Database d = new Database();
+		d.connect();
+		Controller c = d.getController();
+		d.close();
+
+		if(c==null)
+			return null;
+
+		FloodlightController controller = new FloodlightController(c);
+
+		return controller;
+	}
 	
 	@Override
 	public void contextInitialized(ServletContextEvent c) {
@@ -32,10 +45,13 @@ public class LimeContextServerListener implements ServletContextListener {
 			
 			c.getServletContext().setAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER, 
 					new VPMGraphHolder());
-			c.getServletContext().setAttribute(VPMPathHolder.VPM_PATHS, new VPMPathHolder());
+			
+			/*c.getServletContext().setAttribute(VPMPathInfoHolder.VPM_PATHS, new VPMPathInfoHolder());
 			
 			c.getServletContext().setAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER, 
-					new VPMSwitchInfoHolder());
+					new VPMSwitchInfoHolder());*/
+			
+			c.getServletContext().setAttribute(VPMPathManager.VPM_PATH_MANAGER, new VPMPathManager());
 			
 			Database.initialize(Database.DEFAULT_DBPATH);
 			HypervisorConnectionManager manager = new HypervisorConnectionManager(MANAGER_RETRY_TIME,props.getProperty("network_name"),
@@ -56,6 +72,7 @@ public class LimeContextServerListener implements ServletContextListener {
 		try {
 			manager.stop();
 			System.out.println("DB connection closed");
+			getController().resetAllFlowsForAllSwitches();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

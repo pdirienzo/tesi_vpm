@@ -214,7 +214,7 @@
 		$('#graph-pnl').css("visibility", "hidden");
 		$("#dPath").addClass("disabled");
 		$("#dPath").prop("disabled",true);
-		$.getJSON("VPMPathManager?src_dpid="+src+"&dst_dpid="+dst, function(data) {
+		$.getJSON("NetworkPath?src_dpid="+src+"&dst_dpid="+dst, function(data) {
 			if (data.status == "ok_path") {
 				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 				xmlPath = data.path;
@@ -262,7 +262,7 @@
 			console.log(req);
 			$("#loadingMaskP").css("visibility", "show");
 			$('#graph-pnl').css("visibility", "hidden");
-			$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
+			$.post("NetworkPath", {"path" : JSON.stringify(req)}, function(data) {
 
 				if (data.status == "ok") {
 					console.log(data.path);
@@ -312,7 +312,7 @@
 		};
 		$("#loadingMaskP").css("visibility", "show");
 		$('#graph-pnl').css("visibility", "hidden");
-		$.post("VPMPathManager", {"path" : JSON.stringify(req)}, function(data) {
+		$.post("NetworkPath", {"path" : JSON.stringify(req)}, function(data) {
 
 			if (data.status == "ok") {
 				console.log(data.path);

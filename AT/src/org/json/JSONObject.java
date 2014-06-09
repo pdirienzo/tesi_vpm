@@ -184,6 +184,23 @@ public class JSONObject {
             }
         }
     }
+    
+    /**
+     * Construct a JSONObject from another json object.
+     * This newly created json object is identical
+     * @param jo A JSONObject.
+     * @throws JSONException
+     * @exception JSONException If a value is a non-finite number or if a name is duplicated.
+     */
+    public JSONObject(JSONObject jo){
+    	this();
+    	@SuppressWarnings("unchecked")
+		Iterator<String> it = jo.keys();
+    	while(it.hasNext()){
+    		String key = it.next();
+    		this.putOnce(key, jo.get(key));
+    	}
+    }
 
 
     /**
