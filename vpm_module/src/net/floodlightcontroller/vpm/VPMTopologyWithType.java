@@ -42,20 +42,6 @@ public class VPMTopologyWithType extends JsonSerializer<VPMTopologyWithType>{
         this.type = type;
         this.direction = direction;
     }
-
-//	OLD CONSTRUCTOR:
-//    public VPMTopologyWithType(Link link, String srcIp, String dstIp,
-//            LinkType type,
-//            LinkDirection direction) {
-//        this.srcSwDpid = link.getSrc();
-//        this.srcIp = srcIp.substring(1).split(":")[0];
-//        this.srcPort = link.getSrcPort();
-//        this.dstSwDpid = link.getDst();
-//        this.dstIp = dstIp.substring(1).split(":")[0];
-//        this.dstPort = link.getDstPort();
-//        this.type = type;
-//        this.direction = direction;
-//    }
     
 	@Override
 	public void serialize(VPMTopologyWithType lwt, JsonGenerator jgen,

@@ -23,6 +23,7 @@ import net.floodlightcontroller.counter.ICounterStoreService;
 import net.floodlightcontroller.devicemanager.IDevice;
 import net.floodlightcontroller.devicemanager.IDeviceService;
 import net.floodlightcontroller.devicemanager.SwitchPort;
+import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryService;
 import net.floodlightcontroller.packet.Ethernet;
 import net.floodlightcontroller.packet.IPv4;
 import net.floodlightcontroller.packet.UDP;
@@ -51,7 +52,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	private Logger log;
 	public static final int FORWARDING_APP_ID=20;
 	private IRoutingService router;
-
+	private VPMNetworkTopologyListener netListener = null;
 
 	@Override
 	public Collection<Class<? extends IFloodlightService>> getModuleServices() {
@@ -79,9 +80,9 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	@Override
 	public void init(FloodlightModuleContext context)
 			throws FloodlightModuleException {
-		// TODO Auto-generated method stub
-
+		
 		this.floodlightProvider = context.getServiceImpl(IFloodlightProviderService.class);
+		this.netListener = new VPMNetworkTopologyListener(this.floodlightProvider);
 		this.staticFlowPusher = context.getServiceImpl(IStaticFlowEntryPusherService.class);
 		this.deviceService = context.getServiceImpl(IDeviceService.class);
 		this.router = context.getServiceImpl(IRoutingService.class);
@@ -93,6 +94,8 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	public void startUp(FloodlightModuleContext context)
 			throws FloodlightModuleException {
 		// TODO Auto-generated method stub
+		ILinkDiscoveryService ilds=context.getServiceImpl(ILinkDiscoveryService.class);
+		ilds.addListener(this.netListener);
 		this.floodlightProvider.addOFMessageListener(OFType.PACKET_IN, this);
 		this.floodlightProvider.addOFSwitchListener(this);
 	}
@@ -171,7 +174,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 					log.info(sw.getStringId()+": DHCP REQUEST ");
 					List<OFAction> list = new ArrayList<OFAction>();
 					for (ImmutablePort p : sw.getPorts()){
-						if (!p.getName().equals("patch1") && (p.getPortNumber() != pi.getInPort() && !p.getName().equals("br0"))){
+						if (!p.getName().equals("patch1") && (p.getPortNumber() != pi.getInPort())){ //&& !p.getName().equals("br0"))){
 							//log.info(sw.getStringId()+" Outputting to Port: "+p.getName());
 							OFActionOutput ofaction = new OFActionOutput((short) p.getPortNumber());
 							list.add(ofaction);
@@ -194,7 +197,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 					}
 				}
 				else if (isDhcpResponse(match.getTransportSource(),match.getTransportDestination())){
-					log.info(sw.getStringId()+": DHCP RESPONSE ");
+					log.info(sw.getStringId()+": DHCP RESPONSE");
 					long macSrc = Ethernet.toLong(match.getDataLayerSource());
 					long macDst = Ethernet.toLong(match.getDataLayerDestination());
 					IDevice devSrc = findDevice(macSrc);
@@ -206,7 +209,8 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 								(short) dstId.getPort(), FORWARDING_APP_ID, true).getPath();
 						short firstPort = match.getInputPort();
 						for (int i=np.size()-1;i>=0;i=i-2){
-							//log.info("ID: "+np.get(i).getNodeId()+" : "+np.get(i).getPortId());
+							log.info("ID: "+HexString.toHexString(np.get(i).getNodeId())+" : "+np.get(i).getPortId()+" port: "
+						+floodlightProvider.getSwitch(np.get(i).getNodeId()).getPort(np.get(i).getPortId()).getName());
 							List<OFAction> list = new ArrayList<OFAction>();
 							OFActionOutput ofaction = new OFActionOutput((short) np.get(i).getPortId());
 							list.add(ofaction);
@@ -359,7 +363,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 
 	@Override
 	public void switchAdded(long switchId) {
-		// TODO Auto-generated method stub
+
 		OFMatch match = new OFMatch();
 		match.setInputPort(floodlightProvider.getSwitch(switchId).getPort("patch1").getPortNumber());
 		OFFlowMod fm = (OFFlowMod) floodlightProvider.getOFMessageFactory().getMessage(OFType.FLOW_MOD);
@@ -384,8 +388,14 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	@Override
 	public void switchPortChanged(long switchId, ImmutablePort port,
 			PortChangeType type) {
-		// TODO Auto-generated method stub
-
+		
+		//TODO FALLO!
+		if(port.getName().startsWith("vnet")){
+			if (type==PortChangeType.DELETE){
+			}
+		}
+		
+		
 	}
 
 	@Override

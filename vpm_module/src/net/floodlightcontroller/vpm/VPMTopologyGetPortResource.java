@@ -43,6 +43,7 @@ public class VPMTopologyGetPortResource extends ServerResource {
 	public String getPortInfo(String fmJson){
 		String response="";
 		Map<String,String> mp=null;
+		boolean isPopulated = false;
 		try {
 			mp=jsonToStorageEntry(fmJson);
 		
@@ -54,11 +55,15 @@ public class VPMTopologyGetPortResource extends ServerResource {
 					ImmutablePort port = (ImmutablePort)ports[i];
 					if (port.getName().startsWith("vnet")){
 						sb.append("{\"port-name\":\""+port.getName()+"\",");
-						sb.append("\"port-number\":\""+port.getPortNumber()+"\"}");
-						if(i<ports.length-1)
-							sb.append(",");
+						sb.append("\"port-number\":\""+port.getPortNumber()+"\"},");
+						isPopulated=true;
+							
 					}
 				}
+				if (isPopulated){
+					sb.deleteCharAt(sb.length()-1);	
+				}
+				
 				sb.append("]}");
 				
 				response = sb.toString();
@@ -66,7 +71,7 @@ public class VPMTopologyGetPortResource extends ServerResource {
 				response = "{\"port-number\":\""+String.valueOf(ifps.getSwitch(HexString.toLong(mp.get("switch-dpid")))
 					.getPort(mp.get("port-name")).getPortNumber())+"\"}";
 		} catch (IOException | NullPointerException e) {
-			response="-1";
+			response="{\"port-number\":\"-1\"}";
 		}
 		return response;
 	}

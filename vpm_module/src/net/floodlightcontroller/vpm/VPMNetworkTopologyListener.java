@@ -1,6 +1,8 @@
 package net.floodlightcontroller.vpm;
 
-import java.util.ArrayList;
+import java.io.DataOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -9,15 +11,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import net.floodlightcontroller.core.IFloodlightProviderService;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.openflow.util.HexString;
 
 
@@ -73,28 +66,6 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 		return ld;
 	}*/
 
-
-
-	private void sendPost(String content){
-		//		HttpRequest httpReq= new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, CALLBACK_URI);
-		//		httpReq.setHeader(HttpHeaders.CONTENT_TYPE,"application/json");     
-		//		//String params="";
-		//		ChannelBuffer cb=ChannelBuffers.copiedBuffer(content,Charset.defaultCharset());
-		//		httpReq.setHeader(HttpHeaders.CONTENT_LENGTH,cb.readableBytes());
-		//		httpReq.setContent(cb);
-		//		
-		//		ClientBootstrap client = new ClientBootstrap(
-		//				new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
-		//						Executors.newCachedThreadPool()));
-		//		Channel channel = client.connect(new InetSocketAddress("192.168.1.179", 8081)).awaitUninterruptibly()
-		//				.getChannel();
-		//		
-		//		channel.write(httpReq);
-		//		channel.close();
-		//		client.releaseExternalResources();
-
-	}
-
 	@Override
 	public void linkDiscoveryUpdate(List<LDUpdate> updateList) {
 
@@ -141,32 +112,20 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 
 	private class FaultSender extends TimerTask{
 
-		private final HttpClient client = createHttpClient();
 
-		private HttpClient createHttpClient(){
-			RequestConfig config = RequestConfig.custom()
-					.setSocketTimeout(TIMEOUT)
-					.setConnectTimeout(TIMEOUT)
-					.build();
-
-			HttpClientBuilder hcBuilder = HttpClients.custom();
-			hcBuilder.setDefaultRequestConfig(config);
-
-			return hcBuilder.build();
-		}
-
-
-		private String post(String url, String data) {
+		private void post(String url, String data) {
 			/* POST Method */
-			final HttpPost post = new HttpPost(url);
 			try {
-				List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-				nameValuePairs.add(new BasicNameValuePair("data", data));
-				post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-				return EntityUtils.toString(client.execute(post).getEntity());
+				HttpURLConnection conn = (HttpURLConnection)((new URL(url)).openConnection());
+				conn.setRequestMethod("POST");
+				conn.setDoOutput(true);
+				DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+				dos.writeBytes("data="+data);
+				dos.flush();
+				dos.close();
+				System.out.println(conn.getResponseCode());
 			} catch (Exception e) {
 				e.printStackTrace();
-				return null;
 			}
 		}
 
@@ -192,6 +151,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 				firstRequest = true;
 				nRequests = 0;
 				timer = new Timer();
+
 			}finally{
 				synchronized(lock){
 					lock.unlock();
