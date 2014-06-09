@@ -2,22 +2,22 @@ package org.at.web.network.path.types;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 import org.at.network.types.OvsSwitch;
+import org.json.JSONObject;
 
-import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry.Entry;
-
-public class OvsSwitchInfo {
+public class VPMSwitchInfo {
 	private HashMap<Integer, Integer> outputPorts;
 	private List<Integer> vnetPorts;
 	
 	public OvsSwitch sw;
 	private int counter;
+	public HashMap<String, JSONObject> flows; //TODO populate this one with <name of flow, flow> pair
 
-	public OvsSwitchInfo(OvsSwitch sw){
+	public VPMSwitchInfo(OvsSwitch sw){
 		this.sw = sw;
+		flows = new HashMap<String, JSONObject>();
 		outputPorts = new HashMap<Integer, Integer>();
 		vnetPorts = new ArrayList<Integer>();
 		counter = 0;
@@ -43,6 +43,10 @@ public class OvsSwitchInfo {
 	public synchronized void removeVnetPort(Integer p){
 		vnetPorts.remove(p);
 	}
+	
+	public synchronized int getVnetNumber(){
+		return vnetPorts.size();
+	}
 
 	public synchronized void addOutputPort(Integer p){
 		Integer count = outputPorts.get(p);
@@ -67,15 +71,7 @@ public class OvsSwitchInfo {
 
 	public synchronized String getCurrentOutputActionString(){
 		StringBuilder sb = new StringBuilder();
-		/*Iterator<Integer> keys = outputPorts.keySet().iterator();
-		int i = 0;
-		int size = outputPorts.keySet().size();
 		
-		while( i < size-1 ){
-			sb.append("output="+keys.next()+",");
-			i++;
-		}
-		sb.append("output="+keys.next());*/
 		if(outputPorts.size() > 0){
 			for(Integer port : outputPorts.keySet() )
 				sb.append("output="+port+",");
@@ -93,19 +89,18 @@ public class OvsSwitchInfo {
 			for(Integer port : vnetPorts)
 				sb.append("output="+port+",");
 			
-			sb.deleteCharAt(sb.length()-1);
+			sb.deleteCharAt(sb.length()-1); //removing last comma
 		}
 		
 		return sb.toString();
 	}
 	
-	public static void main(String[] args){
-		OvsSwitchInfo i = new OvsSwitchInfo(new OvsSwitch("m","n"));
-		i.addOutputPort(5);
-		i.addOutputPort(5);
-		i.addOutputPort(3);
-		i.addVnetPort(1);
-		System.out.println(i.getCurrentOutputActionString()+" "+i.getCurrentVnetActionString());
+	public List<Integer> getVMPorts(){
+		List<Integer> ports = new ArrayList<>();
+		for(Integer i : vnetPorts)
+			ports.add(i);
+		
+		return ports;
 	}
 
 }

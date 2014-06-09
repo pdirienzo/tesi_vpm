@@ -2,9 +2,9 @@ package org.at.web.network.path.types;
 
 import java.util.HashMap;
 
-public class VPMSwitchInfoHolder extends HashMap<String, OvsSwitchInfo>{
+public class VPMSwitchInfoHolder extends HashMap<String, VPMSwitchInfo>{
 
-	public static final String SWITCH_INFO_HOLDER = "SW_HOLDER";
+	//public static final String SWITCH_INFO_HOLDER = "SW_HOLDER";
 	/**
 	 * 
 	 */
