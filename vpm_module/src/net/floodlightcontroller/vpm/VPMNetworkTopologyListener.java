@@ -97,9 +97,9 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 	@Override
 	public void switchRemoved(long switchId) {
 		// TODO Auto-generated method stub
-		synchronized(lock){
+		//synchronized(lock){
 			lock.lock();
-		}
+		//}
 		try{
 			if(firstRequest){
 				topologyUpdate.append("{ \"type\": \"TOPOLOGY\"," +
@@ -108,22 +108,24 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 				timer.schedule(new FaultSender(), TIMEOUT);
 				firstRequest = false;
 			}
+			
 			topologyUpdate.append("{ \"type\":\"switch\",\"dpid\":\""
 			+HexString.toHexString(switchId)+"\"},");
-			
+			nRequests++;
+
 		}finally{
-			synchronized(lock){
+			//synchronized(lock){
 				lock.unlock();
-			}
+			//}
 		}
 	}
 
 	@Override
 	public void linkDiscoveryUpdate(List<LDUpdate> updateList) {
 
-		synchronized(lock){
+		//synchronized(lock){
 			lock.lock();
-		}
+		//}
 		try{
 			if(firstRequest){
 				topologyUpdate.append("{ \"type\": \"TOPOLOGY\"," +
@@ -144,6 +146,10 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 						topologyUpdate.append("\"src-ip\":\""+srcIP+"\",");
 						topologyUpdate.append("\"dst-ip\":\""+dstIP+"\",");
 					}
+					else {
+						topologyUpdate.append("\"src-ip\":\"\",");
+						topologyUpdate.append("\"dst-ip\":\"\",");
+					}
 					String srcPortName = "" + upd.getSrcPort();
 					String dstPortName = "" + upd.getDstPort();
 					String dstDpid = HexString.toHexString(upd.getDst());
@@ -158,9 +164,9 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 			}
 
 		}finally{
-			synchronized(lock){
+			//synchronized(lock){
 				lock.unlock();
-			}
+			//}
 		}
 
 	}
@@ -187,9 +193,9 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 		@Override
 		public void run() {
 
-			synchronized(lock){
+			//synchronized(lock){
 				lock.lock();
-			}
+			//}
 
 			try{
 				topologyUpdate.deleteCharAt(topologyUpdate.length()-1);
@@ -208,9 +214,9 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 				timer = new Timer();
 
 			}finally{
-				synchronized(lock){
+				//synchronized(lock){
 					lock.unlock();
-				}
+				//}
 			}
 		}
 
