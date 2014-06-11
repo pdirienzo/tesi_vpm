@@ -307,9 +307,12 @@
 					
 					var layout = new mxCircleLayout(graph);
 					layout.execute(graph.getDefaultParent());
+				}else if (data.status == "ok_no_network"){
+					//alert(data.details);
+					showDialog("Info","First Time execution or Topology Changed!");
 				}else{
 					//alert(data.details);
-					showDialog("Errore",data.details);
+					showDialog("Error",data.details);
 				}
 				$("#loadingMaskN").fadeOut("slow", function() {
 		           // $("#graph-panel").fadeIn("slow");
