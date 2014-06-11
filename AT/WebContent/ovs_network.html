@@ -298,7 +298,7 @@
 		
 		function getNetwork(){
 			$.getJSON("NetworkTopology",function(data){
-				if(data.status == "ok"){
+				if(data.status == "ok" || data.status == "ok_no_network"){
 					xml=data.graph;
 					console.log(xml);
 					var doc = mxUtils.parseXml(xml);
@@ -307,9 +307,10 @@
 					
 					var layout = new mxCircleLayout(graph);
 					layout.execute(graph.getDefaultParent());
-				}else if (data.status == "ok_no_network"){
-					//alert(data.details);
-					showDialog("Info","First Time execution or Topology Changed!");
+					if (data.status == "ok_no_network"){
+						//alert(data.details);
+						showDialog("Info","First Time execution or Topology Changed!");
+					}
 				}else{
 					//alert(data.details);
 					showDialog("Error",data.details);
