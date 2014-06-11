@@ -1,5 +1,8 @@
 package net.floodlightcontroller.vpm;
 
+import java.io.DataOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -53,6 +56,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	public static final int FORWARDING_APP_ID=20;
 	private IRoutingService router;
 	private VPMNetworkTopologyListener netListener = null;
+	private static final String CALLBACK_URI = "http://192.168.1.179:8081/VPM/VPMEventListener";
 
 	@Override
 	public Collection<Class<? extends IFloodlightService>> getModuleServices() {
@@ -159,7 +163,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	}
 
 	@Override
-	public net.floodlightcontroller.core.IListener.Command receive(
+	public synchronized net.floodlightcontroller.core.IListener.Command receive(
 			IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {
 		// TODO Auto-generated method stub
 		OFPacketIn pi = (OFPacketIn) msg;
@@ -174,7 +178,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 					log.info(sw.getStringId()+": DHCP REQUEST ");
 					List<OFAction> list = new ArrayList<OFAction>();
 					for (ImmutablePort p : sw.getPorts()){
-						if (!p.getName().equals("patch1") && (p.getPortNumber() != pi.getInPort())){ //&& !p.getName().equals("br0"))){
+						if (!p.getName().equals("patch1") && (p.getPortNumber() != pi.getInPort())){
 							//log.info(sw.getStringId()+" Outputting to Port: "+p.getName());
 							OFActionOutput ofaction = new OFActionOutput((short) p.getPortNumber());
 							list.add(ofaction);
@@ -193,7 +197,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 						fm.setCookie(AppCookie.makeCookie(FORWARDING_APP_ID, 0))
 						.setMatch(my_match)
 						.setActions(list);
-						staticFlowPusher.addFlow("TEST"+sw.getId(), fm, sw.getStringId());
+						staticFlowPusher.addFlow("DHCP_REQUEST("+sw.getId()+")", fm, sw.getStringId());
 					}
 				}
 				else if (isDhcpResponse(match.getTransportSource(),match.getTransportDestination())){
@@ -236,7 +240,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 							.setActions(list);
 							
 							//log.info("MATCH: "+fm);
-							staticFlowPusher.addFlow("DHCP_OUT"+np.get(i).getNodeId(), fm, HexString.toHexString(np.get(i).getNodeId()));
+							staticFlowPusher.addFlow("DHCP_RESPONSE("+np.get(i).getNodeId()+")", fm, HexString.toHexString(np.get(i).getNodeId()));
 						}
 					}
 				}
@@ -247,7 +251,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 				log.info(sw.getStringId()+": ARP REQUEST ");
 				List<OFAction> list = new ArrayList<OFAction>();
 				for (ImmutablePort p : sw.getPorts()){
-					if (!p.getName().equals("patch1") && (p.getPortNumber() != pi.getInPort() && !p.getName().equals("br0"))){
+					if (!p.getName().equals("patch1") && (p.getPortNumber() != pi.getInPort())){// && !p.getName().equals("br0"))){
 						//log.info(sw.getStringId()+" Outputting to Port: "+p.getName());
 						OFActionOutput ofaction = new OFActionOutput((short) p.getPortNumber());
 						list.add(ofaction);
@@ -266,7 +270,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 					//.setIdleTimeout((short)5)
 					.setMatch(my_match)
 					.setActions(list);
-					staticFlowPusher.addFlow("TEST_ARP"+sw.getId(), fm, sw.getStringId());
+					staticFlowPusher.addFlow("ARP_REQUEST("+sw.getId()+")", fm, sw.getStringId());
 					//	messageDamper.write(sw, fm, cntx);
 				}
 
@@ -310,8 +314,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 						.setMatch(my_match)
 						.setActions(list);
 						
-						//log.info("MATCH: "+fm);
-						staticFlowPusher.addFlow("ARP_RESPONSE"+np.get(i).getNodeId(), fm, HexString.toHexString(np.get(i).getNodeId()));
+						staticFlowPusher.addFlow("ARP_RESPONSE("+np.get(i).getNodeId()+")", fm, HexString.toHexString(np.get(i).getNodeId()));
 					}
 				}
 			}
@@ -353,7 +356,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 						.setMatch(my_match)
 						.setActions(list);
 						//log.info("MATCH: "+fm);
-						staticFlowPusher.addFlow("ICMP"+np.get(i).getNodeId()+my_match.getNetworkDestination(), fm, HexString.toHexString(np.get(i).getNodeId()));
+						staticFlowPusher.addFlow("ICMP("+np.get(i).getNodeId()+my_match.getNetworkDestination()+")", fm, HexString.toHexString(np.get(i).getNodeId()));
 					}
 				}
 			}
@@ -388,14 +391,49 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	@Override
 	public void switchPortChanged(long switchId, ImmutablePort port,
 			PortChangeType type) {
-		
+		StringBuilder vnetUpdate = null;
 		//TODO FALLO!
+		this.staticFlowPusher.deleteFlow("ARP_REQUEST("+switchId+")");
+		this.staticFlowPusher.deleteFlow("ARP_RESPONSE("+switchId+")");
+		this.staticFlowPusher.deleteFlow("DHCP_REQUEST("+switchId+")");
+		this.staticFlowPusher.deleteFlow("DHCP_RESPONSE("+switchId+")");
+		System.out.println("CALLED SWITCH PORT CHANGED!");
 		if(port.getName().startsWith("vnet")){
-			if (type==PortChangeType.DELETE){
+			try {
+				HttpURLConnection conn = (HttpURLConnection)((new URL(CALLBACK_URI)).openConnection());
+				conn.setRequestMethod("POST");
+				conn.setDoOutput(true);
+				vnetUpdate = new StringBuilder();
+				vnetUpdate.append("{");
+				vnetUpdate.append("\"type\":\"VM\",");
+				vnetUpdate.append("\"switch\":\""+HexString.toHexString(switchId)+"\",");
+				vnetUpdate.append("\"vnet\":\""+port.getName()+"/"+port.getPortNumber()+"\",");
+				if (type==PortChangeType.DELETE){
+					vnetUpdate.append("\"op\":\"REMOVE\"");
+					vnetUpdate.append("}");
+					log.info("VPMFORWARDING: "+vnetUpdate.toString());
+					DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+					dos.writeBytes("data="+vnetUpdate.toString());
+					dos.flush();
+					dos.close();
+					System.out.println(conn.getResponseCode());
+				}
+				else if(type==PortChangeType.UP){
+					vnetUpdate.append("\"op\":\"ADD\"");
+					vnetUpdate.append("}");
+					log.info("VPMFORWARDING: "+vnetUpdate.toString());
+					DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+					dos.writeBytes("data="+vnetUpdate.toString());
+					dos.flush();
+					dos.close();
+					System.out.println(conn.getResponseCode());
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
+			
 		}
-		
-		
 	}
 
 	@Override
