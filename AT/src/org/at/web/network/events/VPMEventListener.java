@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.at.db.Controller;
 import org.at.db.Database;
 import org.at.floodlight.FloodlightController;
+import org.at.network.types.OvsSwitch;
 import org.at.network.types.Port;
 import org.at.web.network.path.VPMPathManager;
 import org.at.web.network.path.types.VPMSwitchInfo;
@@ -106,108 +107,109 @@ public class VPMEventListener extends HttpServlet {
 
 		switch(Event.valueOf(event.getString("type"))){
 		case VM:
-			System.out.println("Swithc: "+event.getString("switch"));
+			System.out.println("Switch: "+event.getString("switch"));
 
-			//TODO not create for ROOT
 			synchronized(pathManager){
 				VPMSwitchInfo swInfos = pathManager.getSwitchInfos(event.getString("switch"));
 				if(swInfos != null){
-					VM_OP op = VM_OP.valueOf(event.getString("op"));
-					Port vnetPort = new Port(event.getString("vnet"));
-					FloodlightController controller = getController();
-
-					if(op == VM_OP.ADD){
-						System.out.println("added a new vm "+vnetPort);
-						swInfos.addVnetPort(vnetPort.number);
-
-						JSONObject fromVnet = null;
-
-						if(swInfos.getVnetNumber() > 1){ //in this case there is a rule for an existing vnet, so we have to alter it
-							//to add this new one
-
-							System.out.println("There is already a vm on this switch");
-							JSONObject flow = getToVnetFlow(swInfos);
-							flow.put("actions", swInfos.getCurrentVnetActionString()); //adding the port to output rules
-
-							controller.addStaticFlow(flow);
-							swInfos.flows.put(flow.getString("name"), flow);
-
-							fromVnet = getFromVnetFlow(swInfos, vnetPort.number);
-							fromVnet.put("ingress-port", vnetPort.number);
-
-							controller.addStaticFlow(fromVnet);
-							swInfos.flows.put(fromVnet.getString("name"), fromVnet);
-
-						}else{ //in this other case we have a passby rule we have to delete, and then add a couple rules to forward traffic
-							//to this vnet
-
-							System.out.println("No vms...casino!");
-							JSONObject passBy = getPassbyFlow(swInfos);
-							System.out.println("So, this is the name: "+passBy.getString("name"));
-
-
-							//now we have to create a couple rules
-							//first to vnet
-							JSONObject toVnet = new JSONObject(passBy);
-							toVnet.put("name", VPMPathManager.TO_VNET_FLOW+swInfos.sw.dpid.replace(":", ""));
-							toVnet.put("actions", swInfos.getCurrentVnetActionString());
-
-							//from vnet
-							fromVnet = new JSONObject(passBy)
-							.put("name", VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""))
-							.put("ingress-port", vnetPort.number);
-
-							System.out.println("removing "+passBy.getString("name"));
-
-							controller.deleteFlow(swInfos.sw.dpid, passBy.getString("name")); //cleaning passBy flow
-							System.out.println("adding "+toVnet.getString("name"));
-							controller.addStaticFlow(toVnet);
-
-							System.out.println("adding "+fromVnet.getString("name"));
-							controller.addStaticFlow(fromVnet);	
-
-							//updating data structure
-							swInfos.flows.put(toVnet.getString("name"), toVnet);
-							swInfos.flows.put(fromVnet.getString("name"), fromVnet);
-							swInfos.flows.remove(passBy);
-
-						}
-
-					}else if (op == VM_OP.REMOVE){
-						System.out.println("removed a port");
-						swInfos.removeVnetPort(vnetPort.number);
-
-						if(swInfos.getVnetNumber() > 0){ //in this case there are other vms so we have to rewrite the flow rule
-							System.out.println("There are still more vms on this switch");
-							JSONObject flow = getToVnetFlow(swInfos);
-							flow.put("actions", swInfos.getCurrentVnetActionString()); //adding the port to output rules
-
-							//altering rule to vnet to exclude this vnet from output ports
-							controller.addStaticFlow(flow);
-							//removing the rule from this vnet to external
-							controller.deleteFlow(swInfos.sw.dpid, VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
-
-							swInfos.flows.put(flow.getString("name"), flow);
-							swInfos.flows.remove(VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
-
-						}else{ //there was just one vnet so now we need to remove 2 rules and install a passby one
-
-							//adding passByrule
-							JSONObject passBy = new JSONObject(getFromVnetFlow(swInfos, vnetPort.number));
-							passBy.remove("ingress-port"); 
-							passBy.put("name", VPMPathManager.PASSBY_FLOW+swInfos.sw.dpid.replace(":", ""));
-
-							controller.deleteFlow(swInfos.sw.dpid, VPMPathManager.TO_VNET_FLOW + swInfos.sw.dpid.replace(":", ""));
-							controller.deleteFlow(swInfos.sw.dpid, VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
-							controller.addStaticFlow(passBy);
-
-
-							swInfos.flows.remove(VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
-							swInfos.flows.remove(VPMPathManager.TO_VNET_FLOW + swInfos.sw.dpid.replace(":", ""));
-							swInfos.flows.put(passBy.getString("name"), passBy);
-						}
-					}
-					
+					if(swInfos.sw.type != OvsSwitch.Type.ROOT){ //Only if sw is not a root we create a rule
+						VM_OP op = VM_OP.valueOf(event.getString("op"));
+						Port vnetPort = new Port(event.getString("vnet"));
+						FloodlightController controller = getController();
+						if(op == VM_OP.ADD){
+							System.out.println("added a new vm "+vnetPort);
+							
+								swInfos.addVnetPort(vnetPort.number);
+		
+								JSONObject fromVnet = null;
+		
+								if(swInfos.getVnetNumber() > 1){ //in this case there is a rule for an existing vnet, so we have to alter it
+									//to add this new one
+		
+									System.out.println("There is already a vm on this switch");
+									JSONObject flow = getToVnetFlow(swInfos);
+									flow.put("actions", swInfos.getCurrentVnetActionString()); //adding the port to output rules
+		
+									controller.addStaticFlow(flow);
+									swInfos.flows.put(flow.getString("name"), flow);
+		
+									fromVnet = getFromVnetFlow(swInfos, vnetPort.number);
+									fromVnet.put("ingress-port", vnetPort.number);
+		
+									controller.addStaticFlow(fromVnet);
+									swInfos.flows.put(fromVnet.getString("name"), fromVnet);
+		
+								}else{ //in this other case we have a passby rule we have to delete, and then add a couple rules to forward traffic
+									//to this vnet
+		
+									System.out.println("No vms...casino!");
+									JSONObject passBy = getPassbyFlow(swInfos);
+									System.out.println("So, this is the name: "+passBy.getString("name"));
+		
+		
+									//now we have to create a couple rules
+									//first to vnet
+									JSONObject toVnet = new JSONObject(passBy);
+									toVnet.put("name", VPMPathManager.TO_VNET_FLOW+swInfos.sw.dpid.replace(":", ""));
+									toVnet.put("actions", swInfos.getCurrentVnetActionString());
+		
+									//from vnet
+									fromVnet = new JSONObject(passBy)
+									.put("name", VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""))
+									.put("ingress-port", vnetPort.number);
+		
+									System.out.println("removing "+passBy.getString("name"));
+		
+									controller.deleteFlow(swInfos.sw.dpid, passBy.getString("name")); //cleaning passBy flow
+									System.out.println("adding "+toVnet.getString("name"));
+									controller.addStaticFlow(toVnet);
+		
+									System.out.println("adding "+fromVnet.getString("name"));
+									controller.addStaticFlow(fromVnet);	
+		
+									//updating data structure
+									swInfos.flows.put(toVnet.getString("name"), toVnet);
+									swInfos.flows.put(fromVnet.getString("name"), fromVnet);
+									swInfos.flows.remove(passBy);
+		
+								}
+		
+							}else if (op == VM_OP.REMOVE){
+								System.out.println("removed a port");
+								swInfos.removeVnetPort(vnetPort.number);
+		
+								if(swInfos.getVnetNumber() > 0){ //in this case there are other vms so we have to rewrite the flow rule
+									System.out.println("There are still more vms on this switch");
+									JSONObject flow = getToVnetFlow(swInfos);
+									flow.put("actions", swInfos.getCurrentVnetActionString()); //adding the port to output rules
+		
+									//altering rule to vnet to exclude this vnet from output ports
+									controller.addStaticFlow(flow);
+									//removing the rule from this vnet to external
+									controller.deleteFlow(swInfos.sw.dpid, VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
+		
+									swInfos.flows.put(flow.getString("name"), flow);
+									swInfos.flows.remove(VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
+		
+								}else{ //there was just one vnet so now we need to remove 2 rules and install a passby one
+		
+									//adding passByrule
+									JSONObject passBy = new JSONObject(getFromVnetFlow(swInfos, vnetPort.number));
+									passBy.remove("ingress-port"); 
+									passBy.put("name", VPMPathManager.PASSBY_FLOW+swInfos.sw.dpid.replace(":", ""));
+		
+									controller.deleteFlow(swInfos.sw.dpid, VPMPathManager.TO_VNET_FLOW + swInfos.sw.dpid.replace(":", ""));
+									controller.deleteFlow(swInfos.sw.dpid, VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
+									controller.addStaticFlow(passBy);
+		
+		
+									swInfos.flows.remove(VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
+									swInfos.flows.remove(VPMPathManager.TO_VNET_FLOW + swInfos.sw.dpid.replace(":", ""));
+									swInfos.flows.put(passBy.getString("name"), passBy);
+								}
+							}
+					}//END IF != ROOT
+	
 				}else{
 					System.out.println("There is no path for this switch so we will not do anything");
 				}
