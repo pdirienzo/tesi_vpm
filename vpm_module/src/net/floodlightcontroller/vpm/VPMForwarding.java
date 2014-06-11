@@ -102,6 +102,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 		ilds.addListener(this.netListener);
 		this.floodlightProvider.addOFMessageListener(OFType.PACKET_IN, this);
 		this.floodlightProvider.addOFSwitchListener(this);
+		this.floodlightProvider.addOFSwitchListener(this.netListener);
 	}
 
 	private boolean isDhcpRequest(short src,short dst){

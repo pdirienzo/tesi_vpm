@@ -9,19 +9,22 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 
 import net.floodlightcontroller.core.IFloodlightProviderService;
+import net.floodlightcontroller.core.IOFSwitch.PortChangeType;
+import net.floodlightcontroller.core.IOFSwitchListener;
+import net.floodlightcontroller.core.ImmutablePort;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
 
 import org.openflow.util.HexString;
 
 
-public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
+public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwitchListener {
 
-	private static final String CALLBACK_URI = "http://192.168.1.179:8081/VPM/VPMToleranceManager";
+	private static final String CALLBACK_URI = "http://192.168.1.179:8081/VPM/VPMEventListener";
 	private static final int TIMEOUT = 1000;
 
 	private IFloodlightProviderService ifps = null;
 	private Timer timer;
-	private StringBuilder linkUpdate;
+	private StringBuilder topologyUpdate;
 	private boolean firstRequest;
 	private int nRequests;
 
@@ -34,7 +37,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 		this.nRequests = 0;
 		this.ifps= floodlightProvider;
 		this.timer = new Timer();
-		this.linkUpdate = new StringBuilder();
+		this.topologyUpdate = new StringBuilder();
 		this.lock = new ReentrantLock();
 	}
 
@@ -65,6 +68,55 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 		}
 		return ld;
 	}*/
+	@Override
+	public void switchAdded(long switchId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	
+	@Override
+	public void switchActivated(long switchId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void switchPortChanged(long switchId, ImmutablePort port,
+			PortChangeType type) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void switchChanged(long switchId) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public void switchRemoved(long switchId) {
+		// TODO Auto-generated method stub
+		synchronized(lock){
+			lock.lock();
+		}
+		try{
+			if(firstRequest){
+				topologyUpdate.append("{ \"type\": \"TOPOLOGY\"," +
+						"\"op\":\"REMOVE\","
+						+ "\"result\": [");
+				timer.schedule(new FaultSender(), TIMEOUT);
+				firstRequest = false;
+			}
+			topologyUpdate.append("{ \"type\":\"switch\",\"dpid\":\""
+			+HexString.toHexString(switchId)+"\"},");
+			
+		}finally{
+			synchronized(lock){
+				lock.unlock();
+			}
+		}
+	}
 
 	@Override
 	public void linkDiscoveryUpdate(List<LDUpdate> updateList) {
@@ -72,10 +124,11 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 		synchronized(lock){
 			lock.lock();
 		}
-
 		try{
 			if(firstRequest){
-				linkUpdate.append("{ \"result\": [");
+				topologyUpdate.append("{ \"type\": \"TOPOLOGY\"," +
+						"\"op\":\"REMOVE\","
+						+ "\"result\": [");
 				timer.schedule(new FaultSender(), TIMEOUT);
 				firstRequest = false;
 			}
@@ -84,21 +137,23 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 				LDUpdate upd = updateList.get(i);
 				if (upd.getOperation() == UpdateOperation.LINK_REMOVED){
 					nRequests++;
-
-					linkUpdate.append("{");
-					String srcIP= ifps.getSwitch(upd.getSrc()).getInetAddress().toString();
-					String dstIP= ifps.getSwitch(upd.getDst()).getInetAddress().toString();
+					topologyUpdate.append("{ \"type\" : \"link\",");
+					if(ifps.getSwitch(upd.getSrc()) != null && ifps.getSwitch(upd.getDst()) != null){
+						String srcIP= ifps.getSwitch(upd.getSrc()).getInetAddress().toString();
+						String dstIP= ifps.getSwitch(upd.getDst()).getInetAddress().toString();
+						topologyUpdate.append("\"src-ip\":\""+srcIP+"\",");
+						topologyUpdate.append("\"dst-ip\":\""+dstIP+"\",");
+					}
 					String srcPortName = "" + upd.getSrcPort();
 					String dstPortName = "" + upd.getDstPort();
 					String dstDpid = HexString.toHexString(upd.getDst());
 					String srcDpid = HexString.toHexString(upd.getSrc());
-					linkUpdate.append("\"src-ip\":\""+srcIP+"\",");
-					linkUpdate.append("\"dst-ip\":\""+dstIP+"\",");
-					linkUpdate.append("\"src-port\":\""+srcPortName+"\",");
-					linkUpdate.append("\"dst-port\":\""+dstPortName+"\",");
-					linkUpdate.append("\"src-dpid\":\""+srcDpid+"\",");
-					linkUpdate.append("\"dst-dpid\":\""+dstDpid+"\"");
-					linkUpdate.append("},");
+					
+					topologyUpdate.append("\"src-port\":\""+srcPortName+"\",");
+					topologyUpdate.append("\"dst-port\":\""+dstPortName+"\",");
+					topologyUpdate.append("\"src-dpid\":\""+srcDpid+"\",");
+					topologyUpdate.append("\"dst-dpid\":\""+dstDpid+"\"");
+					topologyUpdate.append("},");
 				}
 			}
 
@@ -137,17 +192,17 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 			}
 
 			try{
-				linkUpdate.deleteCharAt(linkUpdate.length()-1);
-				linkUpdate.append("]}");
+				topologyUpdate.deleteCharAt(topologyUpdate.length()-1);
+				topologyUpdate.append("]}");
 
 				if( nRequests > 0 ){ //sometimes we just get notifies about link creation 
-					System.out.println("LDUPDATE: "+linkUpdate);
-					post(CALLBACK_URI,linkUpdate.toString());
+					System.out.println("LDUPDATE: "+topologyUpdate);
+					post(CALLBACK_URI,topologyUpdate.toString());
 				}else
 					System.out.println("it will not be sent as does not contain destruction of links");
 
 				//resetting status
-				linkUpdate = new StringBuilder();
+				topologyUpdate = new StringBuilder();
 				firstRequest = true;
 				nRequests = 0;
 				timer = new Timer();
@@ -161,4 +216,5 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener {
 
 	}
 
+	
 }
