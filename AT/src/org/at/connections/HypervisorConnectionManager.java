@@ -35,6 +35,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	private synchronized boolean isActive(){
 		return active;
 	}
+	
 	private synchronized void setActive(boolean v){
 		active = v;
 	}
@@ -152,9 +153,9 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		}
 		
 		//closing every active connection
-		for(NetHypervisorConnection hc : activeConnections)
-			removeHypervisor(hc.getHypervisor());
-			
+		/*for(NetHypervisorConnection hc : activeConnections)
+			;//removeHypervisor(hc.getHypervisor());
+		*/
 	}
 	
 	public synchronized void removeHypervisor(Hypervisor h){
@@ -181,25 +182,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		}
 	}
 	
-	/*
-	public static void main(String[] args) throws IOException{
-		//testing some stuff
-		
-		HypervisorConnectionManager c = new HypervisorConnectionManager(0);
-		c.start();
-		Hypervisor h = new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514);
-		for(HypervisorConnection hh : c.getActiveConnections())
-			System.out.println(hh.getHypervisor());
-		
-		c.removeHypervisor(h);
-		for(HypervisorConnection hh : c.getActiveConnections())
-			System.out.println(hh.getHypervisor());
-		
-		System.out.println(c.getOfflineHypervisors().contains(h) +""+c.getActiveConnections().size());
-		c.stop();
-	}*/
-	
-	public synchronized List<NetHypervisorConnection> getActiveConnections(){
+	public synchronized List<NetHypervisorConnection> getActiveHypervisors(){
 		return this.activeConnections;
 	}
 	
@@ -256,12 +239,14 @@ public class HypervisorConnectionManager implements DatabaseListener{
 
 		@Override
 		public void run() {
-			for(Hypervisor h : offlineConnections){
+			for(Hypervisor h : getOfflineHypervisors()){
 				try {
+					//this constructor call will either succeed or throw exception, in this last case we can
+					//assume the hypervisor is still offline and so we do nothing
 					NetHypervisorConnection c = NetHypervisorConnection.getConnectionWithTimeout(h, NETWORK_NAME,
 							getNetworkDescription(),CONNECTION_TIMEOUT);
-					activeConnections.add(c);
-					offlineConnections.remove(h);
+					getActiveHypervisors().add(c);
+					getOfflineHypervisors().remove(h);
 				} catch (IOException | LibvirtException e) {
 					//System.err.println(h+" is still offline");
 				}

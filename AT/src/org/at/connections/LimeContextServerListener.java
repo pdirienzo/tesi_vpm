@@ -73,8 +73,9 @@ public class LimeContextServerListener implements ServletContextListener {
 			manager.stop();
 			System.out.println("DB connection closed");
 			getController().resetAllFlowsForAllSwitches();
+			System.out.println("Flows resetted");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 		

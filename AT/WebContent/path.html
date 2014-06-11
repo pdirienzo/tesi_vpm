@@ -131,7 +131,7 @@
 				'<root><mxCell id="0"/></root></mxGraphModel>');
 			var decoder = new mxCodec(doc);
 			decoder.decode(doc.documentElement, graphPath.getModel());
-			var layout = new mxHierarchicalLayout(graphPath);
+			var layout = new mxCircleLayout(graphPath);//new mxHierarchicalLayout(graphPath);
 			layout.execute(graphPath.getDefaultParent());
 			document.getElementById("zoomPath").appendChild(
 					mxUtils.button('+', function() {
@@ -225,7 +225,7 @@
 				$("#dPath").removeClass("disabled");
 				$("#dPath").prop('disabled',false);
 
-				var layout = new mxHierarchicalLayout(graphPath);
+				var layout = new mxCircleLayout(graphPath);
 				layout.execute(graphPath.getDefaultParent());
 			} else if(data.status == "ok_no_path"){
 				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
@@ -273,7 +273,7 @@
 					var decoder = new mxCodec(doc);
 					decoder.decode(doc.documentElement, graphPath.getModel());
 
-					var layout = new mxHierarchicalLayout(graphPath);
+					var layout = new mxCircleLayout(graphPath);
 					layout.execute(graphPath.getDefaultParent());
 					$("#dPath").removeClass("disabled");
 					$("#dPath").prop('disabled',false);

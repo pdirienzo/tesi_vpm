@@ -22,6 +22,15 @@ public class OvsSwitch {
 			case 0:
 				str = "ROOT";
 				break;
+			case 1:
+				str = "RELAY";
+				break;
+			case 2:
+				str = "LEAF";
+				break;
+			case 3:
+				str = "NULL";
+				break;
 			}
 			
 			return str;

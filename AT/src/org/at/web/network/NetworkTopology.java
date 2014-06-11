@@ -107,13 +107,17 @@ public class NetworkTopology extends HttpServlet {
 			mxGraph savedmxGraph = topologyFromFile();
 			if(savedmxGraph != null){
 				VPMGraph<OvsSwitch, LinkConnection> savedGraph = NetworkConverter.mxToJgraphT(savedmxGraph, true);
+				for(LinkConnection l : savedGraph.edgeSet()){
+					
+				}
+				
 				System.out.println("A saved graph has been found, checking if still valid...");
 				VPMGraph<OvsSwitch, LinkConnection> actualGraph = getController().getTopology();
 				//we have to check if every tree edge defined in the saved graph still exists
 				//(just tree edges are phisical links and so visible by the controller)
 				boolean valid = true;
 				int savedTreeEdgesCount = 0;
-				
+
 				if(savedGraph.vertexSet().size() == actualGraph.vertexSet().size()){
 					Iterator<LinkConnection> savedEdges = savedGraph.edgeSet().iterator();
 					while( (valid) && savedEdges.hasNext()){
@@ -121,21 +125,20 @@ public class NetworkTopology extends HttpServlet {
 						if(tEdge.isTree){
 							savedTreeEdgesCount++;
 							valid = (actualGraph.containsEdge(tEdge.getSource(),tEdge.getTarget()) || 
-								actualGraph.containsEdge(tEdge.getTarget(),tEdge.getSource()));//checking if exists
+									actualGraph.containsEdge(tEdge.getTarget(),tEdge.getSource()));//checking if exists
 
 							if(valid){ //between two different starts controller may have been restarted and so port ids could have
 								//been changed
 								LinkConnection freshL = actualGraph.getEdge(tEdge.getSource(), tEdge.getTarget());
-								System.out.println(freshL);
 								tEdge.setSourceP(freshL.getSrcPort());
 								tEdge.setTargetP(freshL.getTargetPort());
 							}
 						}
 					}
-					
+
 					if(savedTreeEdgesCount != actualGraph.edgeSet().size())
 						valid = false;
-				
+
 				}else
 					valid = false;
 
@@ -189,7 +192,7 @@ public class NetworkTopology extends HttpServlet {
 	}
 
 
-	private void potateRelays(VPMGraph<OvsSwitch, LinkConnection> g){
+	/*private void potateRelays(VPMGraph<OvsSwitch, LinkConnection> g){
 		for(OvsSwitch sw : g.vertexSet()){
 			if(sw.type == OvsSwitch.Type.RELAY || sw.type == OvsSwitch.Type.NULL){
 				boolean hasLeaf = false;
@@ -213,6 +216,203 @@ public class NetworkTopology extends HttpServlet {
 				}
 			}
 		}
+	}*/
+
+	private static void potateRelays(VPMGraph<OvsSwitch, LinkConnection> g){
+		for(OvsSwitch sw : g.vertexSet()){
+			int k=0;
+			int j=0;
+			int i=0;
+			if(sw.type == OvsSwitch.Type.RELAY || sw.type == OvsSwitch.Type.NULL){
+				ArrayList<Integer> hasLeaf = new ArrayList<Integer>();
+				ArrayList<Integer> hasRoot = new ArrayList<Integer>();
+				ArrayList<String> hasRelay = new ArrayList<String>();
+				Set<LinkConnection> links = g.edgesOf(sw);
+				//Controllo che la dimensione sia maggiore di 1 in tal caso significa che non sono isolato
+				// un relay deve avere per forza due link uno verso la radice e uno vero la foglia nel caso base.
+				if (links.size() > 1){
+
+					for(LinkConnection l : links){
+						if(l.isTree){
+							if( (l.getTarget().type == OvsSwitch.Type.LEAF) || (l.getSource().type == OvsSwitch.Type.LEAF)){
+								hasLeaf.add(1);
+								k++;
+							}
+							else if((l.getTarget().type == OvsSwitch.Type.ROOT || l.getSource().type == OvsSwitch.Type.ROOT)){
+								hasRoot.add(2);
+								j++;
+							}
+							else if (l.getTarget().type == OvsSwitch.Type.RELAY && l.getSource().type == OvsSwitch.Type.RELAY){
+								if(l.getTarget().dpid != sw.dpid){
+									//Devo ottenere in qualche modo l'OvsSwitch target
+									//OvsSwitch newTarget = l.getTarget();
+									hasRelay.add(checkNode(l.getTarget(),l,g));
+								}
+								else {
+									//Ottengo il prossimo relay dalla sorgente del link 
+									hasRelay.add(checkNode(l.getSource(),l,g));
+								}
+								i++;
+							}
+						}
+					}
+					//Blocco di controlli...
+					if (k > 0) { // ho sicuramente una foglia collegata controllo se ho anche una radice
+						if (!(j>0)){ // non ho una radice controllo se ho qualche relay
+							if(i>0){ // ho i relay
+								// controllo se qualcuno e' attaccato alla radice altrimenti cancello i miei link
+								int n=0; 
+								boolean isRooted=false;
+								while(n<i){
+									if(hasRelay.get(n).contains("ROOT")){
+										isRooted=true;
+										break;
+									}
+									n++;
+								}
+								if (!isRooted){
+									for(LinkConnection l : g.edgesOf(sw)){
+										if(l.isTree)
+											l.isTree = false;
+									}
+								}
+
+							}else { //non ho i relay quindi sono solo attaccato alla foglia posso eliminare
+								for(LinkConnection l : g.edgesOf(sw)){
+									if(l.isTree)
+										l.isTree = false;
+								}
+							}
+						}
+					}
+					else {
+						if (!(j>0)){ // non ho una radice e nemmeno una foglia controllo se ho qualche relay
+							if(i>0){ // ho i relay
+								// controllo se qualcuno e' attaccato alla radice e ad una foglia altrimenti cancello i miei link
+								int n=0; 
+								boolean isRooted=false;
+								boolean hasALeaf=false;
+								while(n<i){
+									if(hasRelay.get(n).contains("ROOT") ){
+										isRooted=true;
+
+									}
+									if(hasRelay.get(n).contains("LEAF")){
+										hasALeaf=true;
+									}
+									n++;
+								}
+								if (!isRooted && !hasALeaf){ //non hanno radice ne foglie e una catena di relay
+									for(LinkConnection l : g.edgesOf(sw)){
+										if(l.isTree)
+											l.isTree = false;
+									}
+								}
+
+							}else { //non ho i relay quindi sono solo attaccato alla foglia posso eliminare
+								for(LinkConnection l : g.edgesOf(sw)){
+									if(l.isTree)
+										l.isTree = false;
+								}
+							}
+						}
+						else {
+							//sono attaccato ad una radice ma non ho foglie controllo se ho relay che hanno foglie
+							if(i>0){ // ho i relay
+								// controllo se qualcuno e' attaccato alla radice e ad una foglia altrimenti cancello i miei link
+								int n=0; 
+								boolean hasALeaf=false;
+								while(n<i){
+									if(hasRelay.get(n).contains("LEAF")){
+										hasALeaf=true;
+										break;
+									}
+									n++;
+								}
+								if (!hasALeaf){ //non hanno foglie e una catena di relay
+									for(LinkConnection l : g.edgesOf(sw)){
+										if(l.isTree)
+											l.isTree = false;
+									}
+								}
+
+							}else { //non ho i relay quindi sono solo attaccato alla foglia posso eliminare
+								for(LinkConnection l : g.edgesOf(sw)){
+									if(l.isTree)
+										l.isTree = false;
+								}
+							}
+						}
+					}
+
+
+
+				}
+				else {
+					for(LinkConnection l : g.edgesOf(sw))
+						if(l.isTree)
+							l.isTree = false;
+				}
+
+
+			}
+		}
+
+	}
+
+	private static String checkNode(OvsSwitch sw, LinkConnection link, VPMGraph<OvsSwitch,LinkConnection> g){
+		String ret = "";
+		int root=0;
+		int leaf=0;
+		int count = 0; // se count e uno significa che il relay e isolato e non dobbiamo considerarlo nell'albero
+		Set<LinkConnection> links = g.edgesOf(sw);
+		for(LinkConnection l : links){
+			if(l.isTree && !l.equals(link)){
+				if( (l.getTarget().type == OvsSwitch.Type.RELAY) && (l.getSource().type == OvsSwitch.Type.RELAY)){
+					if(l.getTarget().dpid != sw.dpid){
+						//Devo ottenere in qualche modo i,l relay dal target del link l
+						ret=checkNode(l.getTarget(),l,g);
+					}
+					else {
+						//Ottengo il prossimo relay dalla sorgente del link 
+
+						ret=checkNode(l.getSource(),l,g);
+					}
+				}
+				else if( (l.getTarget().type == OvsSwitch.Type.LEAF && l.getSource().type == OvsSwitch.Type.RELAY) || 
+						(l.getTarget().type == OvsSwitch.Type.RELAY && l.getSource().type == OvsSwitch.Type.LEAF)){ //relay connesso ad una foglia
+					leaf+=1; //ritorno 1 se direttamente attaccato ad una leaf; 
+				}
+				else if( (l.getTarget().type == OvsSwitch.Type.RELAY && l.getSource().type == OvsSwitch.Type.ROOT) || 
+						(l.getTarget().type == OvsSwitch.Type.ROOT && l.getSource().type == OvsSwitch.Type.RELAY)){ //relay connesso direttamente alla root
+					root+=1;
+				}
+				count++;
+			}
+			else if(l.isTree && l.equals(link)) count++;
+		}
+		if (count > 1){
+			if(leaf > 0) {
+				if(root > 0){
+					if (ret != ""){
+						if(!ret.contains("LEAF")) 
+							ret+="LEAF"+","+"ROOT,";
+						else
+							ret+="ROOT,"; //se gia vie e una foglia inserisco solo la radice nel valore di ritorno
+					}
+					else ret+="LEAF"+","+"ROOT,";
+
+				}
+				else if (ret != ""){
+					if(!ret.contains("LEAF")) //se nel valore di ritorno non vi e gia una foglia la inserisco
+						ret+="LEAF,";
+				}
+				else ret+="LEAF";
+			}
+			else if (root>0) ret+="ROOT,"; //ci sara solo una root
+			return ret;
+		}
+		else return "";
 	}
 
 
@@ -311,6 +511,7 @@ public class NetworkTopology extends HttpServlet {
 		FloodlightController controller = getController();
 
 		if(oldGraph != null){ //if it is still valid
+			String currentDpid = null;
 			try{
 				//we get user made topology
 				mxGraph userGraph = new mxGraph();
@@ -345,6 +546,7 @@ public class NetworkTopology extends HttpServlet {
 						// so we phisically add the link to the switches as it is part of a tree
 
 						//1. starting from source switch
+						currentDpid = l.getSource().dpid;
 						DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
 						String ovs = null;
 
@@ -360,6 +562,7 @@ public class NetworkTopology extends HttpServlet {
 						l.setSourceP(new Port(srcPortName,controller.getPortNumber(l.getSource(), srcPortName)));
 
 						//2. now the other one
+						currentDpid = l.getTarget().dpid;
 						client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
 						opts = new OvsdbOptions();
 						opts.put(OvsdbOptions.REMOTE_IP, l.getSource().ip);
@@ -377,22 +580,21 @@ public class NetworkTopology extends HttpServlet {
 				if(previousTreeLinks.size() > 0){ //user deleted some link
 					for(LinkConnection l : previousTreeLinks){
 						//System.out.println("To delete " + l);
+						currentDpid = l.getSource().dpid;
 						DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
 						String ovs = client.getOvsdbNames()[0];
 						//1.
 						client.deletePort(ovs, BR_NAME,l.getSrcPort().name);
 
 						//2.
+						currentDpid = l.getTarget().dpid;
 						client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
 						client.deletePort(ovs, BR_NAME,l.getTargetPort().name);
 
 					}
 				}
 
-				controller.resetAllFlowsForAllSwitches(); //resetting flows
-				
-				/*getServletContext().setAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER, new VPMSwitchInfoHolder());//resetting switches
-				getServletContext().setAttribute(VPMPathInfoHolder.VPM_PATHS, new VPMPathInfoHolder()); //and path variables*/
+				//resetting path manager
 				getServletContext().setAttribute(VPMPathManager.VPM_PATH_MANAGER, new VPMPathManager());
 
 				holder.addGraph(jgraph);
@@ -403,7 +605,7 @@ public class NetworkTopology extends HttpServlet {
 
 			}catch(IOException | OvsdbException ex){
 				jResponse.put("status", "error");
-				jResponse.put("details", ex.getMessage());
+				jResponse.put("details", currentDpid+": "+ex.getMessage());
 				ex.printStackTrace();
 			}
 

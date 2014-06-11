@@ -14,7 +14,7 @@ public class TryMigrationThread{
 		
 		
 		System.out.println("we are starting");
-		MigrationThread mt = new MigrationThread(h1, h2, "linx2");
+		MigrationThread mt = null; /*new MigrationThread(h1, h2, "linx2", "br0", 6640);*/
 		mt.start();
 		
 		while (mt.getMigrationStatus() == MigrationThread.MIGRATION_IDLE)

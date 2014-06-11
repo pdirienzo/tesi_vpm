@@ -82,81 +82,6 @@ public class FloodlightController {
 		return vnets;
 	}
 	
-	
-	
-	/*private List<LinkConnection> deleteOpposites(List<LinkConnection> original){
-		List<LinkConnection> result = new ArrayList<LinkConnection>();
-
-		while(original.size() > 0){
-			LinkConnection l = original.remove(0); //taking first element
-			for(int i=0;i<original.size();i++){
-				if(original.get(i).oppositeLink(l))
-					original.remove(i);
-			}
-			result.add(l);
-		}
-
-		return result;
-	}
-	
-	private boolean isOpposite(LinkConnection l, List<LinkConnection> connections){
-		boolean opposite = false;
-		int i = 0;
-		
-		while((!opposite) && (i<connections.size())){
-			if(connections.get(i).oppositeLink(l))
-				opposite = true;
-			else
-				i++;
-		}
-		
-		return opposite;
-	}
-	
-	public ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> getJgraphTopology() throws IOException{
-		return NetworkConverter.getJgraphTopology(getSwitches(), getSwitchConnections(false));
-	}
-	
-	public mxGraph getMxTopology() throws IOException{
-		return NetworkConverter.getMxTopology(getSwitches(), getSwitchConnections(false));
-	}
-	
-	public List<LinkConnection> getSwitchConnections(boolean undirected) throws IOException{
-		JSONArray result = RestRequest.getJSonArray(baseURL+"/vpm/topology/links/json");
-		List<LinkConnection> links = new ArrayList<LinkConnection>(result.length());
-		for(int i=0;i<result.length();i++){
-			JSONObject o = result.getJSONObject(i);
-			LinkConnection l = new LinkConnection(
-					o.getString("src-switch"),o.getString("src-inet"), 
-					o.getString("dst-switch"),o.getString("dst-inet"),
-					new Port(o.getString("src-port")), 
-					new Port(o.getString("dst-port")) );
-			
-			if(undirected){
-				if(!isOpposite(l, links))
-					links.add(l);
-				
-			}else
-				links.add(l);
-		}
-		
-		return links;
-	}
-	
-	public List<OvsSwitch> getSwitches() throws IOException{
-		JSONArray result = RestRequest.getJSonArray(baseURL+"/wm/core/controller/switches/json");
-		
-		List<OvsSwitch> switches = new ArrayList<OvsSwitch>(result.length());
-		
-		for(int i=0;i<result.length();i++){
-			JSONObject o = result.getJSONObject(i);
-			String inet = (o.getString("inetAddress").substring(1)).split(":")[0];
-			switches.add(new OvsSwitch(o.getString("dpid"), inet));
-		}
-		
-		return switches;
-	}*/
-	
 	public JSONObject getStaticFlows(String dpid) throws IOException{
 		JSONObject json = null;
 
@@ -274,6 +199,7 @@ public class FloodlightController {
 
 		return result;
 	}
+	
 	
 	public void resetAllFlowsForAllSwitches() throws IOException{
 		HttpClient client = HttpClients.createDefault();

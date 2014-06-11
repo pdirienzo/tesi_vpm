@@ -33,7 +33,9 @@ public class Migration extends HttpServlet {
 		
 		HypervisorConnectionManager manager =(HypervisorConnectionManager)getServletContext().getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		
-		MigrationThread mt = new MigrationThread(manager.getActiveConnection(srcip).getHypervisor(), manager.getActiveConnection(dstip).getHypervisor(), vname);
+		
+		MigrationThread mt = new MigrationThread(manager.getActiveConnection(srcip).getHypervisor(), 
+				manager.getActiveConnection(dstip).getHypervisor(), vname, getServletContext());
 		mt.start();
 		
 		String id = srcip+"_"+dstip+"_"+vname;
