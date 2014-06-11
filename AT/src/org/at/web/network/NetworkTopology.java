@@ -107,9 +107,6 @@ public class NetworkTopology extends HttpServlet {
 			mxGraph savedmxGraph = topologyFromFile();
 			if(savedmxGraph != null){
 				VPMGraph<OvsSwitch, LinkConnection> savedGraph = NetworkConverter.mxToJgraphT(savedmxGraph, true);
-				for(LinkConnection l : savedGraph.edgeSet()){
-					
-				}
 				
 				System.out.println("A saved graph has been found, checking if still valid...");
 				VPMGraph<OvsSwitch, LinkConnection> actualGraph = getController().getTopology();
@@ -118,20 +115,21 @@ public class NetworkTopology extends HttpServlet {
 				boolean valid = true;
 				int savedTreeEdgesCount = 0;
 
-				if(savedGraph.vertexSet().size() == actualGraph.vertexSet().size()){
+				if(savedGraph.vertexSet().size() == actualGraph.vertexSet().size()){ //rough control: if the vertex size is different then it's 
+																					//100% different
+					
 					Iterator<LinkConnection> savedEdges = savedGraph.edgeSet().iterator();
 					while( (valid) && savedEdges.hasNext()){
 						LinkConnection tEdge = savedEdges.next();
-						if(tEdge.isTree){
+						System.out.println(tEdge);
+						if(tEdge.isTree){ //we just care about tree edges as they are the only phisical links the controller can see
 							savedTreeEdgesCount++;
-							valid = (actualGraph.containsEdge(tEdge.getSource(),tEdge.getTarget()) || 
-									actualGraph.containsEdge(tEdge.getTarget(),tEdge.getSource()));//checking if exists
+							valid = actualGraph.containsEdge(tEdge.getSource(),tEdge.getTarget());// || 
+									//(actualGraph.containsEdge(tEdge.getTarget(),tEdge.getSource()));//checking if exists
 
 							if(valid){ //between two different starts controller may have been restarted and so port ids could have
 								//been changed
-								LinkConnection freshL = actualGraph.getEdge(tEdge.getSource(), tEdge.getTarget());
-								tEdge.setSourceP(freshL.getSrcPort());
-								tEdge.setTargetP(freshL.getTargetPort());
+								tEdge = actualGraph.getEdge(tEdge.getTarget(), tEdge.getSource());
 							}
 						}
 					}

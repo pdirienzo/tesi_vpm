@@ -118,8 +118,9 @@ public final class NetworkConverter {
 
 			while(links.hasNext()){
 				LinkConnection l = links.next();
+				
+				System.out.println(l);
 				Element linkEl = linkToDom(doc,l);
-
 				myGraph.insertEdge(myGraph.getDefaultParent(), null, linkEl, vertexes.get(l.getSource().dpid), 
 						vertexes.get(l.getTarget().dpid));
 
