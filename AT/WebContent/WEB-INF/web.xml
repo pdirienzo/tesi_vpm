@@ -10,6 +10,6 @@
     <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
   <listener>
-    <listener-class>org.at.connections.LimeContextServerListener</listener-class>
+    <listener-class>org.at.connections.VPMContextServerListener</listener-class>
   </listener>
 </web-app>

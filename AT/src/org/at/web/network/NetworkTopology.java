@@ -19,8 +19,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.at.db.Controller;
-import org.at.db.Database;
+import org.at.connections.VPMContextServerListener;
 import org.at.floodlight.FloodlightController;
 import org.at.network.NetworkConverter;
 import org.at.network.types.LinkConnection;
@@ -49,31 +48,6 @@ public class NetworkTopology extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String TOPOLOGY_XML = "./topology/topology.xml";
 
-	private String BR_NAME;
-	private int BR_PORT;
-	private int VLAN_ID;
-
-
-	private mxGraph topologyFromFile() throws IOException{
-		mxGraph graph = null;
-
-		if(new File(TOPOLOGY_XML).exists()){
-			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(TOPOLOGY_XML)));
-			StringBuilder xml = new StringBuilder();
-			String read = null;
-			while((read=reader.readLine()) != null)
-				xml.append(read);
-			reader.close();
-
-			graph = new mxGraph();
-			org.w3c.dom.Node node = mxXmlUtils.parseXml(xml.toString());
-			mxCodec decoder = new mxCodec(node.getOwnerDocument());
-			decoder.decode(node.getFirstChild(),graph.getModel());
-		}
-
-		return graph;
-	}
-
 	private void topologyToFile(mxGraph topo) throws FileNotFoundException{
 		mxCodec codec = new mxCodec();	
 		String xmlString =  mxXmlUtils.getXml(codec.encode(topo.getModel()));
@@ -91,6 +65,7 @@ public class NetworkTopology extends HttpServlet {
 		super();
 	}
 
+	/*
 	@Override
 	public void init() throws ServletException {
 		super.init();
@@ -109,7 +84,8 @@ public class NetworkTopology extends HttpServlet {
 				VPMGraph<OvsSwitch, LinkConnection> savedGraph = NetworkConverter.mxToJgraphT(savedmxGraph, true);
 				
 				System.out.println("A saved graph has been found, checking if still valid...");
-				VPMGraph<OvsSwitch, LinkConnection> actualGraph = getController().getTopology();
+				FloodlightController controller = FloodlightController.getDbController();
+				VPMGraph<OvsSwitch, LinkConnection> actualGraph = controller.getTopology();
 				//we have to check if every tree edge defined in the saved graph still exists
 				//(just tree edges are phisical links and so visible by the controller)
 				boolean valid = true;
@@ -121,7 +97,6 @@ public class NetworkTopology extends HttpServlet {
 					Iterator<LinkConnection> savedEdges = savedGraph.edgeSet().iterator();
 					while( (valid) && savedEdges.hasNext()){
 						LinkConnection tEdge = savedEdges.next();
-						System.out.println(tEdge);
 						if(tEdge.isTree){ //we just care about tree edges as they are the only phisical links the controller can see
 							savedTreeEdgesCount++;
 							valid = actualGraph.containsEdge(tEdge.getSource(),tEdge.getTarget());// || 
@@ -154,24 +129,7 @@ public class NetworkTopology extends HttpServlet {
 			e.printStackTrace();
 		}
 	}
-
-
-	private FloodlightController getController() throws IOException{
-		Database d = new Database();
-		d.connect();
-		Controller c = d.getController();
-		d.close();
-
-		if(c==null)
-			return null;
-
-		FloodlightController controller = new FloodlightController(c);
-
-		return controller;
-	}
-
-
-
+*/
 	private KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> createTree(VPMGraph<OvsSwitch,LinkConnection> graph){	
 
 		KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> k = new KruskalMinimumSpanningTree<OvsSwitch,LinkConnection>(graph);
@@ -430,7 +388,7 @@ public class NetworkTopology extends HttpServlet {
 
 			if( (graph = holder.getGraph()) == null){ //first time execution or invalid graph
 
-				FloodlightController controller = getController();
+				FloodlightController controller = FloodlightController.getDbController();
 
 				if(controller != null){
 					graph = controller.getTopology();
@@ -440,7 +398,7 @@ public class NetworkTopology extends HttpServlet {
 					String xmlString =  mxXmlUtils.getXml(codec.encode(
 							(NetworkConverter.jgraphToMx(graph)).getModel()));
 
-					jsResp.put("status", "ok");
+					jsResp.put("status", "ok_no_network");
 					jsResp.put("graph", xmlString);
 
 				}else{
@@ -506,7 +464,7 @@ public class NetworkTopology extends HttpServlet {
 		VPMGraphHolder holder = (VPMGraphHolder)getServletContext().getAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER);
 		VPMGraph<OvsSwitch, LinkConnection> oldGraph = holder.getGraph();
 
-		FloodlightController controller = getController();
+		FloodlightController controller = FloodlightController.getDbController();
 
 		if(oldGraph != null){ //if it is still valid
 			String currentDpid = null;
@@ -545,27 +503,27 @@ public class NetworkTopology extends HttpServlet {
 
 						//1. starting from source switch
 						currentDpid = l.getSource().dpid;
-						DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
+						DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, VPMContextServerListener.BR_PORT);
 						String ovs = null;
 
 						OvsDBSet<Integer> trunks = new OvsDBSet<Integer>();
-						trunks.add(VLAN_ID);
+						trunks.add(VPMContextServerListener.VLAN_ID);
 
 						ovs = client.getOvsdbNames()[0];
 						OvsdbOptions opts = new OvsdbOptions();
 						opts.put(OvsdbOptions.REMOTE_IP, l.getTarget().ip);
 						String srcPortName = computePortName(l.getSource().dpid,l.getTarget().dpid);
-						client.addPort(ovs, BR_NAME, srcPortName, Interface.Type.gre.name(),0,trunks,opts);
+						client.addPort(ovs, VPMContextServerListener.BR_NAME, srcPortName, Interface.Type.gre.name(),0,trunks,opts);
 
 						l.setSourceP(new Port(srcPortName,controller.getPortNumber(l.getSource(), srcPortName)));
 
 						//2. now the other one
 						currentDpid = l.getTarget().dpid;
-						client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
+						client = new DefaultOvsdbClient(l.getTarget().ip, VPMContextServerListener.BR_PORT);
 						opts = new OvsdbOptions();
 						opts.put(OvsdbOptions.REMOTE_IP, l.getSource().ip);
 						String targetPortName = computePortName(l.getTarget().dpid,l.getSource().dpid);
-						client.addPort(ovs, BR_NAME, targetPortName, Interface.Type.gre.name(),0,trunks,opts);
+						client.addPort(ovs, VPMContextServerListener.BR_NAME, targetPortName, Interface.Type.gre.name(),0,trunks,opts);
 
 						l.setTargetP(new Port(targetPortName,controller.getPortNumber(l.getTarget(), targetPortName)));
 						//System.out.println("Creating "+computePortName(l.getSource().dpid,l.getTarget().dpid)+" on "+l.getSource());
@@ -579,15 +537,15 @@ public class NetworkTopology extends HttpServlet {
 					for(LinkConnection l : previousTreeLinks){
 						//System.out.println("To delete " + l);
 						currentDpid = l.getSource().dpid;
-						DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, BR_PORT);
+						DefaultOvsdbClient client = new DefaultOvsdbClient(l.getSource().ip, VPMContextServerListener.BR_PORT);
 						String ovs = client.getOvsdbNames()[0];
 						//1.
-						client.deletePort(ovs, BR_NAME,l.getSrcPort().name);
+						client.deletePort(ovs, VPMContextServerListener.BR_NAME,l.getSrcPort().name);
 
 						//2.
 						currentDpid = l.getTarget().dpid;
-						client = new DefaultOvsdbClient(l.getTarget().ip, BR_PORT);
-						client.deletePort(ovs, BR_NAME,l.getTargetPort().name);
+						client = new DefaultOvsdbClient(l.getTarget().ip, VPMContextServerListener.BR_PORT);
+						client.deletePort(ovs, VPMContextServerListener.BR_NAME,l.getTargetPort().name);
 
 					}
 				}

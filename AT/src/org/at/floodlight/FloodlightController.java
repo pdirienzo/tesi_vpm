@@ -14,6 +14,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.at.db.Controller;
+import org.at.db.Database;
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
 import org.at.network.types.Port;
@@ -28,6 +29,25 @@ public class FloodlightController {
 	public FloodlightController(Controller c){
 		this.baseURL = "http://"+c.getHostAddress()
 				+":"+c.getPort();	
+	}
+	
+	/**
+	 * Gets an instance of the floodlight controller from the data saved into the db.
+	 * 
+	 * @return an instance of floodlight controller or null if it doesn't exist
+	 */
+	public static FloodlightController getDbController() throws IOException{
+		Database d = new Database();
+		d.connect();
+		Controller c = d.getController();
+		d.close();
+
+		if(c==null)
+			throw new IOException("No floodlight controller defined");
+
+		FloodlightController controller = new FloodlightController(c);
+
+		return controller;
 	}
 	
 	private HashMap<String, OvsSwitch> getSwitches() throws IOException{

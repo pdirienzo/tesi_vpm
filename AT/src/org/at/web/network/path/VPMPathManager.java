@@ -5,8 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import org.at.db.Controller;
-import org.at.db.Database;
 import org.at.floodlight.FloodlightController;
 import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
@@ -54,20 +52,6 @@ public class VPMPathManager {
 	 */
 	public VPMSwitchInfo getSwitchInfos(String dpid){
 		return switchInfos.get(dpid);
-	}
-	
-	private FloodlightController getController() throws IOException{
-		Database d = new Database();
-		d.connect();
-		Controller c = d.getController();
-		d.close();
-
-		if(c==null)
-			throw new IOException("couldn't contact controller");
-
-		FloodlightController controller = new FloodlightController(c);
-
-		return controller;
 	}
 	
 	public VPMPathManager(){
@@ -128,18 +112,9 @@ public class VPMPathManager {
 		}
 	}
 	
-	//********************************************** auxiliary functions ***************************************************
-	/*public void addVnetToFlow(VPMSwitchInfo infos, JSONObject flow, FloodlightController controller) throws IOException{
-		if(controller == null)
-			controller = getController();
-		
-		
-	}*/
-	
-	//****************************************** flow logic ******************************************************************************
 	private void addFlows(GraphPath<OvsSwitch,LinkConnection> jpath, String externalBcast) throws IOException{
 
-		FloodlightController controller = getController();
+		FloodlightController controller = FloodlightController.getDbController();
 		List<OvsSwitch> nodes = Graphs.getPathVertexList(jpath);
 
 
@@ -236,7 +211,7 @@ public class VPMPathManager {
 	
 	private void deleteFlows(GraphPath<OvsSwitch,LinkConnection> jpath) throws IOException{
 		
-		FloodlightController controller = getController();
+		FloodlightController controller = FloodlightController.getDbController();
 		List<OvsSwitch> nodes = Graphs.getPathVertexList(jpath);
 
 		for(int i=0;i<nodes.size();i++){

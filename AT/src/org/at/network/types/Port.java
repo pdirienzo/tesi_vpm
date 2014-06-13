@@ -30,7 +30,7 @@ public class Port {
 	
 	@Override
 	public int hashCode() {
-		return (this.name.hashCode()+this.number);
+		return (String.valueOf(this.number)).hashCode();
 	}
 	
 	public String toString(){

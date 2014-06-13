@@ -57,12 +57,12 @@ public class OvsSwitch {
 	
 	public boolean equals(Object o){
 		OvsSwitch s = (OvsSwitch)o;
-		return (s.ip.equals(this.ip)) && (s.dpid.equals(this.dpid));
+		return /*(s.ip.equals(this.ip)) &&*/ (s.dpid.equals(this.dpid));
 	}
 	
 	@Override
 	public int hashCode() {
-		return (this.ip+this.dpid).hashCode();
+		return (/*this.ip+*/this.dpid).hashCode();
 	}
 	
 	public static void main(String[] args){
