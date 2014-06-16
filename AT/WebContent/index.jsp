@@ -112,8 +112,8 @@
 					<li><a href="migration.html">Migration</a></li>
 					<li><a href="ovs_network.html">Networking</a></li>
 					<li><a href="path.html">Path</a></li>
-<!-- 					<li><a href="settings.html">Settings</a></li>-->
-					<li><a href="settingsBootstrap.html">New Setting Tab</a></li>
+ 	<!--				<li><a href="settings.html">Settings</a></li> -->
+					<li><a href="settingsBootstrap.html">New Setting Tab</a></li> 
 				</ul>
 			</div>
 		</div>

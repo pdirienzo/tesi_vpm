@@ -23,6 +23,10 @@
 	$("#set-controller").button().click(function() {
 		$("#set-controller-dialog").modal("show");
 	});
+	
+	$("#add-iscsi").button().click(function() {
+		$("#add-iscsi-dialog").modal("show");
+	});
 /*
 	$("#add-host-dialog").dialog({
 		title : "Aggiunta Hypervisor",
@@ -43,14 +47,33 @@
 	});
 */
 	$("#addNewHypervisor").button().click(function() {
-		$("#add-host-dialog").modal("show");
+		
+		$.getJSON("ISCSISettings", function(response) {
+			
+			if(response.status == "ok"){
+				var targets = response.data;
+				var $el = $('#addhost-iscsi'); 
+				
+				$('#addhost-iscsi option:gt(0)').remove();//el.empty();
+				console.log("after removed" + targets.length);
+				for(var i=0;i<targets.length;i++){
+					console.log("ok"+targets[i].id+targets[i].name);
+					$el.append("<option value='"+targets[i].id+"'>"+targets[i].name+"</option>");		
+				}
+				
+				$("#add-host-dialog").modal("show");
+			}else{
+				showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>",response.details);
+			}
+			
+		});
 	});
 
 	function getHypervisorSettings() {
 		$.getJSON(
 			"GetHypervisorSettings",
 			function(response) {
-				html = "";
+				var html = "";
 				for (i = 0; i < response.length; i++) {
 					html += "<tr>";
 					html += "<td>" + response[i].username + "</td>";
@@ -89,16 +112,23 @@
 	}
 
 	function addNewHypervisor() {
-		username = document.getElementById("addhost-username").value;
-		host = document.getElementById("addhost-hostname").value;
-		port = document.getElementById("addhost-port").value;
-		$.getJSON("AddHypervisor?username=" + username + "&ip=" + host
-				+ "&port=" + port, function(response) {
-			showDialog2("INFO",response.status);
-			//$("#add-host-dialog").dialog("close");
-			getHypervisorSettings();
+		var username = $("#addhost-username").val();
+		var host = $("#addhost-hostname").val();
+		var port = $("#addhost-port").val();
+		var iscsi = $("#addhost-iscsi").val();
+		
+		if(username != '' && host != '' && port != '' && iscsi != 0 ){
+			$.getJSON("AddHypervisor?username=" + username + "&ip=" + host
+				+ "&port=" + port + "&iscsi=" + iscsi, function(response) {
+					showDialog2("INFO",response.status);
+					//$("#add-host-dialog").dialog("close");
+					getHypervisorSettings();
 
-		});
+			});
+			
+		}else{
+			alert(" Fill all fields!");
+		}
 	}
 
 	function removeHypervisor(event) {
@@ -112,11 +142,71 @@
 
 				});
 	}
+	
+	function getISCSISettings() {
+		$.getJSON("ISCSISettings", function(response) {
+			
+			if(response.status == "ok"){
+				var targets = response.data;
+				//populating
+				var html = "";
+				for(var i=0;i<targets.length;i++){
+					html += "<tr>";
+					html += "<td>" + targets[i].name + "</td>";
+					html += "<td>" + targets[i].hostname + "</td>";
+					html += "<td>" + targets[i].iqn + "</td>";
+					html += "<td><button id=\"ISCSI-"
+							+ targets[i].id
+							+ "\" class=\"btn btn-danger\" onclick=\"removeISCSI(event);\">Elimina</button></td>";
+					html += "</tr>";
+				}
+				
+				$("#ISCSI-list").html(html);
+				
+			}else{
+				showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>",response.details);
+			}
+			
+		});	
+	}
+	
+	function addNewISCSI(){
+		var name = $('#set-iscsi-name').val();
+		var hostname = $('#set-iscsi-hostname').val();
+		var iqn = $('#set-iscsi-iqn').val();
+		
+		if( name != '' && hostname != '' && iqn != ''){
+		$.post("ISCSISettings", {"op":"add", "name":name, "hostname":hostname, "iqn":iqn}, function(response){
+			if(response.status == "ok"){
+				showDialog2("INFO", "ISCSI added with success");
+				getISCSISettings();
+			}else
+				alert(response.details);
+		});
+		
+		}else{
+			alert("Fill all fields");	
+		}
+	}
+	
+	function removeISCSI(event) {
+
+		var target = event.target.id.split('-')[1];
+		console.log(target);
+		$.post("ISCSISettings", {"op":"del", "id":target}, function(response){
+			if(response.status == "ok"){
+				showDialog2("INFO", "ISCSI removed");
+				getISCSISettings();
+			}else
+				alert(response.details);
+		});
+	}
 
 	//chiamate quando il doc è pronto
 	
 	getControllerSettings();
 	getHypervisorSettings();
+	getISCSISettings();
 	
 </script>
 
@@ -159,10 +249,34 @@
 	<hr>
 	<br>
 
+	<div id="iscsi-box" class="cent">
+		<h3>Target ISCSI Registrati</h3>
+		<table id="iscsi-table" cellspacing="10" class="table table-stripered"
+			style="width: 100%">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Hostname</th>
+					<th>IQN</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody id="ISCSI-list">
+
+			</tbody>
+		</table>
+		<br>
+		<button id="add-iscsi" class="btn">Aggiungi Target</button>
+	</div>
+	<br>
+	<hr>
+	<br>
+
 	<div id="hypervisors-box" class="cent">
 		<h3>Hypervisors Registrati</h3>
-		<table id="hyper-table" cellspacing="10" class="table table-bordered table-hover">
-			<thead style="background-color:#CCC">
+		<table id="hyper-table" cellspacing="10"
+			class="table table-bordered table-hover">
+			<thead style="background-color: #CCC">
 				<tr>
 					<th>Username</th>
 					<th>Hostname</th>
@@ -177,83 +291,161 @@
 		<br>
 		<button id="addNewHypervisor" class="btn ">Aggiungi</button>
 
-		<!-- DIALOG FOR HYPERVISOR -->
-		<div class="modal fade" id="add-host-dialog" tabindex="-1" role="dialog" aria-labelledby="add-host-label" aria-hidden="true">
-		  <div class="modal-dialog modal-sm" >
-		    <div class="modal-content">
-		      <div class="modal-header" style="background-color:#DDD">
-		        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-		        <h4 class="modal-title" id="myVmLabel">Aggiunta Hypervisor</h4>
-		      </div>
-		      <div class="modal-body">
-		      	
-			      <div class="row">
-			      	<div class="span1">
-			        	<label for="addhost-username">Username</label>
-			        </div>
-			        <div class="span2"> 
-			       		<input id="addhost-username" type="text" value="" placeholder="Username" style="width:inherit" class="form-control" />
-			        </div>
-			      </div>
-			      <div class="row">
-			      	<div class="span1">
-			        	<label for="addhost-hostname">Host</label> 
-					  </div>
-			        <div class="span2"> 
-			      		<input id="addhost-hostname" type="text" value="" class="form-control" style="width:inherit" placeholder="localhost" />
-					  </div>
-			      </div>
-			      <div class="row">
-			      	<div class="span1">
-			      <label for="addhost-port">Port</label>
-			        </div>
-			        <div class="span2">  
-					<input id="addhost-port" type="text" value="16514" class="form-control" style="width:inherit" placeholder="Port" />
+	</div>
+	
+	<!-- DIALOG FOR ISCSI -->
+	<div class="modal fade" id="add-iscsi-dialog" tabindex="-1"
+		role="dialog" aria-labelledby="add-iscsi-label" aria-hidden="true">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header" style="background-color: #DDD">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-hidden="true">&times;</button>
+					<h4 class="modal-title" id="add-iscsi-label">Aggiunta Target</h4>
+				</div>
+				<div class="modal-body">
+
+					<div class="row">
+						<div class="span1">
+							<label for="set-iscsi-name">Name</label>
+						</div>
+						<div class="span2">
+							<input id="set-iscsi-name" type="text" value=""
+								placeholder="Name iscsi" class="form-control"
+								style="width: inherit" />
+						</div>
 					</div>
-			      </div>
-			     </div>
-		      <div class="modal-footer">
-		        <button type="button" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" onClick="addNewHypervisor()">Okay</button>
-		      </div>
-		    </div>
-		  </div>
+					<div class="row">
+						<div class="span1">
+							<label for="set-iscsi-hostname">Hostname</label>
+						</div>
+						<div class="span2">
+							<input id="set-iscsi-hostname" type="text" value=""
+								class="form-control" style="width: inherit"
+								placeholder="localhost" />
+						</div>
+					</div>
+					<div class="row">
+						<div class="span1">
+							<label for="set-iscsi-iqn">IQN</label>
+						</div>
+						<div class="span2">
+							<input id="set-iscsi-iqn" type="text" value=""
+								class="form-control" style="width: inherit"
+								placeholder="iqn.Y-M.domain:unique" />
+						</div>
+					</div>
+
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary btn-lg btn-block"
+						data-dismiss="modal" onClick="addNewISCSI()">Okay</button>
+				</div>
+			</div>
 		</div>
-		
-		<!-- DIALOG FOR CONTROLLER -->
-		<div class="modal fade" id="set-controller-dialog" tabindex="-1" role="dialog" aria-labelledby="set-controller-label" aria-hidden="true">
-		  <div class="modal-dialog modal-sm" >
-		    <div class="modal-content">
-		      <div class="modal-header" style="background-color:#DDD">
-		        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-		        <h4 class="modal-title" id="set-controller-label">Aggiunta Controller</h4>
-		      </div>
-		      <div class="modal-body">
-		      <h3>Impostazioni Openflow Controller</h3>
-			      <div class="row">
-			      	<div class="span1">
-			        	<label for="set-hostname">Hostname</label>
+	</div>
+
+	<!-- DIALOG FOR HYPERVISOR -->
+	<div class="modal fade" id="add-host-dialog" tabindex="-1"
+		role="dialog" aria-labelledby="add-host-label" aria-hidden="true">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header" style="background-color: #DDD">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-hidden="true">&times;</button>
+					<h4 class="modal-title" id="myVmLabel">Aggiunta Hypervisor</h4>
+				</div>
+				<div class="modal-body">
+
+					<div class="row">
+						<div class="span1">
+							<label for="addhost-username">Username</label>
+						</div>
+						<div class="span2">
+							<input id="addhost-username" type="text" value=""
+								placeholder="Username" style="width: inherit"
+								class="form-control" />
+						</div>
 					</div>
-			        <div class="span2"> 
-			      		<input id="set-hostname" type="text" style="width:inherit" value="localhost" />
+					<div class="row">
+						<div class="span1">
+							<label for="addhost-hostname">Host</label>
+						</div>
+						<div class="span2">
+							<input id="addhost-hostname" type="text" value=""
+								class="form-control" style="width: inherit"
+								placeholder="localhost" />
+						</div>
 					</div>
-			      </div>
-			      <div class="row">
-			      	<div class="span1">
-			        <label for="set-port">Port</label>
+					<div class="row">
+						<div class="span1">
+							<label for="addhost-port">Port</label>
+						</div>
+						<div class="span2">
+							<input id="addhost-port" type="text" value="16514"
+								class="form-control" style="width: inherit" placeholder="Port" />
+						</div>
 					</div>
-			        <div class="span2"> 
-			      	<input id="set-port" type="text" style="width:inherit" value="8080" />
+					<div class="row">
+						<div class="span1">
+							<label for="addhost-iscsi">ISCSI</label>
+						</div>
+						<div class="span2">
+							<select id="addhost-iscsi" style="width: inherit" name="iscsi"><option
+									value="0">Select iSCSI</option></select>
+						</div>
 					</div>
-			      </div>
-			  </div>
-		      <div class="modal-footer">
-		      <p>
-		        <button type="button" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" onClick="applyControllerSettings()">Applica</button>
-		        <button type="button" class="btn btn-danger btn-lg btn-block" data-dismiss="modal">Annulla</button>
-		      </p>
-		      </div>
-		    </div>
-		  </div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary btn-lg btn-block"
+						data-dismiss="modal" onClick="addNewHypervisor()">Okay</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- DIALOG FOR CONTROLLER -->
+	<div class="modal fade" id="set-controller-dialog" tabindex="-1"
+		role="dialog" aria-labelledby="set-controller-label"
+		aria-hidden="true">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header" style="background-color: #DDD">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-hidden="true">&times;</button>
+					<h4 class="modal-title" id="set-controller-label">Aggiunta
+						Controller</h4>
+				</div>
+				<div class="modal-body">
+					<h3>Impostazioni Openflow Controller</h3>
+					<div class="row">
+						<div class="span1">
+							<label for="set-hostname">Hostname</label>
+						</div>
+						<div class="span2">
+							<input id="set-hostname" type="text" style="width: inherit"
+								value="localhost" />
+						</div>
+					</div>
+					<div class="row">
+						<div class="span1">
+							<label for="set-port">Port</label>
+						</div>
+						<div class="span2">
+							<input id="set-port" type="text" style="width: inherit"
+								value="8080" />
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<p>
+						<button type="button" class="btn btn-primary btn-lg btn-block"
+							data-dismiss="modal" onClick="applyControllerSettings()">Applica</button>
+						<button type="button" class="btn btn-danger btn-lg btn-block"
+							data-dismiss="modal">Annulla</button>
+					</p>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

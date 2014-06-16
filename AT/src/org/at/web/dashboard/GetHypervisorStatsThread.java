@@ -1,5 +1,6 @@
 package org.at.web.dashboard;
 
+import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
@@ -25,7 +26,14 @@ public class GetHypervisorStatsThread implements Callable<JSONObject>{
 	public JSONObject call() {
 		Hypervisor h = c.getHypervisor();
 		JSONObject hypervisorJ = new JSONObject()
-		.put("id", h.getId()).put("ip",h.toString());
+		.put("id", h.getId())
+		.put("hostname",h.toString());
+		
+		try{
+			hypervisorJ.put("ip", c.getIpAddress());
+		}catch(IOException | LibvirtException ex){
+			hypervisorJ.put("ip", "undefined");
+		}
 		
 		try {
 			hypervisorJ.put("status", Hypervisor.STATUS_ONLINE);

@@ -146,7 +146,7 @@ public class VPMContextServerListener implements ServletContextListener {
 			c.getServletContext().setAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER, manager);
 			
 		} catch (IOException e) {
-			System.err.println("Failed to initialize db: "+e.getLocalizedMessage());
+			System.err.println("Failed to initialize db: "+e.getMessage());
 		}
 	}
 	
