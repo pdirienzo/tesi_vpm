@@ -122,11 +122,11 @@ public class FloodlightController {
 
 		rd.close();
 		
-		return json;
+		return json.getJSONObject(dpid);
 	}
 	
-	public JSONObject getFlows(String dpid) throws IOException{
-		JSONObject json = null;
+	/*
+	public JSONArray getFlows(String dpid) throws IOException{
 
 		HttpClient client = HttpClients.createDefault();
 		HttpGet getRequest = new HttpGet(
@@ -141,12 +141,12 @@ public class FloodlightController {
 		while((s=rd.readLine())!= null)
 			sb.append(s);
 
-		json = new JSONObject(sb.toString());
-
 		rd.close();
 		
-		return json;
-	}
+		JSONArray flows = (new JSONObject(sb.toString())).getJSONArray(dpid);
+		
+		return flows;
+	}*/
 
 	public JSONObject addStaticFlow(JSONObject data) throws IOException{
 		JSONObject result = null;
@@ -239,27 +239,37 @@ public class FloodlightController {
 	
 	public static void main(String[] args) throws IOException{
 		FloodlightController f = new FloodlightController(
-				new Controller("192.168.1.180", 8080));
+				new Controller("192.168.1.181", 8080));
 		
+		JSONObject jos = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
+		for(Object s : jos.keySet()){
+			
+			JSONObject flow = jos.getJSONObject((String)s);
+			Object o = jos.get("actions");
+			
+			//JSONObject jas = flow.getJSONObject("actions");
+			System.out.println(o);
+			
+		}
+		//System.out.println(jos.get("actions"));
 		/*for(LinkConnection ovs : f.getSwitchConnections(true))
 			System.out.println(ovs);*/
 		
-		System.out.println(f.getPortNumber(new OvsSwitch("00:00:16:d1:61:6a:85:49","192.168.1.180"), "col0"));
-		/*JSONObject data = new JSONObject()
-		 //.put("name", "flow-mod-vm1-swl")
-		.put("switch", "00:00:16:d1:61:6a:85:49")
-		//.put("cookie", "5")
+		//System.out.println(f.getPortNumber(new OvsSwitch("00:00:16:d1:61:6a:85:49","192.168.1.180"), "col0"));
+		JSONObject data = new JSONObject()
+		 .put("name", "flow-test-abc-swl")
+		.put("switch", "00:00:72:5b:2d:c5:15:46")
+		.put("cookie", "5")
 		//.put("priority", "20")
 		//.put("idle_timeout","5")
 		//.put("vlan-id", "1")
 		//.put("ingress-port", "3")
 		//.put("ether-type", "0x0800")
 		.put("active", "true")
-		.put("dst-port", "6633")
-		.put("actions", "output=1");
+		.put("dst-port", "6633");
 		
-		System.out.println(f.addFlow(data));
-		f.deleteAllFlows("00:00:00:0c:29:4a:ba:96");
+		//System.out.println(f.addStaticFlow(data));
+		//f.deleteAllFlows("00:00:00:0c:29:4a:ba:96");
 		
 		//JSONObject obj = f.getFlows("00:00:00:24:be:c1:a9:5c");
 		//JSONObject obj = f.deleteFlow("00:00:00:24:be:c1:a9:5c","pleaseWork_out");

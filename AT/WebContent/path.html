@@ -13,7 +13,7 @@
 	var leafPath = 0;
 	var xmlPath;
 	
-	function getDummies(){
+	/* function getDummies(){
 	    var myJSONObject = [{
 	    	"status": "ok_path",
 	    	"path" : '<mxGraphModel>'+
@@ -41,7 +41,7 @@
 			"external" : "192.168.1.101"
 	    }];
 	    return myJSONObject;
-	} 
+	}  */
 	
 	function sendPath() {
 				if ($("#root_id").val() != -1 && $("#leaf_id").val() != -1) {
@@ -190,10 +190,17 @@
 		var overlay = new mxCellOverlay(new mxImage(
 				path, 26, 26), tooltip);
 		overlay.addListener(mxEvent.CLICK, function(sender, evt){
-		//	$.getJSON("GetFlow?dpid="+dpid, function(data) {
+		$.getJSON("Flows?dpid="+dpid, function(resp) {
+				if(resp.status == "ok"){
+					showDialogModal(tooltip+" "+dpid,new Date()+"<br />"+JSON.stringify(resp.data, undefined, 2));
+				}else{
+					alert(resp.details);
+				}
 				//mxUtils.alert(tooltip + '\nFlow update: ' + new Date()+ "\n"+"Ciao");
-				showDialogModal(tooltip+" "+dpid,new Date()+"<br />Ciao");
-		//	});
+				
+		//
+		
+			});
 		});
 		
 		return overlay;
