@@ -26,6 +26,7 @@
 			}
 			else
 			{	
+				getVM();
 				var xml;
 				// Disables built-in context menu
 				mxEvent.disableContextMenu(document.body);
@@ -203,19 +204,24 @@
 		}
 		
 		function createTooltip(tooltip,ip){
+			var hasVm = false;
 			var html = "<ul class=\"list-group\">";
 			for (var i = 0; i < nodesVM.length; i++){
 				var node = nodesVM[i];
 				if (node.ip == ip){
 					console.log(ip);
-					
+					hasVm= true;
 					for (j in node.vm){
 						var vm = node.vm[j];
 						html+="<li class=\"list-group-item\"><span class=\"badge pull-right\">"+ 
-						vm.cpu +"</span>"+ vm.name +"</li>";
+						vm.cpu +"%</span>"+ vm.name +"("+vm.status+")</li>";
 					}
 					break;
 				}
+				else hasVm=false;
+			}
+			if (!hasVm){
+				html+="<li class=\"list-group-item\">NO Virtual Machines Available</li>";
 			}
 			html += "</ul>";
 			console.log(html);
@@ -241,9 +247,14 @@
 		                    var tmp = {};
 		                	if (hypervisor.machines[j].status == "running") {
 		                    	tmp["name"] = hypervisor.machines[j].name;
-		                    	tmp["cpu"] = hypervisor.machines[j].cpustats;
-		                    	
+		                    	tmp["cpu"] = hypervisor.machines[j].cpuUsage;
+		                    	tmp["status"] = "running";
 		                    }
+		                	else {
+		                		tmp["name"] = hypervisor.machines[j].name;
+		                    	tmp["cpu"] = "0%";
+		                    	tmp["status"] = "offline";
+		                	}
 		                    vmachine.push(tmp);
 		                }
 		                item["vm"]=vmachine;
@@ -265,6 +276,7 @@
 				if (cell!=null && cell.isVertex()){
 					menu.addItem('Root', null, function()
 				    {
+						console.log(cell.getAttribute("ip"));
 						if(root==0){
 							root+=1;
 							//alert('Root Selected');
@@ -296,6 +308,7 @@
 						if(cell.getAttribute("type")=="ROOT"){
 							root=0;
 						}
+						console.log(cell.getAttribute("ip"));
 						//alert('Leaf Selected');
 						// Creates a new overlay with an image and a tooltip
 						var overlays=graph.getCellOverlays(cell);
@@ -309,6 +322,7 @@
 							'Leaf');
 						
 						overlay.addListener(mxEvent.CLICK, function(sender, evt){
+							
 							createTooltip("Leaf",cell.getAttribute("ip"));													
 						});
 						// Sets the overlay for the cell in the graph
@@ -318,6 +332,7 @@
 				    });
 					menu.addItem('Relay', null, function()
 					{
+						console.log(cell.getAttribute("ip"));
 						if(cell.getAttribute("type")=="ROOT"){
 							root=0;
 						}
@@ -377,23 +392,10 @@
 		}
 	
 </script>
-
 <script>
 $(document).ready(function(){
-	getVM();
-	main(document.getElementById('graphContainer'));
 	
-	/*if (mxClient.IS_NS)
-	{
-	  mxEvent.addListener(graph.container, 'mousedown', function()
-	  {
-	    if (!graph.isEditing())
-	    {
-	      graph.container.setAttribute('tabindex', '-1');
-	      graph.container.focus();
-	    }
-	  });
-	}*/
+	main(document.getElementById('graphContainer'));
 }); 
 
 $( "#sendChangesB" ).button().click(function( event ) {
@@ -405,21 +407,7 @@ $( "#sendChangesB" ).button().click(function( event ) {
 		
 		$.post("NetworkTopology",{"xml":exml},function(data){
 			   if(data.status == "ok"){
-				   graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
-				   /*$.getJSON("NetworkTopology",function(data){
-						if(data.status == "ok"){
-							xml=data.graph;
-							var doc = mxUtils.parseXml(xml);
-							var decoder = new mxCodec(doc);
-							decoder.decode(doc.documentElement, graph.getModel());
-							
-							var layout = new mxCircleLayout(graph);
-							layout.execute(graph.getDefaultParent());
-						}else{
-							showDialog2("Errore",data.details);
-						}
-					});*/
-				   
+				   graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));			   
 					$('#loadingMaskN').show();
 					$('#command').hide();
 					$('#graph-panel').css("visibility","hidden");
@@ -432,6 +420,7 @@ $( "#sendChangesB" ).button().click(function( event ) {
 	}
 	});
 </script>
+
 <style>
 #graph-panel {
 	margin: auto;
@@ -461,4 +450,20 @@ $( "#sendChangesB" ).button().click(function( event ) {
 	</div>
 	<div id="zoom" style="text-align:center; padding:10px">
 	</div>
+	<div class="modal fade" id="myVm" tabindex="-1" role="dialog" aria-labelledby="myVmLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color:#DDD">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myVmLabel"></h4>
+      </div>
+      <div class="modal-body">
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Okay</button>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
