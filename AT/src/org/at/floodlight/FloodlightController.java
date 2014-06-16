@@ -3,6 +3,8 @@ package org.at.floodlight;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -102,8 +104,9 @@ public class FloodlightController {
 		return vnets;
 	}
 	
-	public JSONObject getStaticFlows(String dpid) throws IOException{
-		JSONObject json = null;
+	public JSONArray getStaticFlows(String dpid) throws IOException{
+		JSONArray flows = new JSONArray();
+		/*JSONObject json = null;
 
 		HttpClient client = HttpClients.createDefault();
 		HttpGet getRequest = new HttpGet(
@@ -122,7 +125,55 @@ public class FloodlightController {
 
 		rd.close();
 		
-		return json.getJSONObject(dpid);
+		return json.getJSONObject(dpid);*/
+		
+		HttpClient client = HttpClients.createDefault();
+		HttpGet getRequest = new HttpGet(
+				baseURL+"/wm/staticflowentrypusher/list/"+
+						dpid+"/json");
+
+		HttpResponse resp = client.execute(getRequest);
+		BufferedReader rd = new BufferedReader(new InputStreamReader(
+				resp.getEntity().getContent()));
+		String s = null;
+		StringBuilder sb = new StringBuilder();
+		while((s=rd.readLine())!= null)
+			sb.append(s);
+		
+		JSONObject notFormatted = (new JSONObject(sb.toString())).getJSONObject(dpid);
+		
+		for(Object flowName : notFormatted.keySet()){
+			JSONObject rawFlow = notFormatted.getJSONObject((String)flowName);
+			/*
+			JSONObject flow = new JSONObject();
+			flow.put("name", flowName);
+			flow.put("match",rawFlow.get("match"));
+			flow.put("actions", rawFlow.get("actions"));
+			//flow.put("match", notFormatted.get)*/
+			rawFlow.put("name", flowName);
+			
+			if(rawFlow.get("actions") != JSONObject.NULL){
+				JSONArray actions = rawFlow.getJSONArray("actions");
+				for(JSONObject jos : actions)
+					if(jos.getString("type").equals("SET_NW_DST")){
+						jos.put("networkAddress", IntToInet(jos.getInt("networkAddress")));
+					}
+			}
+			
+			flows.put(rawFlow);
+		}
+		return flows;
+	}
+	
+	private String IntToInet(int bytes) throws IOException{
+		byte[] unpack = new byte[] {
+			    (byte)((bytes >>> 24) & 0xff),
+			    (byte)((bytes >>> 16) & 0xff),
+			    (byte)((bytes >>>  8) & 0xff),
+			    (byte)((bytes       ) & 0xff)
+			  };
+		
+		return InetAddress.getByAddress(unpack).getHostAddress();
 	}
 	
 	/*
@@ -241,31 +292,32 @@ public class FloodlightController {
 		FloodlightController f = new FloodlightController(
 				new Controller("192.168.1.181", 8080));
 		
-		JSONObject jos = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
+		JSONArray flows = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
+		System.out.println(((JSONObject)flows.get(2)).get("actions"));
+		/*JSONObject jos = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
 		for(Object s : jos.keySet()){
 			
 			JSONObject flow = jos.getJSONObject((String)s);
-			Object o = jos.get("actions");
+			if(flow.get("actions") != JSONObject.NULL)
+				System.out.println(s+"-->"+flow.get("actions"));
 			
-			//JSONObject jas = flow.getJSONObject("actions");
-			System.out.println(o);
-			
-		}
+		}*/
 		//System.out.println(jos.get("actions"));
 		/*for(LinkConnection ovs : f.getSwitchConnections(true))
 			System.out.println(ovs);*/
 		
 		//System.out.println(f.getPortNumber(new OvsSwitch("00:00:16:d1:61:6a:85:49","192.168.1.180"), "col0"));
 		JSONObject data = new JSONObject()
-		 .put("name", "flow-test-abc-swl")
+		 .put("name", "flow-test-abc-swf")
 		.put("switch", "00:00:72:5b:2d:c5:15:46")
 		.put("cookie", "5")
 		//.put("priority", "20")
 		//.put("idle_timeout","5")
-		//.put("vlan-id", "1")
+		.put("vlan-id", "2")
 		//.put("ingress-port", "3")
 		//.put("ether-type", "0x0800")
 		.put("active", "true")
+		.put("actions", "output=3")
 		.put("dst-port", "6633");
 		
 		//System.out.println(f.addStaticFlow(data));

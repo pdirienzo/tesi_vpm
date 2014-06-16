@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.at.floodlight.FloodlightController;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -37,7 +38,7 @@ public class Flows extends HttpServlet {
 		
 		try{
 			FloodlightController controller = FloodlightController.getDbController();
-			JSONObject flows = controller.getStaticFlows(request.getParameter("dpid"));
+			JSONArray flows = controller.getStaticFlows(request.getParameter("dpid"));
 			jResp.put("status", "ok");
 			jResp.put("data", flows);
 		}catch(IOException ex){

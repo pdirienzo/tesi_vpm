@@ -192,7 +192,10 @@
 		overlay.addListener(mxEvent.CLICK, function(sender, evt){
 		$.getJSON("Flows?dpid="+dpid, function(resp) {
 				if(resp.status == "ok"){
-					showDialogModal(tooltip+" "+dpid,new Date()+"<br />"+JSON.stringify(resp.data, undefined, 2));
+					var json = {"data":resp.data};
+					var str = JSON.stringify(json, undefined,4);
+					console.log(str);
+					showDialogModal(tooltip+" "+dpid,new Date()+"<br />"+str);
 				}else{
 					alert(resp.details);
 				}
@@ -208,7 +211,7 @@
 
 	function showDialogModal(title,message){
 				$("#myModalLabel").html(title);
-				$("#myModal .modal-body").html(message);
+				$("#myModal .modal-body").text(message);
 				
 				$("#myModal").modal('show');
 			}
