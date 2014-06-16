@@ -134,7 +134,6 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		try {
 			NetHypervisorConnection conn = NetHypervisorConnection.getConnectionWithTimeout(h,NETWORK_NAME,networkDescr,
 					CONNECTION_TIMEOUT); 
-			
 			activeConnections.add(conn);
 		} catch (IOException e) {
 			System.err.println("Hypervisor "+h+" was offline, adding it to offline list");
@@ -153,9 +152,9 @@ public class HypervisorConnectionManager implements DatabaseListener{
 		}
 		
 		//closing every active connection
-		/*for(NetHypervisorConnection hc : activeConnections)
-			;//removeHypervisor(hc.getHypervisor());
-		*/
+		for(NetHypervisorConnection hc : getActiveHypervisors())
+			removeHypervisor(hc.getHypervisor());
+		
 	}
 	
 	public synchronized void removeHypervisor(Hypervisor h){

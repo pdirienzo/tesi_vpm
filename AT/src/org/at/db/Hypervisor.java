@@ -1,26 +1,40 @@
 package org.at.db;
 
+import java.io.IOException;
+import java.net.InetAddress;
+
 public class Hypervisor {
 	private String id;
 	private String name;
+	private String hostname;
 	private String ipAddress;
 	private long port;
 	
 	public final static String STATUS_ONLINE = "online";
 	public final static String STATUS_OFFLINE = "offline";
 	
-	public Hypervisor(int id, String name, String ipAddress, long port) {
+	public Hypervisor(int id, String name, String hostname, long port) {
 		this.id = "H"+id;
 		this.name = name;
-		this.ipAddress = ipAddress;
+		this.hostname = hostname;
+		try{
+			this.ipAddress = InetAddress.getByName(hostname).getHostAddress(); //resolving, if possible, the hostname
+			
+		}catch(IOException ex){
+			System.out.println("could not resolve address for hypervisor "+id+"hostname <"+hostname+">");
+			this.ipAddress = null;
+		}
 		this.port = port;
 	}
 	
-	public Hypervisor(String name, String ipAddress, long port) {
+	public Hypervisor(String name, String hostname, long port) {
+		this(0,name,hostname,port);
 		this.id = null;
+		
+		/*this.id = null;
 		this.name = name;
-		this.ipAddress = ipAddress;
-		this.port = port;
+		this.hostname = ipAddress;
+		this.port = port;*/
 	}
 	
 	public String getId(){
@@ -39,12 +53,20 @@ public class Hypervisor {
 		this.name = name;
 	}
 
-	public String getHostAddress() {
-		return ipAddress;
+	public String getHostname() {
+		return hostname;
 	}
 
+	/**
+	 * 
+	 * @return the resolved ip address or null if wasn't possible to retrieve it
+	 */
+	public String getIPAddress() {
+		return ipAddress; 
+	}
+	
 	public void setHostname(String hostname) {
-		this.ipAddress = hostname;
+		this.hostname = hostname;
 	}
 
 	public long getPort() {
@@ -58,12 +80,12 @@ public class Hypervisor {
 	@Override
 	public boolean equals(Object h1){
 		Hypervisor h = (Hypervisor)h1;
-		return (h.getName().equals(name) && h.getHostAddress().equals(ipAddress) && (h.getPort() == port));
+		return (h.getName().equals(name) && h.getHostname().equals(hostname) && (h.getPort() == port));
 	}
 	
 	@Override
 	public String toString(){
-		return name+"@"+ipAddress+":"+port;
+		return name+"@"+hostname+":"+port;
 	}
 
 }

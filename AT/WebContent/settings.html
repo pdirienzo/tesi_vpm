@@ -1,7 +1,6 @@
 <!--  Script part -->
 
 <script>
-
 	$("#set-controller-dialog").dialog({
 		title : "Modifica impostazioni controller",
 		buttons : [ {
@@ -41,14 +40,42 @@
 		hide : "explode",
 		modal : true
 	});
-
+	
 	$("#addNewHypervisor").button().click(function() {
-		$("#add-host-dialog").dialog("open");
+		$.getJSON("ISCSISettings"), function(response) {
+			if(response.status == "ok"){
+				targets = response.
+				$("#add-host-dialog").dialog("open");
+			}else{
+				
+			}
+		});
+	});
+	
+	$('#add-iscsi-dialog').dialog({
+		title : "Aggiunta Target",
+		buttons : [ {
+			text : "Aggiungi",
+			click : function() {
+				addNewIscsiTarget();
+			}
+		}, {
+			text : "Annulla",
+			click : function() {
+				$(this).dialog("close");
+			}
+		} ],
+		autoOpen : false,
+		hide : "explode",
+		modal : true
+	});
+	
+	$('add-iscsi').button().click(function() {
+		$("#add-iscsi-dialog").dialog("open");
 	});
 
 	function getHypervisorSettings() {
-		$
-				.getJSON(
+		$.getJSON(
 						"GetHypervisorSettings",
 						function(response) {
 							html = "";
@@ -67,6 +94,8 @@
 
 						});
 	}
+	
+	//application functions
 
 	function getControllerSettings() {
 		$.getJSON("GetControllerSettings", function(response) {
@@ -82,7 +111,7 @@
 		port = document.getElementById("set-port").value;
 		$.getJSON("AddController?ip=" + ip + "&port=" + port,
 				function(response) {
-					showDialog("INFO",response.status);
+					showDialog("INFO", response.status);
 					getControllerSettings();
 					$("#set-controller-dialog").dialog("close");
 
@@ -95,7 +124,7 @@
 		port = document.getElementById("addhost-port").value;
 		$.getJSON("AddHypervisor?username=" + username + "&ip=" + host
 				+ "&port=" + port, function(response) {
-			showDialog("INFO",response.status);
+			showDialog("INFO", response.status);
 			$("#add-host-dialog").dialog("close");
 			getHypervisorSettings();
 
@@ -108,17 +137,20 @@
 
 		$.getJSON("DeleteHypervisor?hostname=" + hypervisor,
 				function(response) {
-					showDialog("INFO",response.details);
+					showDialog("INFO", response.details);
 					getHypervisorSettings();
 
 				});
 	}
+	
+	function addNewIscsiTarget() {
+		
+	}
 
 	//chiamate quando il doc è pronto
-	
+
 	getControllerSettings();
 	getHypervisorSettings();
-	
 </script>
 
 <!--  HTML PART -->
@@ -160,6 +192,41 @@
 	<hr>
 	<br>
 
+	<div id="iscsi-box" class="cent">
+		<h3>Target ISCSI Registrati</h3>
+		<table id="iscsi-table" cellspacing="10"
+			class="ui-widget ui-widget-content">
+			<thead>
+				<tr>
+					<th>Hostname</th>
+					<th>Iqn</th>
+					<th>Port</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody id="ISCSI-list">
+
+			</tbody>
+		</table>
+		<br>
+		<button id="add-iscsi">Aggiungi Target</button>
+		
+		<!-- Add iscsi dialog (hidden by default -->
+		<div id="add-iscsi-dialog" title="Add Target" style="">
+			<h3>Aggiungi target</h3>
+			<label for="set-iscsi-name">Name</label><br> <input
+				id="set-iscsi-name" type="text"/><br> <label
+				for="set-iscsi-hostname">hostname</label><br> <input id="set-iscsi-hostname"
+				type="text"/><label
+				for="set-iscsi-iqn">iqn</label><br> <input id="set-iscsi-iqn"
+				type="text"/>
+		</div>
+	</div>
+
+	<br>
+	<hr>
+	<br>
+	
 	<div id="hypervisors-box" class="cent">
 		<h3>Hypervisors Registrati</h3>
 		<table id="hyper-table" cellspacing="10"
@@ -187,7 +254,11 @@
 				for="addhost-hostname">Host</label><br> <input
 				id="addhost-hostname" type="text" value="localhost" /><label
 				for="addhost-port">Port</label><br> <input id="addhost-port"
-				type="text" value="16514" />
+				type="text" value="16514" /><label
+				for="addhost-iscsi">ISCSI</label><br> <select id="addhost-iscsi" name="iscsi">
+				<option>banana</option>
+				<option>fragola</option>
+				</select>
 		</div>
 
 	</div>

@@ -29,7 +29,7 @@ public class AddHypervisor extends HttpServlet {
 		try{
 			Database d = new Database();
 			d.connect();
-			if(d.hypervisorExists(host2add.getHostAddress())){
+			if(d.hypervisorExists(host2add.getHostname())){
 				message.put("status", "hypervisor gia' presente nella lista");
 			}else{
 				d.insertHypervisor(host2add);

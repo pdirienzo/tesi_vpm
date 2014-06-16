@@ -39,7 +39,7 @@ public class HypervisorConnection extends Connect{
 	 * @throws LibvirtException
 	 */
 	protected HypervisorConnection(Hypervisor h, String method, boolean readOnly) throws LibvirtException{
-			super(method+"://"+h.getName()+"@"+h.getHostAddress()+":"+h.getPort()+
+			super(method+"://"+h.getName()+"@"+h.getHostname()+":"+h.getPort()+
 				"/system", readOnly);
 			this.hypervisor = h;
 	}
@@ -56,6 +56,17 @@ public class HypervisorConnection extends Connect{
 	
 	public Hypervisor getHypervisor(){
 		return hypervisor;
+	}
+	
+	/**
+	 * Tries to resolve this hypervisor's hostname into an ip address
+	 * 
+	 * @return the ip address
+	 * @throws IOException if ip resolution failed
+	 * @throws LibvirtException 
+	 */
+	public String getIpAddress() throws IOException, LibvirtException{
+		return InetAddress.getByName(super.getHostName()).getHostAddress();
 	}
 	
 	/***************************** Timed functions ****************************
@@ -87,7 +98,7 @@ public class HypervisorConnection extends Connect{
 	protected static void checkConnection(Hypervisor h, int timeout) throws IOException{
 		Socket s = new Socket();
 		InetSocketAddress addr = new InetSocketAddress(
-				InetAddress.getByName(h.getHostAddress()), (int)h.getPort());
+				InetAddress.getByName(h.getHostname()), (int)h.getPort());
 		
 		s.connect(addr, timeout);
 		s.close();
@@ -181,7 +192,6 @@ public class HypervisorConnection extends Connect{
 					.getChild("devices").getChild("interface");
 			result = networkNode.getChild("mac").getAttributeValue("address");
 		} catch (JDOMException | IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -227,6 +237,11 @@ public class HypervisorConnection extends Connect{
 		newDomain = domain.migrate(destConn, 1, null, null, 0);
 		destConn.close();
 		return (newDomain != null);
+	}
+	
+	//TODO
+	public static void createStorage(HypervisorConnection hc){
+		
 	}
 	
 

@@ -36,7 +36,7 @@ public class GetHypervisorSettings extends HttpServlet {
 			for (Hypervisor h: hosts)
 			{
 				JSONObject hypervisor = new JSONObject()
-				.put("hostname",h.getHostAddress())
+				.put("hostname",h.getHostname())
 				.put("username", h.getName())
 				.put("port", h.getPort());
 

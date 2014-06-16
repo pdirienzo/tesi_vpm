@@ -1,0 +1,22 @@
+<pool type='iscsi'>
+  <name></name>
+  <uuid></uuid>
+  <capacity unit='bytes'></capacity>
+  <allocation unit='bytes'></allocation>
+  <available unit='bytes'>0</available>
+  <source>
+    <host name='platino0' port='3260'/>
+    <device path='iqn.2014-04.it.comics.vpm:streaming'/>
+    <initiator>
+      <iqn name='iqn.2014-04.it.comics.vpm:streaming'/>
+    </initiator>
+  </source>
+  <target>
+    <path>/dev/disk/by-path</path>
+    <permissions>
+      <mode>0711</mode>
+      <owner>-1</owner>
+      <group>-1</group>
+    </permissions>
+  </target>
+</pool>

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.at.db.Hypervisor;
+import org.at.libvirt.HypervisorConnection;
 import org.at.libvirt.NetHypervisorConnection;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -38,15 +39,20 @@ public class TryDomainOps {
 	}
 
 	public static void main(String[] args) throws IOException, LibvirtException, JDOMException {
-		NetHypervisorConnection hc = NetHypervisorConnection.getConnectionWithTimeout(
-				new Hypervisor("platino", "platino1",
-						16514), NETWORK_NAME,getNetworkDescription(), 3000);
-		Domain stream = hc.domainLookupByName("stream1");
+		/*NetHypervisorConnection hc = NetHypervisorConnection.getConnectionWithTimeout(
+				new Hypervisor("pasquale", "platino1",
+						16514), NETWORK_NAME,getNetworkDescription(), 3000);*/
+		
+		HypervisorConnection hc = HypervisorConnection.getConnectionWithTimeout(new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514),
+				true, 3000);
+		
+		/*Domain stream = hc.domainLookupByName("stream1");
 		
 		for(String s : hc.listInterfaces())
 			System.out.println(s);
-		
-		System.out.println(hc.getNetwork().getName()+ hc.interfaceLookupByName("eth0").getMACString());
+		*/
+		System.out.println(hc.getIpAddress());
+		//System.out.println(hc.getNetwork().getName()+ hc.interfaceLookupByName("eth0").getMACString());
 		//hc.bootDomain("test");
 		//hc.migrate("test", new Hypervisor("pasquale", "pasquale-PC", 16514));
 		hc.close();

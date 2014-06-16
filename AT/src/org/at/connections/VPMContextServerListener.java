@@ -131,22 +131,18 @@ public class VPMContextServerListener implements ServletContextListener {
 			
 			c.getServletContext().setAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER, 
 					new VPMGraphHolder());
-			
-			
-			restoreNetwork(c.getServletContext());
-			
-			/*c.getServletContext().setAttribute(VPMPathInfoHolder.VPM_PATHS, new VPMPathInfoHolder());
-			
-			c.getServletContext().setAttribute(VPMSwitchInfoHolder.SWITCH_INFO_HOLDER, 
-					new VPMSwitchInfoHolder());*/
-			
 			c.getServletContext().setAttribute(VPMPathManager.VPM_PATH_MANAGER, new VPMPathManager());
 			
 			Database.initialize(Database.DEFAULT_DBPATH);
+			c.getServletContext().setAttribute(Database.DATABASE, new Database());
+			
+			restoreNetwork(c.getServletContext());
+			
 			HypervisorConnectionManager manager = new HypervisorConnectionManager(MANAGER_RETRY_TIME,props.getProperty("network_name"),
 					props.getProperty("bridge_name"));
 			DatabaseEventDispatcher.addListener(manager);
 			manager.start();
+			
 			c.getServletContext().setAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER, manager);
 			
 		} catch (IOException e) {

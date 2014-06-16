@@ -11,10 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.at.db.DatabaseEventDispatcher.DBEvent;
-import org.at.network.types.OvsSwitch;
 
 public class Database {
-	public static final String DEFAULT_DBPATH = "./data/lime.db";
+	public static final String DEFAULT_DBPATH = "./data/vpm.db";
+	public static final String DATABASE = Database.class.getCanonicalName();
+	
 	private String dbPath;
 
 	private Connection connection = null;
@@ -83,22 +84,47 @@ public class Database {
 		Statement s2 = connection.createStatement();
 		s2.execute("create table controller(ip varchar, port varchar);");
 
-		/*Statement s3 = connection.createStatement();
-		s3.execute("create table switches (dpid text primary key," +
-				"type integer not null);");*/
+		Statement s3 = connection.createStatement();
+		s3.execute("create table storage (id integer primary key autoincrement, iscsi_name text not null, iscsi_hostname text not null,"+
+		"iscsi_iqn text not null), unique(iscsi_name,iscsi_hostname,iscsi_iqn);");
+		
+		Statement s4 = connection.createStatement();
+		s4.execute("create table storage_allocations (id integer primary key autoincrement, iscsi integer not null, iscsi_lun text not null, hypervisor integer default 0,"+
+				"vm integer default 0, foreign key(iscsi) references storage(id), foreign key(hypervisor) references host(id) );");
 
 		s1.close();
 		s2.close();
-		//s3.close();
+		s3.close();
 	}
+	
+	//******************** ISCSI Part ****************************************
+	public List<ISCSITarget> getAllISCSITargets() throws IOException{
+		List<ISCSITarget> l = null; 
+		try {
+			Statement s = connection.createStatement();
+			ResultSet rs = s.executeQuery(
+					"select * from storage;");
+			l = new ArrayList<ISCSITarget>();
+			while(rs.next()){
+				ISCSITarget target = new ISCSITarget(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getString(4));
+				l.add(target);
+			}
+			rs.close();
+			s.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
 
-	/******************* Hypervisor Part ***********************************/
+		return l;
+	}
+	//******************* Hypervisor Part ***********************************
 
 	public void insertHypervisor(Hypervisor h) throws IOException{
 		try {
 			Statement s = connection.createStatement();
 			s.execute("insert into host (nome,ip,port) values(\""+ 
-					h.getName() + "\" ,\"" + h.getHostAddress() +"\" , \"" + h.getPort() +"\");"); 
+					h.getName() + "\" ,\"" + h.getHostname() +"\" , \"" + h.getPort() +"\");"); 
 
 			ResultSet rs = s.executeQuery("SELECT last_insert_rowid()");
 			rs.next();

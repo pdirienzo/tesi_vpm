@@ -170,9 +170,9 @@
 			<% for(Hypervisor h : hypervisors){ %>
 				<tr>
 					<td><%=h.getName()%></td>
-					<td><%=h.getHostAddress()%></td>
+					<td><%=h.getHostname()%></td>
 					<td><%=h.getPort()%></td>
-					<td><button id="<%=h.getHostAddress()%>" onclick="removeHypervisor(event);">Elimina</button></td>
+					<td><button id="<%=h.getHostname()%>" onclick="removeHypervisor(event);">Elimina</button></td>
 				</tr>
 			<% } %>
 			</tbody>

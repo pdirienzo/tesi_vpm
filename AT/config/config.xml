@@ -6,13 +6,13 @@
 	<entry key="vpm_vlan_id">2</entry>
 	<entry key="ovs_manager_port">6640</entry>
 	
-	<entry key="image_server_addr">alessandro-Optiplex</entry>
-	<entry key="image_server_port">8123</entry>	
+	<entry key="overlay_network">10.0.0.0</entry>
+	<entry key="overlay_network_broadcast">10.0.0.5</entry>	
 	
 	<!-- tresholds -->
 	<entry key="warning_treshold">60.0</entry>
 	<entry key="danger_treshold">90.0</entry>
 	
 	<!-- storage -->
-	<entry key="storage_name">vpm-storage</entry>
+	<entry key="storage_name">streaming</entry>
 </properties>

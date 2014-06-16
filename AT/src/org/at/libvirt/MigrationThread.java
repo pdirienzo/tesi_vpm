@@ -76,7 +76,7 @@ public class MigrationThread extends Thread {
 			Properties props = (Properties)ctx.getAttribute("properties");
 
 			//getting dpids
-			DefaultOvsdbClient ovsSrc = new DefaultOvsdbClient(src.getHostAddress(), Integer.parseInt(props.getProperty("ovs_manager_port")));
+			DefaultOvsdbClient ovsSrc = new DefaultOvsdbClient(src.getHostname(), Integer.parseInt(props.getProperty("ovs_manager_port")));
 			String srcDpid = ovsSrc.getBridgeDpid(ovsSrc.getOvsdbNames()[0], props.getProperty("bridge_name"));
 
 			VPMPathManager pathManager = (VPMPathManager)ctx.getAttribute(VPMPathManager.VPM_PATH_MANAGER);
@@ -91,13 +91,13 @@ public class MigrationThread extends Thread {
 					VPMGraph<OvsSwitch, LinkConnection> graph = ((VPMGraphHolder)ctx.getAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER)).getGraph();
 					//existing path found, we replicate if on the destination 
 
-					DefaultOvsdbClient ovsDst = new DefaultOvsdbClient(dstH.getHostAddress(), Integer.parseInt(props.getProperty("ovs_manager_port")));
+					DefaultOvsdbClient ovsDst = new DefaultOvsdbClient(dstH.getHostname(), Integer.parseInt(props.getProperty("ovs_manager_port")));
 					String dstDpid = ovsDst.getBridgeDpid(ovsDst.getOvsdbNames()[0], props.getProperty("bridge_name"));
 
 					newPath = pathManager.installShortestPath(
 							graph, 
 							findOriginal(graph, existingPath.path.getStartVertex()), 
-							findOriginal(graph, new OvsSwitch(dstDpid,dstH.getHostAddress())), 
+							findOriginal(graph, new OvsSwitch(dstDpid,dstH.getHostname())), 
 							existingPath.externalAddress);
 						
 				}
