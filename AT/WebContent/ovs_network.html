@@ -70,24 +70,34 @@
 						{
 							if(cell.getAttribute("type")!=null){
 								var type=cell.getAttribute("type");
-								if (type==ROOT_TYPE){
+								if (type=="ROOT"){
 									root=1;
 									var overlay = new mxCellOverlay(new mxImage('images/crown.png', 26, 26),
 										'Root');
+									overlay.addListener(mxEvent.CLICK, function(sender, evt){
+										createTooltip("Root",cell.getAttribute("ip"));													
+									});
 									graph.addCellOverlay(cell, overlay);
-								
+									
 								}
-								else if (type==LEAF_TYPE){
+								else if (type=="LEAF"){
 									leaf=1;
 									var overlay = new mxCellOverlay(new mxImage('images/leaf.png', 26, 26),
 									'Leaf');
+									overlay.addListener(mxEvent.CLICK, function(sender, evt){
+										createTooltip("Leaf",cell.getAttribute("ip"));													
+									});
 									graph.addCellOverlay(cell, overlay);
+									
 								}
-								else if (type == RELAY_TYPE){
+								else if (type == "RELAY"){
 									var overlay = new mxCellOverlay(new mxImage('images/relay.png', 26, 26),
 									'Relay');
-								graph.addCellOverlay(cell, overlay);
-							
+									overlay.addListener(mxEvent.CLICK, function(sender, evt){
+										createTooltip("Relay",cell.getAttribute("ip"));													
+									});
+									graph.addCellOverlay(cell, overlay);
+								
 								}
 							}
 							
@@ -190,6 +200,59 @@
 			}
 		}
 		
+		function createTooltip(tooltip,ip){
+			var html = "<ul class=\"list-group\">";
+			for (var i = 0; i < nodesVM.length; i++){
+				var node = nodesVM[i];
+				if (node.ip == ip){
+					console.log(ip);
+					
+					for (j in node.vm){
+						var vm = node.vm[j];
+						html+="<li class=\"list-group-item\"><span class=\"badge pull-right\">"+ 
+						vm.cpu +"</span>"+ vm.name +"</li>";
+					}
+					break;
+				}
+			}
+			html += "</ul>";
+			console.log(html);
+			$("#myVmLabel").html(tooltip+" "+ip);
+			$("#myVm .modal-body").html(html);
+			$("#myVm").modal('show');
+		}
+		
+		
+		function getVM(){
+			$.getJSON("HypervisorInfo", function(hvList){
+			    var hypervisorList = hvList;
+			
+			
+		        for (var i = 0; i < hypervisorList.length; i++) {
+		        	var item={};
+		        	var hypervisor = hypervisorList[i];
+		           
+		            if (hypervisor.status == "online") {
+		            	 item["ip"] = hypervisor.ip;
+		            	var vmachine = [];
+		                for (j in hypervisor.machines) {
+		                    var tmp = {};
+		                	if (hypervisor.machines[j].status == "running") {
+		                    	tmp["name"] = hypervisor.machines[j].name;
+		                    	tmp["cpu"] = hypervisor.machines[j].cpustats;
+		                    	
+		                    }
+		                    vmachine.push(tmp);
+		                }
+		                item["vm"]=vmachine;
+		                nodesVM.push(item);
+		            }
+		       }
+			});
+	       //console.log(JSON.stringify(nodesVM));
+		}
+		
+		
 		function createMenu(){
 			// Configures automatic expand on mouseover
 			graph.popupMenuHandler.autoExpand = true;
@@ -212,14 +275,12 @@
 							var overlay = new mxCellOverlay(
 									new mxImage('images/crown.png', 26, 26),
 									'Root');
-							overlay.addListener(mxEvent.CLICK, function(sender, evt2)
-									{
-										mxUtils.alert('Root');
-									});
-														
+							overlay.addListener(mxEvent.CLICK, function(sender, evt){
+								createTooltip("Root",cell.getAttribute("ip"));													
+							});							
 							// Sets the overlay for the cell in the graph
 							graph.addCellOverlay(cell, overlay);
-							cell.setAttribute("type",ROOT_TYPE);
+							cell.setAttribute("type","ROOT");
 							var style=graph.getCellStyle(cell);
 						}
 						else {
@@ -230,7 +291,7 @@
 					
 					menu.addItem('Leaf', null, function()
 				    {
-						if(cell.getAttribute("type")==ROOT_TYPE){
+						if(cell.getAttribute("type")=="ROOT"){
 							root=0;
 						}
 						//alert('Leaf Selected');
@@ -244,19 +305,18 @@
 					
 						var overlay = new mxCellOverlay(new mxImage('images/leaf.png', 26, 26),
 							'Leaf');
-						overlay.addListener(mxEvent.CLICK, function(sender, evt2)
-								{
-									mxUtils.alert('Leaf');
-								});
-													
+						
+						overlay.addListener(mxEvent.CLICK, function(sender, evt){
+							createTooltip("Leaf",cell.getAttribute("ip"));													
+						});
 						// Sets the overlay for the cell in the graph
 						graph.addCellOverlay(cell, overlay);
 						
-						cell.setAttribute("type",LEAF_TYPE);
+						cell.setAttribute("type","LEAF");
 				    });
 					menu.addItem('Relay', null, function()
 					{
-						if(cell.getAttribute("type")==ROOT_TYPE){
+						if(cell.getAttribute("type")=="ROOT"){
 							root=0;
 						}
 						//alert('Relay Selected');
@@ -270,29 +330,17 @@
 						var overlay = new mxCellOverlay(
 							new mxImage('images/relay.png', 26, 26),
 							'Relay');
-						overlay.addListener(mxEvent.CLICK, function(sender, evt2)
-								{
-									mxUtils.alert('Relay');
-								});
-													
+						overlay.addListener(mxEvent.CLICK, function(sender, evt){
+							createTooltip("Realy",cell.getAttribute("ip"));													
+						});							
 						// Sets the overlay for the cell in the graph
 						graph.addCellOverlay(cell, overlay);
 											
-						cell.setAttribute("type",RELAY_TYPE);
+						cell.setAttribute("type","RELAY");
 					});
 				}
-				else if(cell!=null && cell.isEdge()){
-					menu.addItem('tree edge', null, function()
-						    {
-								alert('tree Selected');
-						    });
-					
-					menu.addItem('redundancy', null, function()
-				    {
-						alert('redundancy');
-				    });
-					
-				}
+							
+				
 			};
 		}
 		
@@ -309,11 +357,11 @@
 					layout.execute(graph.getDefaultParent());
 					if (data.status == "ok_no_network"){
 						//alert(data.details);
-						showDialog("Info","First Time execution or Topology Changed!");
+						showDialog2("Info <i class=\"fa fa-info-circle fa-lg\"></i>","First Time execution or Topology Changed!");
 					}
 				}else{
 					//alert(data.details);
-					showDialog("Error",data.details);
+					showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>",data.details);
 				}
 				$("#loadingMaskN").fadeOut("slow", function() {
 		           // $("#graph-panel").fadeIn("slow");
@@ -330,6 +378,7 @@
 
 <script>
 $(document).ready(function(){
+	getVM();
 	main(document.getElementById('graphContainer'));
 	
 	/*if (mxClient.IS_NS)
@@ -365,7 +414,7 @@ $( "#sendChangesB" ).button().click(function( event ) {
 							var layout = new mxCircleLayout(graph);
 							layout.execute(graph.getDefaultParent());
 						}else{
-							showDialog("Errore",data.details);
+							showDialog2("Errore",data.details);
 						}
 					});*/
 				   
@@ -374,10 +423,10 @@ $( "#sendChangesB" ).button().click(function( event ) {
 					$('#graph-panel').css("visibility","hidden");
 					getNetwork();
 			   }else
-				   showDialog("Errore",data.details);
+				   showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>",data.details);
 		});
 	}else{
-		alert("Devi selezionare almeno una radice e una foglia");	
+		alert("Select at least one Root and one Leaf! ");	
 	}
 	});
 </script>

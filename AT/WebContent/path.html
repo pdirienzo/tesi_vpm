@@ -2,25 +2,55 @@
 <script type="text/javascript">
 	var mxBasePath = "mxgraph";
 </script>
-<link href="tools/Jquery_selected/css/jquery.selectbox.css"
-	type="text/css" rel="stylesheet" />
+<link href="tools/Jquery_selected/css/jquery.selectbox.css" type="text/css" rel="stylesheet" />
 <script type="text/javascript" src="tools/Jquery_selected/js/jquery.selectbox-0.2.min.js"></script>
 <script type="text/javascript" src="mxgraph/js/mxClient.js"></script>
 <script type="text/javascript" src="tools/JQuery_IP/jquery.input-ip-address-control.js"></script>
-
+<script type="text/javascript" src="js/bootstrap.js"></script>
 <script type="text/javascript">
 	var graphPath;
 	var rootPath = 0;
 	var leafPath = 0;
 	var xmlPath;
-
+	
+	function getDummies(){
+	    var myJSONObject = [{
+	    	"status": "ok_path",
+	    	"path" : '<mxGraphModel>'+
+			'<root><mxCell id="0"/><mxCell id="1" parent="0"/>'+
+			'<switch dpid="00:00:16:d1:61:6a:85:49" id="2" ip="192.168.1.180" type="LEAF">'+
+			'<mxCell parent="1" vertex="1">'+
+			'<mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977664" y="348.6817188995533"/>'+
+			'</mxCell></switch>'+
+			'<switch dpid="00:00:82:f2:6a:f6:15:4a" id="3" ip="192.168.1.103" type="LEAF">'+
+			'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="344.6817188995533" y="179.34085944977664"/>'+
+			'</mxCell></switch>'+
+			'<switch dpid="00:00:72:a7:06:77:4a:48" id="4" ip="192.168.1.102" type="ROOT">'+
+			'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977667" y="10.0"/>'+
+			'</mxCell></switch><switch dpid="00:00:72:5b:2d:c5:15:46" id="5" ip="192.168.1.101" type="LEAF">'+
+			'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="9.0" y="179.34085944977662"/>'+
+			'</mxCell></switch><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="6" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
+			'<mxCell edge="1" parent="1" source="4" target="3"><mxGeometry as="geometry" relative="1"/></mxCell></link>'+
+			'<link dstDpid="00:00:16:d1:61:6a:85:49" dstPort="0" id="7" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
+			'<mxCell edge="1" parent="1" source="4" target="2"><mxGeometry as="geometry" relative="1"/></mxCell>'+
+			'</link><link dstDpid="00:00:72:5b:2d:c5:15:46" dstPort="0" id="8" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
+			'<mxCell edge="1" parent="1" source="4" target="5"><mxGeometry as="geometry" relative="1"/></mxCell>'+
+			'</link><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="9" srcDpid="00:00:72:5b:2d:c5:15:46" srcPort="0">'+
+			'<mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
+			'</mxCell></link></root></mxGraphModel>',
+			"external" : "192.168.1.101"
+	    }];
+	    return myJSONObject;
+	} 
+	
 	function sendPath() {
 				if ($("#root_id").val() != -1 && $("#leaf_id").val() != -1) {
 					postPath();
 				} else {
-					showDialog("Errore","Devi selezionare almeno una radice e una foglia");
+					showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","You should select at least one Leaf and one Root");
 				}
 			};
+	
 
 	function mainPath(container) {
 		// Checks if the browser is supported
@@ -71,19 +101,27 @@
 							var type = cell.getAttribute("type");
 							if (type == ROOT_TYPE) {
 								rootPath = 1;
-								var overlay = new mxCellOverlay(new mxImage(
-										'images/crown.png', 26, 26), 'Root');
-								graphPath.addCellOverlay(cell, overlay);
-
+								/* var overlay = new mxCellOverlay(new mxImage(
+										'images/crown.png', 26, 26), 'Root'); */
+										
+								//graphPath.addCellOverlay(cell, overlay);
+								var path='images/crown.png';
+								var tooltip = 'Root'
+								graphPath.addCellOverlay(cell, 
+										createCellOverlay(type,path,tooltip,cell.getAttribute('dpid')));
 							} else if (type == LEAF_TYPE) {
 								leafPath = 1;
-								var overlay = new mxCellOverlay(new mxImage(
-										'images/leaf.png', 26, 26), 'Leaf');
-								graphPath.addCellOverlay(cell, overlay);
+								/* var overlay = new mxCellOverlay(new mxImage(
+								 		'images/leaf.png', 26, 26), 'Leaf');*/
+								var path='images/leaf.png';
+								var tooltip = 'Leaf'
+								graphPath.addCellOverlay(cell, 
+										createCellOverlay(type,path,tooltip,cell.getAttribute('dpid')));
 							} else if (type == RELAY_TYPE) {
-								var overlay = new mxCellOverlay(new mxImage(
-										'images/relay.png', 26, 26), 'Relay');
-								graphPath.addCellOverlay(cell, overlay);
+								var path='images/relay.png';
+								var tooltip = 'Relay'
+								graphPath.addCellOverlay(cell, 
+										createCellOverlay(type,path,tooltip,cell.getAttribute('dpid')));
 
 							}
 						}
@@ -100,7 +138,9 @@
 
 				return null;
 			};
-
+			//Shows Flow adding a listener on right click
+			
+			
 			//this sets the label to the dpid
 			graphPath.convertValueToString = function(cell) {
 				if (mxUtils.isNode(cell.value)) {
@@ -145,13 +185,33 @@
 			$(".btn").css("margin-right", 10);
 		}
 	}
+	
+	function createCellOverlay(overlay,path,tooltip,dpid){
+		var overlay = new mxCellOverlay(new mxImage(
+				path, 26, 26), tooltip);
+		overlay.addListener(mxEvent.CLICK, function(sender, evt){
+		//	$.getJSON("GetFlow?dpid="+dpid, function(data) {
+				//mxUtils.alert(tooltip + '\nFlow update: ' + new Date()+ "\n"+"Ciao");
+				showDialogModal(tooltip+" "+dpid,new Date()+"<br />Ciao");
+		//	});
+		});
+		
+		return overlay;
+	}
+
+	function showDialogModal(title,message){
+				$("#myModalLabel").html(title);
+				$("#myModal .modal-body").html(message);
+				
+				$("#myModal").modal('show');
+			}
 
 	function fillOption() {
-		$.getJSON("NetworkTopology", function(data) {
+		 $.getJSON("NetworkTopology", function(data) {
 			if (data.status == "ok") {
 				xmlPath = data.graph;
 				//		console.log("xml");
-				var doc = mxUtils.parseXml(xmlPath);
+				var doc = mxUtils.parseXml(xmlPath); 
 				/* var doc = mxUtils.parseXml('<mxGraphModel>'+
 				'<root><mxCell id="0"/><mxCell id="1" parent="0"/>'+
 				'<switch dpid="00:00:16:d1:61:6a:85:49" id="2" ip="192.168.1.180" type="LEAF">'+
@@ -159,8 +219,22 @@
 				'<mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977664" y="348.6817188995533"/>'+
 				'</mxCell></switch>'+
 				'<switch dpid="00:00:82:f2:6a:f6:15:4a" id="3" ip="192.168.1.103" type="LEAF">'+
-				'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="344.6817188995533" y="179.34085944977664"/></mxCell></switch><switch dpid="00:00:72:a7:06:77:4a:48" id="4" ip="192.168.1.102" type="ROOT"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977667" y="10.0"/></mxCell></switch><switch dpid="00:00:72:5b:2d:c5:15:46" id="5" ip="192.168.1.101" type="LEAF"><mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="9.0" y="179.34085944977662"/></mxCell></switch><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="6" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="3"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:16:d1:61:6a:85:49" dstPort="0" id="7" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="2"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:72:5b:2d:c5:15:46" dstPort="0" id="8" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0"><mxCell edge="1" parent="1" source="4" target="5"><mxGeometry as="geometry" relative="1"/></mxCell></link><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="9" srcDpid="00:00:72:5b:2d:c5:15:46" srcPort="0"><mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
+				'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="344.6817188995533" y="179.34085944977664"/>'+
+				'</mxCell></switch>'+
+				'<switch dpid="00:00:72:a7:06:77:4a:48" id="4" ip="192.168.1.102" type="ROOT">'+
+				'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977667" y="10.0"/>'+
+				'</mxCell></switch><switch dpid="00:00:72:5b:2d:c5:15:46" id="5" ip="192.168.1.101" type="LEAF">'+
+				'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="9.0" y="179.34085944977662"/>'+
+				'</mxCell></switch><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="6" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
+				'<mxCell edge="1" parent="1" source="4" target="3"><mxGeometry as="geometry" relative="1"/></mxCell></link>'+
+				'<link dstDpid="00:00:16:d1:61:6a:85:49" dstPort="0" id="7" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
+				'<mxCell edge="1" parent="1" source="4" target="2"><mxGeometry as="geometry" relative="1"/></mxCell>'+
+				'</link><link dstDpid="00:00:72:5b:2d:c5:15:46" dstPort="0" id="8" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
+				'<mxCell edge="1" parent="1" source="4" target="5"><mxGeometry as="geometry" relative="1"/></mxCell>'+
+				'</link><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="9" srcDpid="00:00:72:5b:2d:c5:15:46" srcPort="0">'+
+				'<mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
 				'</mxCell></link></root></mxGraphModel>'); */
+				
 				var x = doc.getElementsByTagName("switch");
 
 				for (i = 0; i < x.length; i++) {
@@ -202,9 +276,9 @@
 
 			} else {
 				//alert(data.details);
-				showDialog("Errore", data.details);
+				showDialog2("<i class=\"fa fa-warning fa-lg\"></i> Error ", data.details);
 			}
-		});
+		}); 
 	}
 
 	function getPath() {
@@ -214,23 +288,47 @@
 		$('#graph-pnl').css("visibility", "hidden");
 		$("#dPath").addClass("disabled");
 		$("#dPath").prop("disabled",true);
+		//var data = getDummies();
+		//console.log("data: "+data[0].status);
 		$.getJSON("NetworkPath?src_dpid="+src+"&dst_dpid="+dst, function(data) {
 			if (data.status == "ok_path") {
 				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 				xmlPath = data.path;
 				var doc = mxUtils.parseXml(xmlPath);
+				/* var doc = mxUtils.parseXml('<mxGraphModel>'+
+						'<root><mxCell id="0"/><mxCell id="1" parent="0"/>'+
+						'<switch dpid="00:00:16:d1:61:6a:85:49" id="2" ip="192.168.1.180" type="RELAY">'+
+						'<mxCell parent="1" vertex="1">'+
+						'<mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977664" y="348.6817188995533"/>'+
+						'</mxCell></switch>'+
+						'<switch dpid="00:00:82:f2:6a:f6:15:4a" id="3" ip="192.168.1.103" type="LEAF">'+
+						'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="344.6817188995533" y="179.34085944977664"/>'+
+						'</mxCell></switch>'+
+						'<switch dpid="00:00:72:a7:06:77:4a:48" id="4" ip="192.168.1.102" type="ROOT">'+
+						'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977667" y="10.0"/>'+
+						'</mxCell></switch><switch dpid="00:00:72:5b:2d:c5:15:46" id="5" ip="192.168.1.101" type="LEAF">'+
+						'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="9.0" y="179.34085944977662"/>'+
+						'</mxCell></switch><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="6" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
+						'<mxCell edge="1" parent="1" source="4" target="3"><mxGeometry as="geometry" relative="1"/></mxCell></link>'+
+						'<link dstDpid="00:00:16:d1:61:6a:85:49" dstPort="0" id="7" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
+						'<mxCell edge="1" parent="1" source="4" target="2"><mxGeometry as="geometry" relative="1"/></mxCell>'+
+						'</link><link dstDpid="00:00:72:5b:2d:c5:15:46" dstPort="0" id="8" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
+						'<mxCell edge="1" parent="1" source="4" target="5"><mxGeometry as="geometry" relative="1"/></mxCell>'+
+						'</link><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="9" srcDpid="00:00:72:5b:2d:c5:15:46" srcPort="0">'+
+						'<mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
+						'</mxCell></link></root></mxGraphModel>');*/
 				var decoder = new mxCodec(doc);
-				$("#ipv6").val(data.external);
+				$("#ipv6").val(data[0].external);
 				decoder.decode(doc.documentElement, graphPath.getModel());
 				$("#dPath").removeClass("disabled");
 				$("#dPath").prop('disabled',false);
 
 				var layout = new mxCircleLayout(graphPath);
 				layout.execute(graphPath.getDefaultParent());
-			} else if(data.status == "ok_no_path"){
+		 	} else if(data.status == "ok_no_path"){
 				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 			}else if(data.status == "error"){
-				showDialog("Errore", data.details);
+				showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>", data.details);
 			}
 			$("#loadingMaskP").fadeOut("slow", function() {
 				$("#graph-pnl").fadeIn("slow");
@@ -278,7 +376,7 @@
 					$("#dPath").removeClass("disabled");
 					$("#dPath").prop('disabled',false);
 				} else
-					showDialog("Errore", data.details);
+					showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>", data.details);
 				
 				$("#loadingMaskP").fadeOut("slow", function() {
 					// $("#graph-pnl").fadeIn("slow");
@@ -292,7 +390,7 @@
 		}
 		else {
 			
-			showDialog("Errore","Please Fill External IP field");
+			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Please Fill External IP field");
 		}
 		
 				
@@ -321,7 +419,7 @@
 				$("#dPath").addClass("disabled");
 				$("#dPath").prop('disabled',true);
 			} else
-				showDialog("Errore", data.details);
+				showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>", data.details);
 			
 			$("#loadingMaskP").fadeOut("slow", function() {
 				// $("#graph-pnl").fadeIn("slow");
@@ -403,6 +501,22 @@ div .network-infopanel {
 			<div id="zoomPath" style="text-align: center; padding: 10px"></div>
 		</div>
 	</div>
+</div>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color:#DDD">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel"></h4>
+      </div>
+      <div class="modal-body">
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Okay</button>
+      </div>
+    </div>
+  </div>
 </div>
 <script type="text/javascript">
 $(document).ready(function() {
