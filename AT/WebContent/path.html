@@ -359,7 +359,7 @@
 						'<mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
 						'</mxCell></link></root></mxGraphModel>');*/
 				var decoder = new mxCodec(doc);
-				$("#ipv6").val(data[0].external);
+				$("#ipv6").val(data.external);
 				decoder.decode(doc.documentElement, graphPath.getModel());
 				$("#dPath").removeClass("disabled");
 				$("#dPath").prop('disabled',false);

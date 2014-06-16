@@ -174,9 +174,9 @@
 		var name = $('#set-iscsi-name').val();
 		var hostname = $('#set-iscsi-hostname').val();
 		var iqn = $('#set-iscsi-iqn').val();
-		
-		if( name != '' && hostname != '' && iqn != ''){
-		$.post("ISCSISettings", {"op":"add", "name":name, "hostname":hostname, "iqn":iqn}, function(response){
+		var port = $('#set-iscsi-port').val();
+		if( name != '' && hostname != '' && iqn != '' && port != ""){
+		$.post("ISCSISettings", {"op":"add", "name":name, "hostname":hostname, "iqn":iqn, "port" : port}, function(response){
 			if(response.status == "ok"){
 				showDialog2("INFO", "ISCSI added with success");
 				getISCSISettings();
@@ -335,7 +335,15 @@
 								placeholder="iqn.Y-M.domain:unique" />
 						</div>
 					</div>
-
+					<div class="row">
+						<div class="span1">
+							<label for="set-iscsi-port">PORT</label>
+						</div>
+						<div class="span2">
+							<input id="set-iscsi-port" type="text" value="3260"
+								class="form-control" style="width: inherit" />
+						</div>
+					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-primary btn-lg btn-block"

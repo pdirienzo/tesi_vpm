@@ -9,7 +9,18 @@
 	border: 2px solid #808080;
 	height: auto;
 }
-;
+
+.overlay-popup {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 0;
+	background-color: #000;
+	opacity:0.8 !important;
+	
+}
 </style>
 <div class="content">
 	<p><button id="migrationButton" class="btn btn-primary">Migrate</button>
@@ -30,15 +41,32 @@
 	
 	
 	<!-- END: HTML for Hypervisor -->
-
-	<div id="migration-box">
+	<div class="modal fade" id="migration-box" tabindex="-1" role="dialog" aria-labelledby="migration-box-label" aria-hidden="true">
+	 <div class="modal-dialog modal-sm">
+	   <div class="modal-content">
+	     <div class="modal-header" style="background-color:#DDD">
+	        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	        <h4 class="modal-title" id="migration-box-label">Confirm the following tasks?</h4>
+	      </div>
+	      <div class="modal-body">
+	        
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-default btn-lg btn-block" data-dismiss="modal" onClick="migrate()">Confirm</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	<!-- <div id="migration-box">
 		<p>Confirm the following tasks?<p>
 		<div>
 		
 		</div>
-	</div>
+	</div> -->
 	
-	<div id="migration-status-box"></div>
+	<!--  Div for refresh progress bar -->
+	<div id="migration-status-box" style="z-index:1050" class="modal fade in">
+	</div>
 
 </div>
 
@@ -58,7 +86,7 @@
 	 	});
 	 	
 	 	//setup of dialogs
-	 	$("#migration-box").dialog({
+	 	/*$("#migration-box").dialog({
             title : "Migrazione",
             buttons : [ {
                 text : "Migrate",
@@ -74,16 +102,17 @@
             autoOpen : false,
             hide : "explode",
             modal : true
-        });
+        });*/
 	 	
 	 	$("#migration-status-box").dialog({
-	        "title" : "Migration on going",
+	        "title" : "Migration ongoing",
 	        "autoOpen" : false,
 	        "resizable" : true,
 	        "buttons" : {
 	            "Close" : function() {
-	                $("#wrapper .ui-widget-overlay").remove();
-					$(this).empty();
+	                //$("#wrapper .ui-widget-overlay").remove();
+					$("#popUpMigration").remove();
+	                $(this).empty();
 					var current_index = $("#tabs").tabs("option","active");
 					$("#tabs").tabs('load',current_index);
 	                $(this).dialog("close");
@@ -110,8 +139,10 @@
 	
 	function btnReset(){
 		$("#resetMigration").click(function () {
-		    $("#infopanel").empty();
-		    getList();
+			console.log("called");
+			$("#infopanel").empty();
+			var current_index = $("#tabs").tabs("option","active");
+			$("#tabs").tabs('load',current_index);
 		});
 	}
 	
@@ -213,9 +244,10 @@
 	
 	//this function populates the screen with hypervisor boxes and guests inside them
     function getList() {
-       $("#infopanel").hide(); //nascondiamo il pannello info
+    	$("#infopanel").empty();
+		$("#infopanel").hide();      //nascondiamo il pannello info
        $.getJSON("HypervisorInfo?type=\"LEAF_TYPE\"", function(hypervisorList){
-     
+     	
         //hypervisorList = getDummy();
         var html = "";
         for (var i = 0; i < hypervisorList.length; i++) {
@@ -226,7 +258,7 @@
         	}
             html += "<div class='left span3 '>";
 
-            hypervisor = hypervisorList[i];
+            var hypervisor = hypervisorList[i];
             
             if (hypervisor.status == "online") {
                 if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){
@@ -247,7 +279,7 @@
                 
                 for (j in hypervisor.machines) {
 
-                    vmachine = hypervisor.machines[j];
+                    var vmachine = hypervisor.machines[j];
                     if (vmachine.status == "running") {
                     	if (vmachine.cpuUsage > WARNING_THRESHOLD && vmachine.cpuUsage < DANGER_THRESHOLD){
                         html += "<li class='sortable-item-warning' id='"+vmachine.name+"_"+i+"'>"
@@ -291,6 +323,7 @@
                 html += "</ul></div>";
             }*/
        }
+       $("#infopanel").empty();
        $("#infopanel").append(html);
        $("#infopanel ul.sortable-list").sortable({
             items : "li:not(.unsortable)",
@@ -331,23 +364,22 @@
     function showMigrationBox() {
         var html = "";
         for(key in jobList){
-        	html += "<p>From: " + jobList[key].src + "<br>To:" + jobList[key].dst
+        	html += "<div class=\"well\"><p>From: " + jobList[key].src + "<br>To:" + jobList[key].dst
             		+ "<br>The following machine: " + jobList[key].vmname
-            		+ "</p>";
+            		+ "</p></div>";
         }
 
-        $("#migration-box div").html(html);
-        $("#migration-box").dialog("open");
+        $("#migration-box .modal-body").html(html);
+        $("#migration-box").modal("show");
 
     }
-    
     
     function migrate(){
     
     	$("#migration-status-box").empty();
-        $("#migration-box").dialog("close");
+        //$("#migration-box").dialog("close");
         
-        $("#wrapper").append("<div class='ui-widget-overlay ui-front'></div>");
+        $("#wrapper").append("<div id=\"popUpMigration\" class=\"overlay-popup fade in\"></div>");
         
         for (key in jobList) { //first we create a box for each migration
             var srcip = jobList[key].src;
