@@ -2,6 +2,15 @@
 <script type="text/javascript">
 	var mxBasePath = "mxgraph";
 </script>
+<style>
+.modal-body > pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+.string { color: green; }
+.number { color: darkorange; }
+.boolean { color: blue; }
+.null { color: magenta; }
+.key { color: red; }
+
+</style>
 <link href="tools/Jquery_selected/css/jquery.selectbox.css" type="text/css" rel="stylesheet" />
 <script type="text/javascript" src="tools/Jquery_selected/js/jquery.selectbox-0.2.min.js"></script>
 <script type="text/javascript" src="mxgraph/js/mxClient.js"></script>
@@ -193,9 +202,9 @@
 		$.getJSON("Flows?dpid="+dpid, function(resp) {
 				if(resp.status == "ok"){
 					var json = {"data":resp.data};
-					var str = JSON.stringify(json, undefined,4);
+					var str = syntaxHighlight(JSON.stringify(json, undefined,4));
 					console.log(str);
-					showDialogModal(tooltip+" "+dpid,new Date()+"<br />"+str);
+					showDialogModal(tooltip+" "+dpid,new Date()+str);
 				}else{
 					alert(resp.details);
 				}
@@ -211,7 +220,7 @@
 
 	function showDialogModal(title,message){
 				$("#myModalLabel").html(title);
-				$("#myModal .modal-body").text(message);
+				$("#myModal .modal-body > pre").html(message);
 				
 				$("#myModal").modal('show');
 			}
@@ -289,6 +298,28 @@
 				showDialog2("<i class=\"fa fa-warning fa-lg\"></i> Error ", data.details);
 			}
 		}); 
+	}
+	
+	function syntaxHighlight(json) {
+	    if (typeof json != 'string') {
+	         json = JSON.stringify(json, undefined, 2);
+	    }
+	    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+	        var cls = 'number';
+	        if (/^"/.test(match)) {
+	            if (/:$/.test(match)) {
+	                cls = 'key';
+	            } else {
+	                cls = 'string';
+	            }
+	        } else if (/true|false/.test(match)) {
+	            cls = 'boolean';
+	        } else if (/null/.test(match)) {
+	            cls = 'null';
+	        }
+	        return '<span class="' + cls + '">' + match + '</span>';
+	    });
 	}
 
 	function getPath() {
@@ -520,7 +551,8 @@ div .network-infopanel {
         <h4 class="modal-title" id="myModalLabel"></h4>
       </div>
       <div class="modal-body">
-        
+        <pre>
+        </pre>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Okay</button>
