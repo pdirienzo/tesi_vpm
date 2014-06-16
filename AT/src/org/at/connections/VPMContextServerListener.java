@@ -138,12 +138,12 @@ public class VPMContextServerListener implements ServletContextListener {
 			
 			restoreNetwork(c.getServletContext());
 			
-			HypervisorConnectionManager manager = new HypervisorConnectionManager(MANAGER_RETRY_TIME,props.getProperty("network_name"),
+			VPMHypervisorConnectionManager manager = new VPMHypervisorConnectionManager(MANAGER_RETRY_TIME,props.getProperty("network_name"),
 					props.getProperty("bridge_name"));
 			DatabaseEventDispatcher.addListener(manager);
 			manager.start();
 			
-			c.getServletContext().setAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER, manager);
+			c.getServletContext().setAttribute(VPMHypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER, manager);
 			
 		} catch (IOException e) {
 			System.err.println("Failed to initialize db: "+e.getMessage());
@@ -152,8 +152,8 @@ public class VPMContextServerListener implements ServletContextListener {
 	
 	@Override
 	public void contextDestroyed(ServletContextEvent c) {
-		HypervisorConnectionManager manager = (HypervisorConnectionManager)c.getServletContext()
-				.getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
+		VPMHypervisorConnectionManager manager = (VPMHypervisorConnectionManager)c.getServletContext()
+				.getAttribute(VPMHypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		try {
 			manager.stop();
 			System.out.println("DB connection closed");

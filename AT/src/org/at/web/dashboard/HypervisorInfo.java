@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.at.connections.HypervisorConnectionManager;
+import org.at.connections.VPMHypervisorConnectionManager;
 import org.at.db.Hypervisor;
 import org.at.libvirt.NetHypervisorConnection;
 import org.json.JSONArray;
@@ -47,8 +47,8 @@ public class HypervisorInfo extends HttpServlet {
 		PrintWriter out = response.getWriter();
 		response.setContentType("application/json");
 		JSONArray hypervisorsJsonList = new JSONArray();  //the list we will send
-		HypervisorConnectionManager manager = (HypervisorConnectionManager)getServletContext()
-				.getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
+		VPMHypervisorConnectionManager manager = (VPMHypervisorConnectionManager)getServletContext()
+				.getAttribute(VPMHypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		
 		List<NetHypervisorConnection> hypervisors = manager.getActiveHypervisors();
 		

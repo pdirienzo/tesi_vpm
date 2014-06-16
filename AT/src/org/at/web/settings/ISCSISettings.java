@@ -84,9 +84,9 @@ public class ISCSISettings extends HttpServlet {
 			db.connect();
 			if(request.getParameter("op").equals("add")){
 				db.insertISCSITarget(new ISCSITarget(-1, request.getParameter("name"), request.getParameter("hostname"), 
-						request.getParameter("iqn")));
+						Integer.parseInt(request.getParameter("port")),request.getParameter("iqn")));
 			}else if(request.getParameter("op").equals("del")){
-				db.deleteISCSITarget(new ISCSITarget(Integer.parseInt(request.getParameter("id")) , "", "", ""));
+				db.deleteISCSITarget(new ISCSITarget(Integer.parseInt(request.getParameter("id")) , "", "", -1 , ""));
 			}else
 				throw new IOException("unrecognized operation");
 			

@@ -1,8 +1,8 @@
 <domain type='kvm'>
-  <name></name>
-  <uuid></uuid>
-  <memory unit='KiB'>1048576</memory>
-  <currentMemory unit='KiB'>1048576</currentMemory>
+  <name>streamP</name>
+  <uuid>2476b3d2-4ccf-4ca9-46d1-f6610ff55529</uuid>
+  <memory unit='KiB'>524288</memory>
+  <currentMemory unit='KiB'>524288</currentMemory>
   <vcpu placement='static'>1</vcpu>
   <os>
     <type arch='x86_64' machine='pc-i440fx-1.5'>hvm</type>
@@ -19,9 +19,9 @@
   <on_crash>restart</on_crash>
   <devices>
     <emulator>/usr/bin/qemu-system-x86_64</emulator>
-    <disk type='file' device='disk'>
+    <disk type='block' device='disk'>
       <driver name='qemu' type='raw' cache='none'/>
-      <source file='/var/lib/libvirt/images/mine_nfs/H1_linx.img'/>
+      <source dev='/dev/disk/by-path/ip-192.168.1.100:3260-iscsi-iqn.2014-04.it.comics.vpm:streaming-lun-4'/>
       <target dev='vda' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
     </disk>
@@ -30,8 +30,8 @@
     </controller>
     <controller type='pci' index='0' model='pci-root'/>
     <interface type='network'>
-      <mac address='52:54:00:aa:4f:7d'/>
-      <source network='ovs-network'/>
+      <mac address='52:54:00:d3:4c:c2'/>
+      <source network='ovs-network' portgroup='vlan-stream'/>
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>
@@ -47,7 +47,7 @@
       <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
     </sound>
     <video>
-      <model type='cirrus' vram='9216' heads='1'/>
+      <model type='vmvga' vram='9216' heads='1'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
     </video>
     <memballoon model='virtio'>

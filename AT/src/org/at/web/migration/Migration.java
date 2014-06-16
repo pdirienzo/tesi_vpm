@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.at.connections.HypervisorConnectionManager;
+import org.at.connections.VPMHypervisorConnectionManager;
 import org.at.libvirt.MigrationThread;
 import org.json.JSONObject;
 
@@ -31,7 +31,7 @@ public class Migration extends HttpServlet {
 		String srcip = request.getParameter("srcip");
 		String dstip = (request.getParameter("dstip"));
 		
-		HypervisorConnectionManager manager =(HypervisorConnectionManager)getServletContext().getAttribute(HypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
+		VPMHypervisorConnectionManager manager =(VPMHypervisorConnectionManager)getServletContext().getAttribute(VPMHypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		
 		
 		MigrationThread mt = new MigrationThread(manager.getActiveConnection(srcip).getHypervisor(), 

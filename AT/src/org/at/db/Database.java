@@ -83,11 +83,12 @@ public class Database {
 
 		Statement s2 = connection.createStatement();
 		s2.execute("create table storage (id integer primary key autoincrement, iscsi_name text not null, iscsi_hostname text not null,"+
-		"iscsi_iqn text not null, unique(iscsi_name,iscsi_hostname,iscsi_iqn) );");
+		"iscsi_port integer default 3260, iscsi_iqn text not null, unique(iscsi_name,iscsi_hostname,iscsi_iqn) );");
 		
 		Statement s3 = connection.createStatement();
-		s3.execute("create table storage_allocations (id integer primary key autoincrement, iscsi integer not null, iscsi_lun text not null, hypervisor integer default 0,"+
-				"vm integer default 0, foreign key(iscsi) references storage(id), foreign key(hypervisor) references host(id) );");
+		s3.execute("create table storage_allocations (id integer primary key autoincrement, iscsi integer not null, iscsi_volume text not null, hypervisor integer not null,"+
+				"vm integer not null, foreign key(iscsi) references storage(id), foreign key(hypervisor) references host(id),"
+				+ "unique(iscsi,iscsi_volume) );");
 
 		Statement s4 = connection.createStatement();
 		s4.execute(
@@ -109,7 +110,7 @@ public class Database {
 					"select * from storage;");
 			l = new ArrayList<ISCSITarget>();
 			while(rs.next()){
-				ISCSITarget target = new ISCSITarget(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getString(4));
+				ISCSITarget target = new ISCSITarget(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getInt(4), rs.getString(5));
 				l.add(target);
 			}
 			rs.close();
@@ -125,8 +126,8 @@ public class Database {
 	public void insertISCSITarget(ISCSITarget target) throws IOException{
 		try {
 			Statement s = connection.createStatement();
-			s.execute("insert into storage (iscsi_name, iscsi_hostname, iscsi_iqn) values(\""+ 
-					target.name + "\" ,\"" + target.hostname +"\" , \"" + target.iqn +"\");"); 
+			s.execute("insert into storage (iscsi_name, iscsi_hostname, iscsi_port, iscsi_iqn) values(\""+ 
+					target.name + "\" ,\"" + target.hostname +"\" ," +target.port + ", \"" + target.iqn +"\");"); 
 
 			ResultSet rs = s.executeQuery("SELECT last_insert_rowid()");
 			rs.next();
@@ -141,6 +142,26 @@ public class Database {
 		}
 	}
 	
+	public ISCSITarget getTargetById(int id) throws IOException{
+		ISCSITarget result = null;
+		try{
+			Statement s = connection.createStatement();
+			ResultSet rs = s.executeQuery("select * from storage where id="+id);
+			if(rs.next()){
+				result = new ISCSITarget(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getInt(4), rs.getString(5));
+				rs.close();
+				s.close();
+			}else{
+				throw new IOException("can't find iscsi "+id);
+			}
+		}catch (SQLException ex) {
+			ex.printStackTrace();
+			throw new IOException(ex.getMessage());
+		}
+		
+		return result;
+	}
+	
 	public void deleteISCSITarget(ISCSITarget target) throws IOException{
 		try {
 
@@ -152,6 +173,52 @@ public class Database {
 			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
+	}
+	
+	public void insertVolumeAllocation(VolumeAllocation alloc) throws IOException{
+		try {
+			Statement s = connection.createStatement();
+			s.execute("insert into storage_allocations (iscsi, iscsi_volume, hypervisor, vm) values("+ 
+					alloc.iscsiID + " ,\"" + alloc.volume +"\" , " + alloc.hostID +"," + alloc.vmID + ");"); 
+
+			ResultSet rs = s.executeQuery("SELECT last_insert_rowid()");
+			rs.next();
+			alloc.id = rs.getInt(1);
+
+			rs.close();
+			s.close();
+		
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+	}
+	
+	/**
+	 * Returns allocations for specified iscsiID
+	 * @param iscsiID
+	 * @return
+	 * @throws IOException
+	 */
+	public List<VolumeAllocation> getISCSIVolumes(int iscsiID) throws IOException{
+		List<VolumeAllocation> l = null; 
+		try {
+			Statement s = connection.createStatement();
+			ResultSet rs = s.executeQuery(
+					"select * from storage_allocations where iscsi="+iscsiID+";");
+			l = new ArrayList<VolumeAllocation>();
+			while(rs.next()){
+				VolumeAllocation alloc = new VolumeAllocation(rs.getInt(1),rs.getInt(2), rs.getString(3), rs.getInt(4),rs.getInt(5));
+				l.add(alloc);
+			}
+			rs.close();
+			s.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+
+		return l;
 	}
 	
 	//******************* Hypervisor Part ***********************************

@@ -18,7 +18,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
 import org.libvirt.LibvirtException;
 
-public class HypervisorConnectionManager implements DatabaseListener{
+public class VPMHypervisorConnectionManager implements DatabaseListener{
 	
 	private static final int CONNECTION_TIMEOUT = 500;
 	public static final String HYPERVISOR_CONNECTION_MANAGER = "hmanager";
@@ -93,7 +93,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	 * @param dbPath path to the sqlite db
 	 * @throws IOException 
 	 */
-	public HypervisorConnectionManager(int retryTimeout,String dbPath,String network_name,String bridge_name) {
+	public VPMHypervisorConnectionManager(int retryTimeout,String dbPath,String network_name,String bridge_name) {
 		this.retryTimout = retryTimeout;
 		this.NETWORK_NAME = network_name;
 		this.BRIDGE_NAME = bridge_name;
@@ -110,7 +110,7 @@ public class HypervisorConnectionManager implements DatabaseListener{
 	 * @param retryTimeout 0 for no retry
 	 * @throws IOException 
 	 */
-	public HypervisorConnectionManager(int retryTimeout,String network_name,String bridge_name) throws IOException{
+	public VPMHypervisorConnectionManager(int retryTimeout,String network_name,String bridge_name) throws IOException{
 		this(retryTimeout,Database.DEFAULT_DBPATH,network_name,bridge_name);
 	}
 	
