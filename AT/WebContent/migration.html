@@ -229,19 +229,19 @@
             hypervisor = hypervisorList[i];
             
             if (hypervisor.status == "online") {
-                if(hypervisor.cpuinfo > WARNING_THRESHOLD && hypervisor.cpuinfo < DANGER_THRESHOLD){
+                if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){
                 	html += "<span id='"+hypervisor.id+"_label' class='iphyp-online label label-warning' style=\"margin-bottom:10px\">"
                     + hypervisor.hostname + "<br /> &nbsp; " + hypervisor.id
-                    + "&nbsp;<span class=\"badge btn-warning\">"+hypervisor.cpuinfo+"%</span></span>";
+                    + "&nbsp;<span class=\"badge btn-warning\">"+hypervisor.cpuUsage+"%</span></span>";
                 }
-                else if(hypervisor.cpuinfo > DANGER_THRESHOLD){
+                else if(hypervisor.cpuUsage > DANGER_THRESHOLD){
                 	html += "<span id='"+hypervisor.id+"_label' class='iphyp-online label label-danger' style=\"margin-bottom:10px\">"
                     + hypervisor.hostname + "<br /> &nbsp; " + hypervisor.id
-                    + "&nbsp;<span class=\"badge btn-danger\">"+hypervisor.cpuinfo+"%</span></span>";
+                    + "&nbsp;<span class=\"badge btn-danger\">"+hypervisor.cpuUsage+"%</span></span>";
                 }else {
             		html += "<span id='"+hypervisor.id+"_label' class='iphyp-online label label-success' style=\"margin-bottom:10px\">"
                         + hypervisor.hostname + "<br /> &nbsp; " + hypervisor.id
-                        + "&nbsp;<span class=\"badge btn-success\">"+hypervisor.cpuinfo+"%</span></span>";
+                        + "&nbsp;<span class=\"badge btn-success\">"+hypervisor.cpuUsage+"%</span></span>";
                 }
                 html += "<ul id=\""+hypervisor.id+"_list\" class='sortable-list'>";
                 
