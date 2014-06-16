@@ -1,0 +1,261 @@
+<!--  Script part -->
+
+<script>
+
+	/* $("#set-controller-dialog").dialog({
+		title : "Modifica impostazioni controller",
+		buttons : [ {
+			text : "Applica",
+			click : function() {
+				applyControllerSettings();
+			}
+		}, {
+			text : "Annulla",
+			click : function() {
+				$(this).dialog("close");
+			}
+		} ],
+		autoOpen : false,
+		hide : "explode",
+		modal : true
+	});
+*/
+	$("#set-controller").button().click(function() {
+		$("#set-controller-dialog").modal("show");
+	});
+/*
+	$("#add-host-dialog").dialog({
+		title : "Aggiunta Hypervisor",
+		buttons : [ {
+			text : "Aggiungi",
+			click : function() {
+				addNewHypervisor();
+			}
+		}, {
+			text : "Annulla",
+			click : function() {
+				$(this).dialog("close");
+			}
+		} ],
+		autoOpen : false,
+		hide : "explode",
+		modal : true
+	});
+*/
+	$("#addNewHypervisor").button().click(function() {
+		$("#add-host-dialog").modal("show");
+	});
+
+	function getHypervisorSettings() {
+		$.getJSON(
+			"GetHypervisorSettings",
+			function(response) {
+				html = "";
+				for (i = 0; i < response.length; i++) {
+					html += "<tr>";
+					html += "<td>" + response[i].username + "</td>";
+					html += "<td>" + response[i].hostname + "</td>";
+					html += "<td>" + response[i].port + "</td>";
+					html += "<td><button id=\""
+							+ response[i].hostname
+							+ "\" class=\"btn btn-danger\" onclick=\"removeHypervisor(event);\">Elimina</button></td>";
+					html += "</tr>";
+				}
+				//$("#Hypervisor-list").empty();
+				$("#Hypervisor-list").html(html);
+
+			});
+	}
+
+	function getControllerSettings() {
+		$.getJSON("GetControllerSettings", function(response) {
+			$("#current-controller-hostname").html(response.hostname);
+			$("#current-controller-port").html(response.port);
+			$("#current-controller-webui").html(
+					"<a  target=\"_blank\" href=\""+response.ui_url+"\">"
+							+ response.ui_url + "</a>");
+		});
+	}
+	function applyControllerSettings() {
+		ip = document.getElementById("set-hostname").value;
+		port = document.getElementById("set-port").value;
+		$.getJSON("AddController?ip=" + ip + "&port=" + port,
+				function(response) {
+					showDialog2("INFO",response.status);
+					getControllerSettings();
+					$("#set-controller-dialog").dialog("close");
+
+				});
+	}
+
+	function addNewHypervisor() {
+		username = document.getElementById("addhost-username").value;
+		host = document.getElementById("addhost-hostname").value;
+		port = document.getElementById("addhost-port").value;
+		$.getJSON("AddHypervisor?username=" + username + "&ip=" + host
+				+ "&port=" + port, function(response) {
+			showDialog2("INFO",response.status);
+			//$("#add-host-dialog").dialog("close");
+			getHypervisorSettings();
+
+		});
+	}
+
+	function removeHypervisor(event) {
+
+		hypervisor = event.target.id;
+
+		$.getJSON("DeleteHypervisor?hostname=" + hypervisor,
+				function(response) {
+					showDialog2("INFO",response.details);
+					getHypervisorSettings();
+
+				});
+	}
+
+	//chiamate quando il doc è pronto
+	
+	getControllerSettings();
+	getHypervisorSettings();
+	
+</script>
+
+<!--  HTML PART -->
+<link href="css/settings_style.css" rel="stylesheet" />
+
+<div id="box">
+
+	<div id="controller-box" class="cent">
+		<h3>Impostazioni Controller Openflow</h3>
+		<table class="table table-striped">
+			<tr>
+				<td><b>Hostname</b></td>
+				<td id="current-controller-hostname">Non configurato</td>
+			</tr>
+			<tr>
+				<td><b>Port</b></td>
+				<td id="current-controller-port">Non configurato</td>
+			</tr>
+			<tr>
+				<td><b>Floodlight WebUi</b></td>
+				<td id="current-controller-webui">Non configurato</td>
+			</tr>
+		</table>
+		<br>
+		<button id="set-controller" class="btn">Modifica</button>
+
+		<!--  Message Box (Hidden by default) 
+		<div id="set-controller-dialog" title="Set Controller" style="">
+			<h3>Impostazioni Openflow Controller</h3>
+			<label for="set-hostname">Hostname</label><br> <input
+				id="set-hostname" type="text" value="localhost" /><br> <label
+				for="set-port">Port</label><br> <input id="set-port"
+				type="text" value="8080" />
+		</div>-->
+
+	</div>
+
+	<br>
+	<hr>
+	<br>
+
+	<div id="hypervisors-box" class="cent">
+		<h3>Hypervisors Registrati</h3>
+		<table id="hyper-table" cellspacing="10" class="table table-bordered table-hover">
+			<thead style="background-color:#CCC">
+				<tr>
+					<th>Username</th>
+					<th>Hostname</th>
+					<th>Port</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody id="Hypervisor-list">
+
+			</tbody>
+		</table>
+		<br>
+		<button id="addNewHypervisor" class="btn ">Aggiungi</button>
+
+		<!-- DIALOG FOR HYPERVISOR -->
+		<div class="modal fade" id="add-host-dialog" tabindex="-1" role="dialog" aria-labelledby="add-host-label" aria-hidden="true">
+		  <div class="modal-dialog modal-sm" >
+		    <div class="modal-content">
+		      <div class="modal-header" style="background-color:#DDD">
+		        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		        <h4 class="modal-title" id="myVmLabel">Aggiunta Hypervisor</h4>
+		      </div>
+		      <div class="modal-body">
+		      	
+			      <div class="row">
+			      	<div class="span1">
+			        	<label for="addhost-username">Username</label>
+			        </div>
+			        <div class="span2"> 
+			       		<input id="addhost-username" type="text" value="" placeholder="Username" style="width:inherit" class="form-control" />
+			        </div>
+			      </div>
+			      <div class="row">
+			      	<div class="span1">
+			        	<label for="addhost-hostname">Host</label> 
+					  </div>
+			        <div class="span2"> 
+			      		<input id="addhost-hostname" type="text" value="" class="form-control" style="width:inherit" placeholder="localhost" />
+					  </div>
+			      </div>
+			      <div class="row">
+			      	<div class="span1">
+			      <label for="addhost-port">Port</label>
+			        </div>
+			        <div class="span2">  
+					<input id="addhost-port" type="text" value="16514" class="form-control" style="width:inherit" placeholder="Port" />
+					</div>
+			      </div>
+			     </div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" onClick="addNewHypervisor()">Okay</button>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+		
+		<!-- DIALOG FOR CONTROLLER -->
+		<div class="modal fade" id="set-controller-dialog" tabindex="-1" role="dialog" aria-labelledby="set-controller-label" aria-hidden="true">
+		  <div class="modal-dialog modal-sm" >
+		    <div class="modal-content">
+		      <div class="modal-header" style="background-color:#DDD">
+		        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		        <h4 class="modal-title" id="set-controller-label">Aggiunta Controller</h4>
+		      </div>
+		      <div class="modal-body">
+		      <h3>Impostazioni Openflow Controller</h3>
+			      <div class="row">
+			      	<div class="span1">
+			        	<label for="set-hostname">Hostname</label>
+					</div>
+			        <div class="span2"> 
+			      		<input id="set-hostname" type="text" style="width:inherit" value="localhost" />
+					</div>
+			      </div>
+			      <div class="row">
+			      	<div class="span1">
+			        <label for="set-port">Port</label>
+					</div>
+			        <div class="span2"> 
+			      	<input id="set-port" type="text" style="width:inherit" value="8080" />
+					</div>
+			      </div>
+			  </div>
+		      <div class="modal-footer">
+		      <p>
+		        <button type="button" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" onClick="applyControllerSettings()">Applica</button>
+		        <button type="button" class="btn btn-danger btn-lg btn-block" data-dismiss="modal">Annulla</button>
+		      </p>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+	</div>
+</div>
+
+
