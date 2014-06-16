@@ -289,11 +289,11 @@
 		 	       		}
 		 	       	}
 
-		 	        labelId.text(hypervisor.ip+" ("+hypervisor.cpuUsage+"%)");
+		 	        labelId.text(hypervisor.hostname+" ("+hypervisor.cpuUsage+"%)");
 		 	        
 	    	 	}else{
 	    	 		$("#"+hypervisor.id+"_box button[name=crB]").button("option","disabled",true);//.switchClass("ui-state-enabled","ui-state-disabled");
-	    	 		labelId.text(hypervisor.ip+" (offline)");
+	    	 		labelId.text(hypervisor.hostname+" (offline)");
 	    	 	}
 	     }
 	     

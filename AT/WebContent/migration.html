@@ -231,16 +231,16 @@
             if (hypervisor.status == "online") {
                 if(hypervisor.cpuinfo > WARNING_THRESHOLD && hypervisor.cpuinfo < DANGER_THRESHOLD){
                 	html += "<span id='"+hypervisor.id+"_label' class='iphyp-online label label-warning' style=\"margin-bottom:10px\">"
-                    + hypervisor.ip + "<br /> &nbsp; " + hypervisor.id
+                    + hypervisor.hostname + "<br /> &nbsp; " + hypervisor.id
                     + "&nbsp;<span class=\"badge btn-warning\">"+hypervisor.cpuinfo+"%</span></span>";
                 }
                 else if(hypervisor.cpuinfo > DANGER_THRESHOLD){
                 	html += "<span id='"+hypervisor.id+"_label' class='iphyp-online label label-danger' style=\"margin-bottom:10px\">"
-                    + hypervisor.ip + "<br /> &nbsp; " + hypervisor.id
+                    + hypervisor.hostname + "<br /> &nbsp; " + hypervisor.id
                     + "&nbsp;<span class=\"badge btn-danger\">"+hypervisor.cpuinfo+"%</span></span>";
                 }else {
             		html += "<span id='"+hypervisor.id+"_label' class='iphyp-online label label-success' style=\"margin-bottom:10px\">"
-                        + hypervisor.ip + "<br /> &nbsp; " + hypervisor.id
+                        + hypervisor.hostname + "<br /> &nbsp; " + hypervisor.id
                         + "&nbsp;<span class=\"badge btn-success\">"+hypervisor.cpuinfo+"%</span></span>";
                 }
                 html += "<ul id=\""+hypervisor.id+"_list\" class='sortable-list'>";
