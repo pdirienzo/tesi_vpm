@@ -3,13 +3,18 @@
 <head>
 <title>Live migration</title>
 <link href="css/smoothness/jquery-ui-1.10.4.css" rel="stylesheet" />
-<link href="css/bootstrap.css" rel="stylesheet" />
 <link href="css/jquery.switchButton.css" rel="stylesheet" />
 <link href="css/tabs_style.css" rel="stylesheet" />
 <script src="js/jquery-1.11.0.js"></script>
 <script src="js/jquery-ui-1.10.4.js"></script>
 <script src="js/jquery-ui-contextmenu.js"></script>
 <script src="js/jquery.switchButton.js"></script>
+<!-- BOOTSTRAP  -->
+<link href="css/bootstrap.css" rel="stylesheet" />
+<script src="js/bootstrap.js"></script>
+<!-- FONT AWESOME  -->
+<link href="http://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
+<link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css" />
 
 <%@page import="java.util.Properties"%>
 <%@page import="org.at.network.types.OvsSwitch.Type"%>
@@ -61,6 +66,12 @@
 				$("#vpm-alert p").text(message);
 				$("#vpm-alert").dialog("open");
 			}
+			
+			function showDialog2(title,message){
+				$("#vpm-alert-label").html(title);
+				$("#vpm-alert-info .modal-body").html(message);
+				$("#vpm-alert-info").modal("show");
+			}
 			 
 		</script>
 </head>
@@ -101,7 +112,8 @@
 					<li><a href="migration.html">Migration</a></li>
 					<li><a href="ovs_network.html">Networking</a></li>
 					<li><a href="path.html">Path</a></li>
-					<li><a href="settings.html">Settings</a></li>
+<!-- 					<li><a href="settings.html">Settings</a></li>-->
+					<li><a href="settingsBootstrap.html">New Setting Tab</a></li>
 				</ul>
 			</div>
 		</div>
@@ -132,7 +144,25 @@
 <div id="vpm-alert" title="Info">
 	<p></p>
 </div>
-	
+<!-- DIALOG FOR COMUNICATION -->
+	<div class="modal fade" id="vpm-alert-info" tabindex="-1" role="dialog" aria-labelledby="vpm-alert-label" aria-hidden="true">
+	  <div class="modal-dialog modal-sm" >
+	    <div class="modal-content">
+	      <div class="modal-header" style="background-color:#DDD">
+	        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	        <h4 class="modal-title" id="vpm-alert-label"></h4>
+	      </div>
+	      <div class="modal-body">
+	      
+		  </div>
+	      <div class="modal-footer">
+	      <p>
+	        <button type="button" class="btn btn-info btn-lg btn-block" data-dismiss="modal">Okay</button>
+	      </p>
+	      </div>
+	    </div>
+	  </div>
+	</div>
 </body>
 
 

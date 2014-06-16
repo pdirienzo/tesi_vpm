@@ -1,5 +1,6 @@
 <link href="css/drop.css" rel="stylesheet" />
 <script src="js/jquery.dialogextend.js"></script>
+
 <style type="text/css">
 .content {
 	margin: auto;
@@ -11,7 +12,9 @@
 ;
 </style>
 <div class="content">
-	<p><button id="migrationButton">Migrate</button></p>
+	<p><button id="migrationButton" class="btn btn-primary">Migrate</button>
+		<button id="resetMigration" class="btn btn-danger" onClick="btnReset()" type="button" data-toggle="tooltip" data-placement="right" title="Reset Migration">
+			Reset</button></p>
 	<!-- Pre Loading... -->
 	<div id="loadingMask"
 		style="background: none repeat scroll 0% 0% rgb(255, 255, 255); margin-top: 0px; width: inherit; height: inherit;">
@@ -21,7 +24,6 @@
 	<!-- BEGIN: HTML for Hypervisor -->
     
 	<div id="infopanel">
-		<div class="row"></div>
 	</div>
 	
 	<div class="clearer">&nbsp;</div>
@@ -30,7 +32,7 @@
 	<!-- END: HTML for Hypervisor -->
 
 	<div id="migration-box">
-		<p>Confermare i seguenti job?<p>
+		<p>Confirm the following tasks?<p>
 		<div>
 		
 		</div>
@@ -52,19 +54,19 @@
 	 		if(jobList["length"] > 0)
 	 			showMigrationBox();
 	 		else
-	 			showDialog("Errore","Nessun job di migrazione attualmente schedulato");
+	 			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","No migration task scheduled");
 	 	});
 	 	
 	 	//setup of dialogs
 	 	$("#migration-box").dialog({
             title : "Migrazione",
             buttons : [ {
-                text : "Migra",
+                text : "Migrate",
                 click : function() {
                     migrate();
                 }
             }, {
-                text : "Annulla",
+                text : "Cancel",
                 click : function() {
                     $(this).dialog("close");
                 }
@@ -75,14 +77,15 @@
         });
 	 	
 	 	$("#migration-status-box").dialog({
-	        "title" : "Migrazione in corso",
+	        "title" : "Migration on going",
 	        "autoOpen" : false,
 	        "resizable" : true,
 	        "buttons" : {
 	            "Close" : function() {
 	                $("#wrapper .ui-widget-overlay").remove();
 					$(this).empty();
-					location.reload(true);
+					var current_index = $("#tabs").tabs("option","active");
+					$("#tabs").tabs('load',current_index);
 	                $(this).dialog("close");
 	                //window.location.refresh("true");
 	            }
@@ -105,10 +108,17 @@
 	 	
 	}); 
 	
+	function btnReset(){
+		$("#resetMigration").click(function () {
+		    $("#infopanel").empty();
+		    getList();
+		});
+	}
+	
 	function getDummy(){
 	    var myJSONObject = [{
 	    	"id": "H3",
-	    	"ip": "sprom@dell-Sprom",
+	    	"ip": "sprom@dell-Spromargacanaracar",
 	        "status" : "online",
 	        "cpuinfo" : 91,
 	        "machines" : [{
@@ -141,7 +151,52 @@
 	    	"id":"H1",
 	    	"ip": "pasquale@pasq-VAIO",
 	    	"status" : "online",
+	    	"cpuinfo" : 20,
+	        "machines" : [{
+	            "status" : "running",
+	            "name" : "linx",
+	            "cpustats" : 60
+	        },
+	        {
+	            "status" : "running",
+	            "name" : "server2",
+	            "cpustats" : 30
+	        }]
+	    },{
+	    	"id":"H4",
+	    	"ip": "pasquale@pasq-VAIO",
+	    	"status" : "online",
 	    	"cpuinfo" : 80,
+	        "machines" : [{
+	            "status" : "running",
+	            "name" : "linx",
+	            "cpustats" : 60
+	        },
+	        {
+	            "status" : "running",
+	            "name" : "server2",
+	            "cpustats" : 30
+	        }]
+	    },{
+	    	"id":"H5",
+	    	"ip": "pasquale@pasq-VAIO",
+	    	"status" : "online",
+	    	"cpuinfo" : 80,
+	        "machines" : [{
+	            "status" : "running",
+	            "name" : "linx",
+	            "cpustats" : 60
+	        },
+	        {
+	            "status" : "running",
+	            "name" : "server2",
+	            "cpustats" : 30
+	        }]
+	    },{
+	    	"id":"H6",
+	    	"ip": "pasquale@pasq-VAIO",
+	    	"status" : "online",
+	    	"cpuinfo" : 50,
 	        "machines" : [{
 	            "status" : "running",
 	            "name" : "linx",
@@ -159,21 +214,35 @@
 	//this function populates the screen with hypervisor boxes and guests inside them
     function getList() {
        $("#infopanel").hide(); //nascondiamo il pannello info
-       $.getJSON("HypervisorInfo", function(hypervisorList){
+       $.getJSON("HypervisorInfo?type=\"LEAF_TYPE\"", function(hypervisorList){
      
-       // hypervisorList = getDummy();
- 
+        //hypervisorList = getDummy();
+        var html = "";
         for (var i = 0; i < hypervisorList.length; i++) {
-        	var html = "";
+        	
+        	var x = i % 4;
+        	if(i == 0 || x == 0){
+        		html+="<div class=\"row\">";
+        	}
             html += "<div class='left span3 '>";
 
             hypervisor = hypervisorList[i];
             
             if (hypervisor.status == "online") {
-                html += "<label id='"+hypervisor.id+"_label' class='iphyp-online' >"
-                        + hypervisor.ip + " (" + hypervisor.id
-                        + ")</label>";
-
+                if(hypervisor.cpuinfo > WARNING_THRESHOLD && hypervisor.cpuinfo < DANGER_THRESHOLD){
+                	html += "<span id='"+hypervisor.id+"_label' class='iphyp-online label label-warning' style=\"margin-bottom:10px\">"
+                    + hypervisor.ip + "<br /> &nbsp; " + hypervisor.id
+                    + "&nbsp;<span class=\"badge btn-warning\">"+hypervisor.cpuinfo+"%</span></span>";
+                }
+                else if(hypervisor.cpuinfo > DANGER_THRESHOLD){
+                	html += "<span id='"+hypervisor.id+"_label' class='iphyp-online label label-danger' style=\"margin-bottom:10px\">"
+                    + hypervisor.ip + "<br /> &nbsp; " + hypervisor.id
+                    + "&nbsp;<span class=\"badge btn-danger\">"+hypervisor.cpuinfo+"%</span></span>";
+                }else {
+            		html += "<span id='"+hypervisor.id+"_label' class='iphyp-online label label-success' style=\"margin-bottom:10px\">"
+                        + hypervisor.ip + "<br /> &nbsp; " + hypervisor.id
+                        + "&nbsp;<span class=\"badge btn-success\">"+hypervisor.cpuinfo+"%</span></span>";
+                }
                 html += "<ul id=\""+hypervisor.id+"_list\" class='sortable-list'>";
                 
                 for (j in hypervisor.machines) {
@@ -182,21 +251,21 @@
                     if (vmachine.status == "running") {
                     	if (vmachine.cpuUsage > WARNING_THRESHOLD && vmachine.cpuUsage < DANGER_THRESHOLD){
                         html += "<li class='sortable-item-warning' id='"+vmachine.name+"_"+i+"'>"
-                                + vmachine.name
+                                +"<icon class=\"fa fa-database fa-2x\">&nbsp;</icon>"+ vmachine.name
                                 + " ("
                                 + vmachine.status
                                 + ")</li>";
                     	}
                     	 else if (vmachine.cpuUsage >= DANGER_THRESHOLD){
                     		 html += "<li class='sortable-item-danger' id="+vmachine.name+">"
-                             + vmachine.name
+                             +"<icon class=\"fa fa-database fa-2x\">&nbsp;</icon>"+ vmachine.name
                              + " ("
                              + vmachine.status
                              + ")</li>";
                     	 }
                     	 else {
                     		 html += "<li class='sortable-item-green' id="+vmachine.name+">"
-                             + vmachine.name
+                             +"<icon class=\"fa fa-database fa-2x\">&nbsp;</icon>"+ vmachine.name
                              + " ("
                              + vmachine.status
                              + ")</li>";
@@ -209,7 +278,12 @@
                 }
 
                 html += "</ul></div>";
-                $("#infopanel div.row").append(html);
+                var y = ((i+1)%4);
+                if((i!=0) && (y==0)){
+                	
+                	html += "</div>";
+                }
+               
                 
              
                 
@@ -221,11 +295,11 @@
                 html += "</ul></div>";
             }*/
        }
-        
+       $("#infopanel").append(html);
        $("#infopanel ul.sortable-list").sortable({
             items : "li:not(.unsortable)",
             connectWith : '#infopanel ul.sortable-list',
-            
+            containment : 'window',
       		receive: function(evt,ui){
       			var obj = new Object();
       			
@@ -329,7 +403,7 @@
                 $("#"+response.id).progressbar("value", 100);
                 $("#"+response.id+"-txt").text("Migrazione completata");
                 $.getJSON("GetElapsedTime?lmid="+response.id, function(response) {
-                    text = "Tempo trascorso " + response.elapsed / 1000 + " s";
+                    text = "Time elapsed " + response.elapsed / 1000 + " s";
                     console.log(response.id+" "+text);
                     $("#"+response.id+"-mem").html(text);
                   
@@ -337,12 +411,12 @@
             } else if (response.state == "1") { // on progress
                 	$("#"+response.id).progressbar("value", Math.ceil(response.percent));
                     $("#"+response.id+"-txt").text($("#"+response.id).progressbar("value") + " % ");
-                    text = "Memoria trasferita " + Math.ceil(response.processed / 1024 / 1024) +" MB ";
+                    text = "Transfered Memory " + Math.ceil(response.processed / 1024 / 1024) +" MB ";
                 	$("#"+response.id+"-mem").html(text);
                
                 setTimeout(refreshProgress(response.id), 500);
             } else if(response.state == "-1"){
-                showDialog("Impossibile effettuare la migrazione",response.error);
+                showDialog2("Impossible to complete migration",response.error);
                 $("#"+response.id+"-mem").html("<p>Failed</p>");
                 $.getJSON("GetElapsedTime?lmid="+response.id, function(response) {
                    //$("#vmboxes").dialog("close");
