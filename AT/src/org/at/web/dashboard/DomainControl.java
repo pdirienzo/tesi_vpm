@@ -1,5 +1,6 @@
 package org.at.web.dashboard;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -158,14 +159,12 @@ public class DomainControl extends HttpServlet {
 
 	}
 	
-	private String[] getStorageInfos(Domain d) throws IOException{
+	private String[] getStorageInfos(Domain d) throws IOException, LibvirtException{
 		SAXBuilder builder = new SAXBuilder();
-		File xmlFile = new File(XML_VM_FILEPATH);
-
 		Document doc = null;
 		try{
 			String[] result = new String[2];
-			doc = (Document) builder.build(xmlFile);
+			doc = (Document) builder.build(new ByteArrayInputStream(d.getXMLDesc(0).getBytes()));
 			String iscsiPath = doc.getRootElement().getChild("devices").getChild("disk").getChild("source").getAttribute("dev").getValue();
 			String[] splitted = iscsiPath.split("-");
 			result[0] = splitted[splitted.length-3].split(":")[1];
