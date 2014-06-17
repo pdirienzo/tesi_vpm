@@ -77,7 +77,7 @@
 				for (i = 0; i < response.length; i++) {
 					html += "<tr>";
 					html += "<td>" + response[i].username + "</td>";
-					html += "<td>" + response[i].hostname + "</td>";
+					html += "<td style=\"text-overflow:ellipsis\">" + response[i].hostname + "</td>";
 					html += "<td>" + response[i].port + "</td>";
 					html += "<td><button id=\""
 							+ response[i].hostname
@@ -120,14 +120,14 @@
 		if(username != '' && host != '' && port != '' && iscsi != 0 ){
 			$.getJSON("AddHypervisor?username=" + username + "&ip=" + host
 				+ "&port=" + port + "&iscsi=" + iscsi, function(response) {
-					showDialog2("INFO",response.status);
+					showDialog2("INFO <i class=\"fa fa-info-circle fa-lg\"></i>",response.status);
 					//$("#add-host-dialog").dialog("close");
 					getHypervisorSettings();
 
 			});
 			
 		}else{
-			alert(" Fill all fields!");
+			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>"," Fill all fields!");
 		}
 	}
 
@@ -137,7 +137,7 @@
 
 		$.getJSON("DeleteHypervisor?hostname=" + hypervisor,
 				function(response) {
-					showDialog2("INFO",response.details);
+					showDialog2("INFO <i class=\"fa fa-info-circle fa-lg\"></i>",response.details);
 					getHypervisorSettings();
 
 				});
@@ -153,8 +153,8 @@
 				for(var i=0;i<targets.length;i++){
 					html += "<tr>";
 					html += "<td>" + targets[i].name + "</td>";
-					html += "<td>" + targets[i].hostname + "</td>";
-					html += "<td>" + targets[i].iqn + "</td>";
+					html += "<td style=\"text-overflow:ellipsis\">" + targets[i].hostname + "</td>";
+					html += "<td style=\"text-overflow:ellipsis\">" + targets[i].iqn + "</td>";
 					html += "<td><button id=\"ISCSI-"
 							+ targets[i].id
 							+ "\" class=\"btn btn-danger\" onclick=\"removeISCSI(event);\">Elimina</button></td>";
@@ -178,14 +178,14 @@
 		if( name != '' && hostname != '' && iqn != '' && port != ""){
 		$.post("ISCSISettings", {"op":"add", "name":name, "hostname":hostname, "iqn":iqn, "port" : port}, function(response){
 			if(response.status == "ok"){
-				showDialog2("INFO", "ISCSI added with success");
+				showDialog2("INFO <i class=\"fa fa-info-circle fa-lg\"></i>", "ISCSI added with success");
 				getISCSISettings();
 			}else
-				alert(response.details);
+				showDialog2("INFO <i class=\"fa fa-info-circle fa-lg\"></i>",response.details);
 		});
 		
 		}else{
-			alert("Fill all fields");	
+			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Fill all fields");	
 		}
 	}
 	
@@ -195,7 +195,7 @@
 		console.log(target);
 		$.post("ISCSISettings", {"op":"del", "id":target}, function(response){
 			if(response.status == "ok"){
-				showDialog2("INFO", "ISCSI removed");
+				showDialog2("INFO <i class=\"fa fa-info-circle fa-lg\"></i>", "ISCSI removed");
 				getISCSISettings();
 			}else
 				alert(response.details);
@@ -216,23 +216,23 @@
 <div id="box">
 
 	<div id="controller-box" class="cent">
-		<h3>Impostazioni Controller Openflow</h3>
+		<h3>Settings Controller Openflow</h3>
 		<table class="table table-striped">
 			<tr>
 				<td><b>Hostname</b></td>
-				<td id="current-controller-hostname">Non configurato</td>
+				<td id="current-controller-hostname">Not configured</td>
 			</tr>
 			<tr>
 				<td><b>Port</b></td>
-				<td id="current-controller-port">Non configurato</td>
+				<td id="current-controller-port">Not configured</td>
 			</tr>
 			<tr>
 				<td><b>Floodlight WebUi</b></td>
-				<td id="current-controller-webui">Non configurato</td>
+				<td id="current-controller-webui">Not configured </td>
 			</tr>
 		</table>
 		<br>
-		<button id="set-controller" class="btn">Modifica</button>
+		<button id="set-controller" class="btn">Modify</button>
 
 		<!--  Message Box (Hidden by default) 
 		<div id="set-controller-dialog" title="Set Controller" style="">
@@ -250,7 +250,7 @@
 	<br>
 
 	<div id="iscsi-box" class="cent">
-		<h3>Target ISCSI Registrati</h3>
+		<h3>Target ISCSI Subscribed</h3>
 		<table id="iscsi-table" cellspacing="10" class="table table-stripered"
 			style="width: 100%">
 			<thead>
@@ -266,14 +266,14 @@
 			</tbody>
 		</table>
 		<br>
-		<button id="add-iscsi" class="btn">Aggiungi Target</button>
+		<button id="add-iscsi" class="btn">Add a Target</button>
 	</div>
 	<br>
 	<hr>
 	<br>
 
 	<div id="hypervisors-box" class="cent">
-		<h3>Hypervisors Registrati</h3>
+		<h3>Registered Hypervisors</h3>
 		<table id="hyper-table" cellspacing="10"
 			class="table table-bordered table-hover">
 			<thead style="background-color: #CCC">
@@ -301,7 +301,7 @@
 				<div class="modal-header" style="background-color: #DDD">
 					<button type="button" class="close" data-dismiss="modal"
 						aria-hidden="true">&times;</button>
-					<h4 class="modal-title" id="add-iscsi-label">Aggiunta Target</h4>
+					<h4 class="modal-title" id="add-iscsi-label">Add an iSCSI Target</h4>
 				</div>
 				<div class="modal-body">
 
@@ -347,7 +347,7 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-primary btn-lg btn-block"
-						data-dismiss="modal" onClick="addNewISCSI()">Okay</button>
+						data-dismiss="modal" onClick="addNewISCSI()">Confirm</button>
 				</div>
 			</div>
 		</div>
@@ -361,7 +361,7 @@
 				<div class="modal-header" style="background-color: #DDD">
 					<button type="button" class="close" data-dismiss="modal"
 						aria-hidden="true">&times;</button>
-					<h4 class="modal-title" id="myVmLabel">Aggiunta Hypervisor</h4>
+					<h4 class="modal-title" id="myVmLabel">Add a new Hypervisor</h4>
 				</div>
 				<div class="modal-body">
 
@@ -406,7 +406,7 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-primary btn-lg btn-block"
-						data-dismiss="modal" onClick="addNewHypervisor()">Okay</button>
+						data-dismiss="modal" onClick="addNewHypervisor()">Confirm</button>
 				</div>
 			</div>
 		</div>
@@ -421,11 +421,10 @@
 				<div class="modal-header" style="background-color: #DDD">
 					<button type="button" class="close" data-dismiss="modal"
 						aria-hidden="true">&times;</button>
-					<h4 class="modal-title" id="set-controller-label">Aggiunta
-						Controller</h4>
+					<h4 class="modal-title" id="set-controller-label">Add a Controller</h4>
 				</div>
 				<div class="modal-body">
-					<h3>Impostazioni Openflow Controller</h3>
+					<h3>Settings Openflow Controller</h3>
 					<div class="row">
 						<div class="span1">
 							<label for="set-hostname">Hostname</label>
@@ -448,9 +447,7 @@
 				<div class="modal-footer">
 					<p>
 						<button type="button" class="btn btn-primary btn-lg btn-block"
-							data-dismiss="modal" onClick="applyControllerSettings()">Applica</button>
-						<button type="button" class="btn btn-danger btn-lg btn-block"
-							data-dismiss="modal">Annulla</button>
+							data-dismiss="modal" onClick="applyControllerSettings()">Confirm</button>
 					</p>
 				</div>
 			</div>
