@@ -124,7 +124,7 @@
     	<div class="row">
             <div class="span4" style="float:left">
             	<div class="span4 text-center"><br />
-            	<a href="http://www.progettoplatino.it/" target="_blank"><img src="images/customLogo.png" alt="PLATINO" /></a>
+            	<a href="https://sites.google.com/site/progettoplatino/" target="_blank"><img src="images/customLogo.png" alt="PLATINO" /></a>
         		</div>
            	</div>
             <div class="span4" style="float:left">

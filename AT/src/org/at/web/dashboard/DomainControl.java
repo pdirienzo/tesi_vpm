@@ -50,13 +50,17 @@ public class DomainControl extends HttpServlet {
 		byte[] macAddr = new byte[6];
 		rand.nextBytes(macAddr);
 		
+		macAddr[0] = (byte)(macAddr[0] & (byte)254);  //zeroing last 2 bytes to make it unicast and locally adminstrated
+		
 		StringBuilder sb = new StringBuilder(18);
 		for(byte b : macAddr){
+			
 			if(sb.length() > 0)
 				sb.append(":");
 			
 			sb.append(String.format("%02x", b));
 		}
+		
 		
 		return sb.toString();
 	}
@@ -113,8 +117,6 @@ public class DomainControl extends HttpServlet {
 		d.connect();
 		
 		int iscsiID = d.getHypervisorById(hypervisorId).getISCSI();
-		
-		System.out.println("the iscsi id for hypervisor "+hypervisorId+ " is "+iscsiID);
 		ISCSITarget iscsiTarget = d.getTargetById(iscsiID);
 		List<VolumeAllocation> allocations = d.getISCSIVolumes(iscsiID);
 		
@@ -126,7 +128,6 @@ public class DomainControl extends HttpServlet {
 		
 		
 		String[] volumes = sp.listVolumes();
-		System.out.println(allocations.size() + "/" + volumes.length);
 		
 		if(allocations.size() == volumes.length) //following code will be executed just if there is at least a free LUN
 			throw new IOException("The ISCSI Target for this hypervisor has no free LUNs. Add some more or delete some vms from other hypervisors");
@@ -135,7 +136,6 @@ public class DomainControl extends HttpServlet {
 		boolean found = false;
 		int i = 0;
 		while( (!found) && (i<volumes.length)){
-			System.out.println("checkin "+volumes[i]);
 			if(!volumeIsIn(volumes[i], allocations))
 				found = true; //found a free volume
 			else
@@ -171,6 +171,7 @@ public class DomainControl extends HttpServlet {
 				VPMHypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		HypervisorConnection conn = manager.getActiveConnection(hypervisorId);
 
+		System.out.println("action "+action);
 		try{
 			if(action.equals("boot")){
 				conn.bootDomain(guestName);
@@ -181,20 +182,7 @@ public class DomainControl extends HttpServlet {
 			}else if(action.equals("shutdown")){
 				conn.shutdownDomain(guestName);
 				jResponse.put("result", "success");
-			}/*else if(action.equals("list_flavours")){
-				Properties props = (Properties)getServletContext().getAttribute("properties");
-				StorageClient sClient = new StorageClient(props.getProperty("image_server_addr"), 
-						Integer.parseInt(props.getProperty("image_server_port")));
-
-				try{
-					jResponse = sClient.listFlavours();
-				}catch(IOException ex){ //usually server is not reachable but this should not affect the whole app
-					System.err.println("Couldn't contact image server, each image operation will fail");
-					jResponse.put("result", "error");
-					jResponse.put("details","impossible contact image server");
-				}
-
-			}*/else if(action.equals("destroy")){
+			}else if(action.equals("destroy")){
 				
 			}else{
 				jResponse.put("result", "error");
