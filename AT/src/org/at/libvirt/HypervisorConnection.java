@@ -216,6 +216,13 @@ public class HypervisorConnection extends Connect{
 		d.destroy();
 	}
 	
+	public void deleteDomain(String name) throws LibvirtException{
+		Domain d = domainLookupByName(name);
+		if(d.isActive() == 1)
+			d.destroy();
+		d.undefine();
+	}
+	
 	public CPUStatistic[] getCpuStatistics() throws LibvirtException{
 		return super.getCPUStats(-1, 0);
 	}

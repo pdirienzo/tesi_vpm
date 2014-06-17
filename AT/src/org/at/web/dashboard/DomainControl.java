@@ -44,114 +44,145 @@ public class DomainControl extends HttpServlet {
 	public DomainControl() {
 		super();
 	}
-	
+
 	private String randomMACAddress(){
 		Random rand = new Random();
 		byte[] macAddr = new byte[6];
 		rand.nextBytes(macAddr);
-		
+
 		macAddr[0] = (byte)(macAddr[0] & (byte)254);  //zeroing last 2 bytes to make it unicast and locally adminstrated
-		
+
 		StringBuilder sb = new StringBuilder(18);
 		for(byte b : macAddr){
-			
+
 			if(sb.length() > 0)
 				sb.append(":");
-			
+
 			sb.append(String.format("%02x", b));
 		}
-		
-		
+
+
 		return sb.toString();
 	}
-	
+
 	public static void main(String[] args){
 	}
-	
+
 	private boolean volumeIsIn(String volumeName, List<VolumeAllocation> allocations){
 		boolean found = false;
 		int i = 0;
-		
+
 		while((!found) && (i<allocations.size()))
 			if(allocations.get(i).volume.equals(volumeName))
 				found = true;
 			else
 				i++;
-		
+
 		return found;
 	}
-	
+
 	private String getVMDescription(String vmname, String iscsiPath) throws IOException{
 		SAXBuilder builder = new SAXBuilder();
 		File xmlFile = new File(XML_VM_FILEPATH);
- 
+
 		Document doc = null;
 		try{
 			doc = (Document) builder.build(xmlFile);
 		}catch(JDOMException ex){
 			throw new IOException(ex.getMessage());
 		}
-		
+
 		Element rootNode = doc.getRootElement();
 		rootNode.getChild("name").setText(vmname);
 		rootNode.getChild("uuid").setText(UUID.randomUUID().toString());
-		
+
 		Element devicesNode = rootNode.getChild("devices");
-		
+
 		//settings iscsi
 		devicesNode.getChild("disk").getChild("source").setAttribute("dev",iscsiPath);
-		
+
 		//setting mac address
 		devicesNode.getChild("interface").getChild("mac").setAttribute("address",randomMACAddress());
-		
+
 		//setting network
 		String network_name = ((Properties)getServletContext().getAttribute("properties")).getProperty("network_name");
-		
+
 		devicesNode.getChild("interface").getChild("source").setAttribute("network",network_name);
-		
+
 		return new XMLOutputter().outputString(doc);
 	}
-	
-	private void createVM(HypervisorConnection conn, String hypervisorId, String vmName, boolean autostart) throws IOException, LibvirtException{
+
+	private void createVM(HypervisorConnection conn, String hypervisorId, String vmName, int iscsiID, boolean autostart) throws IOException, LibvirtException{
 		Database d = (Database)getServletContext().getAttribute(Database.DATABASE);
+
 		d.connect();
-		
-		int iscsiID = d.getHypervisorById(hypervisorId).getISCSI();
-		ISCSITarget iscsiTarget = d.getTargetById(iscsiID);
-		List<VolumeAllocation> allocations = d.getISCSIVolumes(iscsiID);
-		
-		d.close();
-		
-		System.out.println(iscsiTarget.name);
-		StoragePool sp = conn.storagePoolLookupByName(iscsiTarget.name);
-		
-		
-		
-		String[] volumes = sp.listVolumes();
-		
-		if(allocations.size() == volumes.length) //following code will be executed just if there is at least a free LUN
-			throw new IOException("The ISCSI Target for this hypervisor has no free LUNs. Add some more or delete some vms from other hypervisors");
-		
-		//finding a free lun
-		boolean found = false;
-		int i = 0;
-		while( (!found) && (i<volumes.length)){
-			if(!volumeIsIn(volumes[i], allocations))
-				found = true; //found a free volume
-			else
-				i++;
+		try{
+
+			ISCSITarget iscsiTarget = d.getTargetById(iscsiID);
+			List<VolumeAllocation> allocations = d.getISCSIVolumes(iscsiID);
+
+
+			StoragePool sp = conn.storagePoolLookupByName(iscsiTarget.name);
+
+			String[] volumes = sp.listVolumes();
+
+			if(allocations.size() == volumes.length) //following code will be executed just if there is at least a free LUN
+				throw new IOException("The ISCSI Target for this hypervisor has no free LUNs. Add some more or delete some vms from other hypervisors");
+
+			//finding a free lun
+			boolean found = false;
+			int i = 0;
+			while( (!found) && (i<volumes.length)){
+				if(!volumeIsIn(volumes[i], allocations))
+					found = true; //found a free volume
+				else
+					i++;
+			}
+
+			//building the path
+			String iscsiFullPath = "/dev/disk/by-path/ip-"+InetAddress.getByName(iscsiTarget.hostname).getHostAddress()+":" +iscsiTarget.port + "-iscsi-"+
+					iscsiTarget.iqn+"-lun-"+i; 
+
+			//creating (finally)
+
+			Domain newDomain = conn.domainDefineXML(getVMDescription(vmName, iscsiFullPath));
+			//if no exceptions so far we can set this new assign in the iscsi LUN assignation table
+			VolumeAllocation alloc = new VolumeAllocation(iscsiID, volumes[i], Integer.parseInt(hypervisorId.split("H")[1]) , vmName);
+			d.insertVolumeAllocation(alloc);
+			if(autostart)
+				newDomain.create();
+
+		}finally{
+			d.close();
+		}
+
+	}
+	
+	private String[] getStorageInfos(Domain d) throws IOException{
+		SAXBuilder builder = new SAXBuilder();
+		File xmlFile = new File(XML_VM_FILEPATH);
+
+		Document doc = null;
+		try{
+			String[] result = new String[2];
+			doc = (Document) builder.build(xmlFile);
+			String iscsiPath = doc.getRootElement().getChild("devices").getChild("disk").getChild("source").getAttribute("dev").getValue();
+			String[] splitted = iscsiPath.split("-");
+			result[0] = splitted[splitted.length-3].split(":")[1];
+			result[1] = splitted[splitted.length-1];
+			
+			return result;
+		}catch(JDOMException ex){
+			throw new IOException(ex.getMessage());
 		}
 		
-		//building the path
-		String iscsiFullPath = "/dev/disk/by-path/ip-"+InetAddress.getByName(iscsiTarget.hostname).getHostAddress()+":" +iscsiTarget.port + "-iscsi-"+
-				iscsiTarget.iqn+"-lun-"+i; 
+	}
+	
+	private void deleteVM(HypervisorConnection conn, String guest) throws LibvirtException, IOException{
+		Domain domain = conn.domainLookupByName(guest);
 		
-		//creating (finally)
-		
-		Domain newDomain = conn.domainDefineXML(getVMDescription(vmName, iscsiFullPath));
-		if(autostart)
-			newDomain.create();
-		
+		System.out.println(getStorageInfos(domain)[0]+getStorageInfos(domain)[1]);
+		//domain.undefine();
 	}
 
 	/**
@@ -171,25 +202,26 @@ public class DomainControl extends HttpServlet {
 				VPMHypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		HypervisorConnection conn = manager.getActiveConnection(hypervisorId);
 
-		System.out.println("action "+action);
+		System.out.println("action "+action+" iscsi: "+request.getParameter("iscsi"));
 		try{
 			if(action.equals("boot")){
 				conn.bootDomain(guestName);
 				jResponse.put("result", "success");
 			}else if(action.equals("create")){
-				createVM(conn, hypervisorId, guestName, Boolean.parseBoolean(request.getParameter("autostart")));
+				createVM(conn, hypervisorId, guestName, Integer.parseInt(request.getParameter("iscsi")),Boolean.parseBoolean(request.getParameter("autostart")));
 				jResponse.put("result", "success");
 			}else if(action.equals("shutdown")){
 				conn.shutdownDomain(guestName);
 				jResponse.put("result", "success");
-			}else if(action.equals("destroy")){
-				
+			}else if(action.equals("delete")){
+				deleteVM(conn, guestName);
+				jResponse.put("result", "success");
 			}else{
 				jResponse.put("result", "error");
 				jResponse.put("details", "unrecognized action");
 			}
 
-
+			jResponse.put("action", action);
 
 		}catch(IOException | LibvirtException ex){
 			jResponse.put("result", "error");

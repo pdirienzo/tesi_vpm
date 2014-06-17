@@ -87,13 +87,13 @@ public class Database {
 		
 		Statement s3 = connection.createStatement();
 		s3.execute("create table storage_allocations (id integer primary key autoincrement, iscsi integer not null, iscsi_volume text not null, hypervisor integer not null,"+
-				"vm integer not null, foreign key(iscsi) references storage(id), foreign key(hypervisor) references host(id),"
+				"vm text not null, foreign key(iscsi) references storage(id), foreign key(hypervisor) references host(id),"
 				+ "unique(iscsi,iscsi_volume) );");
 
 		Statement s4 = connection.createStatement();
 		s4.execute(
 				"create table host(id integer primary key autoincrement, nome varchar not null," +
-				"ip varchar , port varchar, iscsi integer not null, foreign key(iscsi) references storage(id) );");
+				"ip varchar , port varchar);");
 		
 		s1.close();
 		s2.close();
@@ -179,7 +179,7 @@ public class Database {
 		try {
 			Statement s = connection.createStatement();
 			s.execute("insert into storage_allocations (iscsi, iscsi_volume, hypervisor, vm) values("+ 
-					alloc.iscsiID + " ,\"" + alloc.volume +"\" , " + alloc.hostID +"," + alloc.vmID + ");"); 
+					alloc.iscsiID + " ,\"" + alloc.volume +"\" , " + alloc.hostID +"," + alloc.vmName + ");"); 
 
 			ResultSet rs = s.executeQuery("SELECT last_insert_rowid()");
 			rs.next();
@@ -208,7 +208,7 @@ public class Database {
 					"select * from storage_allocations where iscsi="+iscsiID+";");
 			l = new ArrayList<VolumeAllocation>();
 			while(rs.next()){
-				VolumeAllocation alloc = new VolumeAllocation(rs.getInt(1),rs.getInt(2), rs.getString(3), rs.getInt(4),rs.getInt(5));
+				VolumeAllocation alloc = new VolumeAllocation(rs.getInt(1),rs.getInt(2), rs.getString(3), rs.getInt(4),rs.getString(5));
 				l.add(alloc);
 			}
 			rs.close();
@@ -221,13 +221,15 @@ public class Database {
 		return l;
 	}
 	
+	//TODO public void deleteVolumeAllocation()
+	
 	//******************* Hypervisor Part ***********************************
 
 	public void insertHypervisor(Hypervisor h) throws IOException{
 		try {
 			Statement s = connection.createStatement();
-			s.execute("insert into host (nome,ip,port,iscsi) values(\""+ 
-					h.getName() + "\" ,\"" + h.getHostname() +"\" , \"" + h.getPort() +"\","+ h.getISCSI()+");"); 
+			s.execute("insert into host (nome,ip,port) values(\""+ 
+					h.getName() + "\" ,\"" + h.getHostname() +"\"," + h.getPort() +");"); 
 
 			ResultSet rs = s.executeQuery("SELECT last_insert_rowid()");
 			rs.next();
@@ -259,7 +261,7 @@ public class Database {
 			ResultSet rs = s.executeQuery(
 					"select* from host where id=\""+id+ "\";");
 			while(rs.next()){ //is just one
-				h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4), rs.getInt(5));
+				h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4));
 			}
 
 			rs.close();
@@ -285,7 +287,7 @@ public class Database {
 			ResultSet rs = s.executeQuery(
 					"select* from host where ip=\""+hostName+ "\";");
 			while(rs.next()){ //is just one
-				h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4), rs.getInt(5));
+				h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4));
 			}
 
 			rs.close();
@@ -324,7 +326,7 @@ public class Database {
 					"select * from host;");
 			l = new ArrayList<Hypervisor>();
 			while(rs.next()){
-				Hypervisor h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4), rs.getInt(5));
+				Hypervisor h = new Hypervisor(rs.getInt(1),rs.getString(2), rs.getString(3), rs.getLong(4));
 				l.add(h);
 			}
 			rs.close();

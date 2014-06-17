@@ -54,26 +54,7 @@
 	});
 */
 	$("#addNewHypervisor").button().click(function() {
-		
-		$.getJSON("ISCSISettings", function(response) {
-			
-			if(response.status == "ok"){
-				var targets = response.data;
-				var $el = $('#addhost-iscsi'); 
-				
-				$('#addhost-iscsi option:gt(0)').remove();//el.empty();
-				console.log("after removed" + targets.length);
-				for(var i=0;i<targets.length;i++){
-					console.log("ok"+targets[i].id+targets[i].name);
-					$el.append("<option value='"+targets[i].id+"'>"+targets[i].name+"</option>");		
-				}
-				
-				$("#add-host-dialog").modal("show");
-			}else{
-				showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>",response.details);
-			}
-			
-		});
+		$("#add-host-dialog").modal("show");	
 	});
 
 	function getHypervisorSettings() {
@@ -122,11 +103,10 @@
 		var username = $("#addhost-username").val();
 		var host = $("#addhost-hostname").val();
 		var port = $("#addhost-port").val();
-		var iscsi = $("#addhost-iscsi").val();
 		
-		if(username != '' && host != '' && port != '' && iscsi != 0 ){
+		if(username != '' && host != '' && port != ''){
 			$.getJSON("AddHypervisor?username=" + username + "&ip=" + host
-				+ "&port=" + port + "&iscsi=" + iscsi, function(response) {
+				+ "&port=" + port, function(response) {
 					showDialog2("INFO <i class=\"fa fa-info-circle fa-lg\"></i>",response.status);
 					//$("#add-host-dialog").dialog("close");
 					getHypervisorSettings();
@@ -401,15 +381,6 @@
 						<div class="span2">
 							<input id="addhost-port" type="text" value="16514"
 								class="form-control" style="width: inherit" placeholder="Port" />
-						</div>
-					</div>
-					<div class="row">
-						<div class="span1">
-							<label for="addhost-iscsi">ISCSI</label>
-						</div>
-						<div class="span2">
-							<select id="addhost-iscsi" style="width: inherit" name="iscsi"><option
-									value="0">Select iSCSI</option></select>
 						</div>
 					</div>
 				</div>

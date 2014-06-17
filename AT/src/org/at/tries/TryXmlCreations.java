@@ -44,7 +44,7 @@ public class TryXmlCreations {
 		System.out.println(o.outputString(doc));
 		
 		HypervisorConnection h = HypervisorConnection.getConnectionWithTimeout(
-				new Hypervisor("pasquale","pasquale-VPCEB1A4E", 16514,0), false, 3000);
+				new Hypervisor("pasquale","pasquale-VPCEB1A4E", 16514), false, 3000);
 		
 		StoragePool pollo = null;
 		

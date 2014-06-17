@@ -5,16 +5,16 @@ public class VolumeAllocation {
 	public int iscsiID;
 	public String volume;
 	public int hostID;
-	public int vmID;
+	public String vmName;
 	
-	public VolumeAllocation(int id, int iscsiID, String volume, int hostID, int vmID){
+	public VolumeAllocation(int id, int iscsiID, String volume, int hostID, String vmID){
 		this.iscsiID = iscsiID;
 		this.volume = volume;
 		this.hostID = hostID;
-		this.vmID = vmID;
+		this.vmName = vmID;
 	}
 	
-	public VolumeAllocation(int iscsiID, String volume, int hostID, int vmID){
+	public VolumeAllocation(int iscsiID, String volume, int hostID, String vmID){
 		this(0, iscsiID, volume, hostID, vmID);
 	}
 	

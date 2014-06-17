@@ -14,7 +14,7 @@ public class TryMemStats {
 	public static void main(String[] args) throws IOException, LibvirtException {
 		HypervisorConnection hc = HypervisorConnection.getConnectionWithTimeout(
 				new Hypervisor("pasquale", "pasquale-VPCEB1A4E",
-						16514,0), true, 3000);
+						16514), true, 3000);
 		int max = 1;
 		
 		for(int i=0;i< max;i++){

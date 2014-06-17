@@ -43,7 +43,7 @@ public class TryDomainOps {
 				new Hypervisor("pasquale", "platino1",
 						16514), NETWORK_NAME,getNetworkDescription(), 3000);*/
 		
-		HypervisorConnection hc = HypervisorConnection.getConnectionWithTimeout(new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514,0),
+		HypervisorConnection hc = HypervisorConnection.getConnectionWithTimeout(new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514),
 				true, 3000);
 		
 		System.out.println(hc.getCapabilities());

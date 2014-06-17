@@ -19,12 +19,10 @@ public class AddHypervisor extends HttpServlet {
 	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		PrintWriter out = response.getWriter();
-		System.out.println("Check iscsi "+Integer.valueOf(request.getParameter("iscsi")));
 		
 		Hypervisor host2add=new Hypervisor(request.getParameter("username"),
 								request.getParameter("ip"), 
-								Long.valueOf(request.getParameter("port")),
-								Integer.valueOf(request.getParameter("iscsi")));
+								Long.valueOf(request.getParameter("port")));
 		
 		JSONObject message=new JSONObject();
 		

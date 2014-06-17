@@ -92,16 +92,33 @@
 	 });*/
  }); 
  
- function controlHypervisor(){
+ function controlHypervisor(event){
+	 
+	 if(event.target.name == "startVM"){
+		 controlOp.action = "boot";
+	 }else if(event.target.name == "stopVM"){
+		 controlOp.action = "shutdown";
+	 }else if(event.target.name == "delVM"){
+		 controlOp.action = "delete";
+	 }
+	 
 	 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
 			 + "&autostart=" + controlOp.autostart, function(result){
      		if(result.result == "error"){
      			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Request failed: "+result.details);
      		}
+     		
+     		if(result.action == "delete"){
+     			var current_index = $("#tabs").tabs("option","active");
+    			$("#tabs").tabs('load',current_index);
+    			//$("#vm_menu").modal("hide");
+     		}
      });
 	 
- 	$("#vm_menu").modal("toggle");
+ 	 //$("#vm_menu").modal("hide");
 	 showDialog2("Info <i class=\"fa fa-info-circle fa-lg\"></i>","Sending a "+controlOp.action+" request for "+controlOp.guest);
+	 
+	 
  }
 
  function openCreateDialog(){
@@ -114,9 +131,10 @@
 			controlOp.flavour = $('#new_vm_flavour select :selected').text();
 			controlOp.guest = "VPM-"+vmName;
 			controlOp.autostart = $('#new_vm_run input').switchButton("option","checked"); 
-			
+			controlOp.iscsi = $('#new_vm_iscsi > select').val();
+		
 			 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
-					 +"&flavour="+controlOp.flavour+"&autostart="+controlOp.autostart,function(result){
+					 +"&flavour="+controlOp.flavour+"&iscsi="+controlOp.iscsi+"&autostart="+controlOp.autostart,function(result){
 		     		if(result.result == "error"){
 		     			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Request failed: "+result.details);
 		     		}
@@ -215,17 +233,35 @@
 	     		controlOp.hypervisor = this.parentNode.id.split("_")[0];
 	     		controlOp.action = "create";
 	     		
-	     		$('#new_vm_name input').val("");
-	    		$("#vm_creation").modal("show"); 
-	    		$('#vm_creation_box').show();
-				$('#vm_creation_loader').hide();
-	    		
+	     		$('#vm_creation_loader').show();
+	     		$.getJSON("ISCSISettings", function(response) {
+	     			if(response.status == "ok"){
+	     				var targets = response.data;
+	    				var sel = $('#new_vm_iscsi > select'); 
+	     				
+	    				$('#new_vm_iscsi > select option:gt(0)').remove();
+	    				
+	    				for(var i=0;i<targets.length;i++){
+	    					sel.append("<option value='"+targets[i].id+"'>"+targets[i].name+"</option>");		
+	    				}
+	    				
+	     				
+	     				$('#new_vm_name input').val("");
+		    			$("#vm_creation").modal("show"); 
+		    			$('#vm_creation_box').show();
+						$('#vm_creation_loader').hide();	//provare a mettere show
+	     			
+	     			
+	     			}else{
+	    				showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>",response.details);
+	    			}	
+	     		});
 	    	 });
 	    	 
 	    	 $( ".vmbutton" ).button().click(function( event ) {
 		 	       	event.preventDefault();
 		 	        $("#vm_menu_title").html(this.name+" Control");
-		 	        console.log(this.name);
+		 	        
 		 	        controlOp.hypervisor = this.parentNode.id.split("_")[0];
 		 	        controlOp.guest = this.name;
 	 	       		
@@ -340,9 +376,9 @@
       	<h3>Choose an option</h3>  
       </div>
       <div class="modal-footer" style="background-color:#DDD">
-      <button name="startVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-success btn-lg btn-block " disabled="false">Start VM</button>
-	  <button name="shutVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-primary btn-lg btn-block" disabled="true">ShutDown VM</button>
-	  <button name="stopVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-danger btn-lg btn-block">Delete VM</button>
+      <button name="startVM" onclick="controlHypervisor(event)" style="width:'20px';" class="btn btn-success btn-lg btn-block ">Start VM</button>
+	  <button name="stopVM" onclick="controlHypervisor(event)" style="width:'20px';" class="btn btn-primary btn-lg btn-block">ShutDown VM</button>
+	  <button name="delVM" onclick="controlHypervisor(event)" style="width:'20px';" class="btn btn-danger btn-lg btn-block" data-dismiss="modal">Delete VM</button>
       </div>
     </div>
   </div>
@@ -362,17 +398,13 @@
 		<p>Creating...this operation can take some minutes..</p>
 		</div>
 		<div id="vm_creation_box">
-		<label style="font-weight: bold;margin-top:2px;" for="new_vm_name">Nome VM:</label>
+		<label style="font-weight: bold;margin-top:2px;" for="new_vm_name">VM Name</label>
 		<div id="new_vm_name">
 		VPM-<input type="text"></input>
 		</div>
-		<label style="font-weight: bold;margin-top:2px;" for="new_vm_flavour">Tipo</label>
-		<div id="new_vm_flavour">
-			<select>
-				<option>ubuntu10.04</option>
-				<option>dhcpd</option>
-			</select>
-			
+		<label style="font-weight: bold;margin-top:5px;" for="new_vm_iscsi">ISCSI Target</label>
+		<div id="new_vm_iscsi">
+			<select name="iscsi"><option value="-1">Select iSCSI</option></select>
 		</div>
 		<label style="font-weight: bold;margin-top:10px;" for="new_vm_run">Avvia dopo creazione</label>
 		<div id="new_vm_run">
