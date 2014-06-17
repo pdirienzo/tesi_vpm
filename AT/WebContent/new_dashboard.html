@@ -100,7 +100,7 @@
      		}
      });
 	 
-	 $("#vm_menu").dialog("close");
+ 	$("#vm_menu").modal("toggle");
 	 showDialog2("Info <i class=\"fa fa-info-circle fa-lg\"></i>","Sending a "+controlOp.action+" request for "+controlOp.guest);
  }
 
@@ -126,7 +126,11 @@
 			 
 			$('#vm_creation_box').hide();
 			$('#vm_creation_loader').show();
-			$("#vm_creation").modal("toggle");
+			
+			//$("#vm_creation").modal("toggle");
+			var current_index = $("#tabs").tabs("option","active");
+			$("#tabs").tabs('load',current_index);
+			
 		}else {
 			$("#vm_creation").modal("toggle");
 			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Name Cannot be empty!");
@@ -164,12 +168,12 @@
 		         active: false 
 		     });
 	    	 
-	    	 $("#vm_menu").dialog({
+	    	 /* $("#vm_menu").dialog({
 	             title : "Control",
 	             autoOpen : false,
 	             resizable: false,
 	             modal:true
-	    	 });
+	    	 }); */
 	    	 
 	    	 $("#new_vm_run input").switchButton();
 	    	 
@@ -221,20 +225,20 @@
 	    	 $( ".vmbutton" ).button().click(function( event ) {
 		 	       	event.preventDefault();
 		 	        $("#vm_menu_title").html(this.name+" Control");
-		 	        
+		 	        console.log(this.name);
 		 	        controlOp.hypervisor = this.parentNode.id.split("_")[0];
 		 	        controlOp.guest = this.name;
 	 	       		
 		 	       	if(this.getAttribute('status') == "offline"){
-		 	       	    controlOp.action = "boot";
+		 	       	    //controlOp.action = "boot";
 		 	       		//$("#vm_menu button[name=shutVM]").switchClass("ui-state-enabled","ui-state-disabled");
 		 	       		//$("#vm_menu button[name=startVM]").switchClass("ui-state-disabled","ui-state-enabled");
-		 	       		$("#vm_menu button[name=shutVM]").property("disabled","false");
-		 	       		$("#vm_menu button[name=startVM]").property("disabled","true");
+		 	       		$("#vm_menu button[name=shutVM]").prop("disabled", true);
+		 	       		$("#vm_menu button[name=startVM]").prop("disabled",false);
 		 	       	}else if (this.getAttribute('status') == "online"){
-		 	          	controlOp.action = "shutdown";
-		 	          	$("#vm_menu button[name=shutVM]").property("disabled","true");
-		 	       		$("#vm_menu button[name=startVM]").property("disabled","false");
+		 	          	//controlOp.action = "shutdown";
+		 	          	$("#vm_menu button[name=shutVM]").prop("disabled", false);
+		 	       		$("#vm_menu button[name=startVM]").prop("disabled", true);
 		 	       		//$("#vm_menu button[name=shutVM]").switchClass("ui-state-disabled","ui-state-enabled");
 		 	       	    //$("#vm_menu button[name=startVM]").switchClass("ui-state-enabled","ui-state-disabled");
 		 	       	}
@@ -377,7 +381,7 @@
 		</div>
       </div>
       <div class="modal-footer" style="background-color:#DDD">
-        <button type="button" class="btn btn-default" onClick="createVM()">Create</button>
+        <button type="button" class="btn btn-default" onClick="createVM()" data-dismiss="modal">Create</button>
       </div>
     </div>
   </div>
