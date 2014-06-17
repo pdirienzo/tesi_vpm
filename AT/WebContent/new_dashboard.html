@@ -82,78 +82,58 @@
 }
  */
  
- 
  var controlOp = new Object(); //this is a shared object containing details about current control operation
  
  $(document).ready(function(){
 	 getHypervisor(true);
-	 /*$.getJSON("DomainControl?action=list_flavours",function(result){
-		 console.log(result);
-	 });*/
- }); 
+}); 
  
- function controlHypervisor(event){
-	 
-	 if(event.target.name == "startVM"){
-		 controlOp.action = "boot";
-	 }else if(event.target.name == "stopVM"){
-		 controlOp.action = "shutdown";
-	 }else if(event.target.name == "delVM"){
-		 controlOp.action = "delete";
-	 }
-	 
+ function controlHypervisor(){
 	 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
 			 + "&autostart=" + controlOp.autostart, function(result){
      		if(result.result == "error"){
+     			//$("#vm_menu").modal("toggle");
      			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Request failed: "+result.details);
      		}
-     		
-     		if(result.action == "delete"){
-     			var current_index = $("#tabs").tabs("option","active");
-    			$("#tabs").tabs('load',current_index);
-    			//$("#vm_menu").modal("hide");
-     		}
      });
-	 
- 	 //$("#vm_menu").modal("hide");
+ 	//$("#vm_menu").modal("toggle");
 	 showDialog2("Info <i class=\"fa fa-info-circle fa-lg\"></i>","Sending a "+controlOp.action+" request for "+controlOp.guest);
-	 
-	 
- }
-
- function openCreateDialog(){
-	 $("#vm_creation").modal("show");
  }
  
  function createVM(){
 	 var vmName = $('#new_vm_name input').val();
 		if(vmName != ""){
+			$("#vm_error_title").html("Loading <i class=\"fa fa-spinner fa-spin fa-lg\"></i>");
+			$('#vm_creation_loader').show();
+			$("#vm_error").modal("show");
 			controlOp.flavour = $('#new_vm_flavour select :selected').text();
 			controlOp.guest = "VPM-"+vmName;
 			controlOp.autostart = $('#new_vm_run input').switchButton("option","checked"); 
-			controlOp.iscsi = $('#new_vm_iscsi > select').val();
-		
-			 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
-					 +"&flavour="+controlOp.flavour+"&iscsi="+controlOp.iscsi+"&autostart="+controlOp.autostart,function(result){
-		     		if(result.result == "error"){
-		     			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Request failed: "+result.details);
-		     		}
-		     		$('#vm_creation_box').show();
-					$('#vm_creation_loader').hide();
+			$.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
+					 +"&flavour="+controlOp.flavour+"&autostart="+controlOp.autostart,function(result){
+				
+				 	if(result.result == "error"){
+				 		$('#vm_creation_loader').fadeOut(1000,function(){
+				 			$("#vm_error_title").html("Error <i class=\"fa fa-warning fa-lg\"></i>");	
+				 			$("#vm_error .modal-body").html("Request failed:"+result.details);
+				 		});
+				 	}
+				 	else {
+				 		$('#vm_creation_loader').fadeOut(1000,function(){
+				 			$("#vm_error_title").html("Success <i class=\"fa fa-check fa-lg\"></i>");
+					 		$("#vm_error .modal-body").html("Request successful completed");
+				 		});
+				 		
+				 	}
+				 	refreshTab(result.result);
 			});
-			 
-			$('#vm_creation_box').hide();
-			$('#vm_creation_loader').show();
-			
-			//$("#vm_creation").modal("toggle");
-			var current_index = $("#tabs").tabs("option","active");
-			$("#tabs").tabs('load',current_index);
 			
 		}else {
-			$("#vm_creation").modal("toggle");
+			//$("#vm_creation").modal("toggle");
 			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Name Cannot be empty!");
 			
 		}
+		
  }
  
  function getHypervisor(firstRun){
@@ -186,97 +166,36 @@
 		         active: false 
 		     });
 	    	 
-	    	 /* $("#vm_menu").dialog({
-	             title : "Control",
-	             autoOpen : false,
-	             resizable: false,
-	             modal:true
-	    	 }); */
 	    	 
 	    	 $("#new_vm_run input").switchButton();
-	    	 
-	    	 /* $("#vm_creation").dialog({
-	    		title : "Il potere della creazione",
-	    		autoOpen : false,
-	    		resizable : false,
-	    		modal : true,
-	    		buttons : [ {
-	    			text : "Crea",
-	    			click : function() {
-	    				vmName = $('#new_vm_name input').val();
-	    				if(vmName != ""){
-	    					controlOp.flavour = $('#new_vm_flavour select :selected').text();
-	    					controlOp.guest = "VPM-"+vmName;
-	    					controlOp.autostart = $('#new_vm_run input').switchButton("option","checked"); 
-	    					
-	    					 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
-	    							 +"&flavour="+controlOp.flavour+"&autostart="+controlOp.autostart,function(result){
-	    				     		if(result.result == "error"){
-	    				     			showDialog("Errore","Request failed: "+result.details);
-	    				     		}
-	    				     		$('#vm_creation_box').show();
-	    							$('#vm_creation_loader').hide();
-	    					});
-	    					 
-	    					$('#vm_creation_box').hide();
-	    					$('#vm_creation_loader').show();
-	    				}else
-	    					showDialog("Error","Il nome non puo' essere vuoto!");
-	    				
-	    			}
-	    		}]
-	    	 }); */
-	    	 
-	    	 
+	    	 	    	 
 	    	 $(".crbutton").button().click(function(event){
 	     		event.preventDefault();
 	     		controlOp.hypervisor = this.parentNode.id.split("_")[0];
 	     		controlOp.action = "create";
 	     		
-	     		$('#vm_creation_loader').show();
-	     		$.getJSON("ISCSISettings", function(response) {
-	     			if(response.status == "ok"){
-	     				var targets = response.data;
-	    				var sel = $('#new_vm_iscsi > select'); 
-	     				
-	    				$('#new_vm_iscsi > select option:gt(0)').remove();
-	    				
-	    				for(var i=0;i<targets.length;i++){
-	    					sel.append("<option value='"+targets[i].id+"'>"+targets[i].name+"</option>");		
-	    				}
-	    				
-	     				
-	     				$('#new_vm_name input').val("");
-		    			$("#vm_creation").modal("show"); 
-		    			$('#vm_creation_box').show();
-						$('#vm_creation_loader').hide();	//provare a mettere show
-	     			
-	     			
-	     			}else{
-	    				showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>",response.details);
-	    			}	
-	     		});
+	     		$('#new_vm_name input').val("");
+	    		$("#vm_creation").modal("show"); 
+	    		$('#vm_creation_box').show();
+				$('#vm_creation_loader').hide();
+	    		
 	    	 });
 	    	 
 	    	 $( ".vmbutton" ).button().click(function( event ) {
 		 	       	event.preventDefault();
 		 	        $("#vm_menu_title").html(this.name+" Control");
-		 	        
+		 	        console.log(this.name);
 		 	        controlOp.hypervisor = this.parentNode.id.split("_")[0];
 		 	        controlOp.guest = this.name;
 	 	       		
 		 	       	if(this.getAttribute('status') == "offline"){
-		 	       	    //controlOp.action = "boot";
-		 	       		//$("#vm_menu button[name=shutVM]").switchClass("ui-state-enabled","ui-state-disabled");
-		 	       		//$("#vm_menu button[name=startVM]").switchClass("ui-state-disabled","ui-state-enabled");
+		 	       	    
 		 	       		$("#vm_menu button[name=shutVM]").prop("disabled", true);
 		 	       		$("#vm_menu button[name=startVM]").prop("disabled",false);
 		 	       	}else if (this.getAttribute('status') == "online"){
-		 	          	//controlOp.action = "shutdown";
+		 	          	
 		 	          	$("#vm_menu button[name=shutVM]").prop("disabled", false);
 		 	       		$("#vm_menu button[name=startVM]").prop("disabled", true);
-		 	       		//$("#vm_menu button[name=shutVM]").switchClass("ui-state-disabled","ui-state-enabled");
-		 	       	    //$("#vm_menu button[name=startVM]").switchClass("ui-state-enabled","ui-state-disabled");
 		 	       	}
       	
 		 	       $("#vm_menu").modal("show");
@@ -352,6 +271,19 @@
 	     });
 	 
 	 }
+ 	
+ 	//$('#vm_error').on('hidden.bs.modal', function() {refreshTab(); })
+ 	
+ 	function refreshTab(result){
+ 		
+ 		$('#vm_error').on('hidden.bs.modal', function() {
+ 			//refreshTab();
+ 			if (result!="error"){
+ 				var current_index = $("#tabs").tabs("option","active");
+				$("#tabs").tabs('load',current_index);
+ 			}
+ 		});
+ 	}
 </script>
 
 <div id="hypervisors-infopanel">
@@ -376,9 +308,9 @@
       	<h3>Choose an option</h3>  
       </div>
       <div class="modal-footer" style="background-color:#DDD">
-      <button name="startVM" onclick="controlHypervisor(event)" style="width:'20px';" class="btn btn-success btn-lg btn-block ">Start VM</button>
-	  <button name="stopVM" onclick="controlHypervisor(event)" style="width:'20px';" class="btn btn-primary btn-lg btn-block">ShutDown VM</button>
-	  <button name="delVM" onclick="controlHypervisor(event)" style="width:'20px';" class="btn btn-danger btn-lg btn-block" data-dismiss="modal">Delete VM</button>
+      <button name="startVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-success btn-lg btn-block " data-dismiss="modal" disabled="false">Start VM</button>
+	  <button name="shutVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-primary btn-lg btn-block" data-dismiss="mdal" disabled="true">ShutDown VM</button>
+	  <button name="stopVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-danger btn-lg btn-block" data-dismiss="modal">Delete VM</button>
       </div>
     </div>
   </div>
@@ -392,19 +324,18 @@
         <h4 class="modal-title" id="vm_creation_title">Create a new Virtual Machine</h4>
       </div>
       <div class="modal-body">
-        <div id="vm_creation_loader" hidden="true"
-	     style="background: none repeat scroll 0% 0% rgb(255, 255, 255); margin-top: 0px; width: inherit; height: inherit;">
-		<img src="images/loading.gif" width="260px">
-		<p>Creating...this operation can take some minutes..</p>
-		</div>
 		<div id="vm_creation_box">
-		<label style="font-weight: bold;margin-top:2px;" for="new_vm_name">VM Name</label>
+		<label style="font-weight: bold;margin-top:2px;" for="new_vm_name">Nome VM:</label>
 		<div id="new_vm_name">
 		VPM-<input type="text"></input>
 		</div>
-		<label style="font-weight: bold;margin-top:5px;" for="new_vm_iscsi">ISCSI Target</label>
-		<div id="new_vm_iscsi">
-			<select name="iscsi"><option value="-1">Select iSCSI</option></select>
+		<label style="font-weight: bold;margin-top:2px;" for="new_vm_flavour">Tipo</label>
+		<div id="new_vm_flavour">
+			<select>
+				<option>ubuntu10.04</option>
+				<option>dhcpd</option>
+			</select>
+			
 		</div>
 		<label style="font-weight: bold;margin-top:10px;" for="new_vm_run">Avvia dopo creazione</label>
 		<div id="new_vm_run">
@@ -413,36 +344,31 @@
 		</div>
       </div>
       <div class="modal-footer" style="background-color:#DDD">
-        <button type="button" class="btn btn-default" onClick="createVM()" data-dismiss="modal">Create</button>
+        <button type="button" class="btn btn-primary btn-block btn-lg" onClick="createVM()" data-dismiss="modal">Create</button>
+        <button type="button" class="btn btn-danger btn-block btn-lg" data-dismiss="modal">Dismiss</button>
       </div>
     </div>
   </div>
 </div>
-<!-- OLD VM CREATION -->
-<!-- 
-<div id="vm_creation" class="ui-helper-hidden">
-	<div id="vm_creation_loader" hidden="true"
+
+<!-- ERROR DASHBOARD -->
+<div class="modal fade" id="vm_error" tabindex="-1" role="dialog" aria-labelledby="vm_error_title" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color:#DDD">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="vm_error_title"></h4>
+      </div>
+      <div class="modal-body">
+        <div id="vm_creation_loader" hidden="true"
 	     style="background: none repeat scroll 0% 0% rgb(255, 255, 255); margin-top: 0px; width: inherit; height: inherit;">
 		<img src="images/loading.gif" width="260px">
-		<p>Creating...this operation can take some minutes..</p>
-	</div>
-	<div id="vm_creation_box">
-	<label style="font-weight: bold;margin-top:2px;" for="new_vm_name">Nome VM:</label>
-	<div id="new_vm_name">
-	VPM-<input type="text"></input>
-	</div>
-	<label style="font-weight: bold;margin-top:2px;" for="new_vm_flavour">Tipo</label>
-	<div id="new_vm_flavour">
-		<select>
-			<option>ubuntu10.04</option>
-			<option>dhcpd</option>
-		</select>
-		
-	</div>
-	<label style="font-weight: bold;margin-top:10px;" for="new_vm_run">Avvia dopo creazione</label>
-	<div id="new_vm_run">
-		<input type="checkbox" value="1" checked>
-	</div>
-	</div>
+		<p>This operation can take some minutes..</p>
+		</div>
+      </div>
+      <div class="modal-footer" style="background-color:#DDD">
+        <button type="button" class="btn btn-primary btn-block btn-lg" data-dismiss="modal">Okay</button>
+      </div>
+    </div>
+  </div>
 </div>
- -->
