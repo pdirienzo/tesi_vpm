@@ -126,6 +126,7 @@
 			 
 			$('#vm_creation_box').hide();
 			$('#vm_creation_loader').show();
+			$("#vm_creation").modal("toggle");
 		}else {
 			$("#vm_creation").modal("toggle");
 			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Name Cannot be empty!");
@@ -148,7 +149,7 @@
 	 	       		 html += "<button name='"+vmachine.name+"' class=\"vmbutton btn\" ><span></span></button><div class=\"clearer\" style=\"height:5px;\" />";
 	 	       	 }
 	 	       	 
-	 	       	 html += "<button class=\"crbutton btn\" onClick=\"openCreateDialog()\" name=\"crB\">Crea Nuova VM</button><br />";
+	 	       	 html += "<button class=\"crbutton btn\" name=\"crB\">Crea Nuova VM</button><br />";
 	 	       	 
 	    	 	 html += "</div></div>";
  
@@ -211,7 +212,7 @@
 	     		controlOp.action = "create";
 	     		
 	     		$('#new_vm_name input').val("");
-	    		$("#vm_creation").dialog("open"); 
+	    		$("#vm_creation").modal("show"); 
 	    		$('#vm_creation_box').show();
 				$('#vm_creation_loader').hide();
 	    		
@@ -219,22 +220,26 @@
 	    	 
 	    	 $( ".vmbutton" ).button().click(function( event ) {
 		 	       	event.preventDefault();
-		 	        $("#vm_menu").dialog("option","title",this.name+" Control");
+		 	        $("#vm_menu_title").html(this.name+" Control");
 		 	        
 		 	        controlOp.hypervisor = this.parentNode.id.split("_")[0];
 		 	        controlOp.guest = this.name;
 	 	       		
 		 	       	if(this.getAttribute('status') == "offline"){
 		 	       	    controlOp.action = "boot";
-		 	       		$("#vm_menu button[name=shutVM]").switchClass("ui-state-enabled","ui-state-disabled");
-		 	       		$("#vm_menu button[name=startVM]").switchClass("ui-state-disabled","ui-state-enabled");
+		 	       		//$("#vm_menu button[name=shutVM]").switchClass("ui-state-enabled","ui-state-disabled");
+		 	       		//$("#vm_menu button[name=startVM]").switchClass("ui-state-disabled","ui-state-enabled");
+		 	       		$("#vm_menu button[name=shutVM]").property("disabled","false");
+		 	       		$("#vm_menu button[name=startVM]").property("disabled","true");
 		 	       	}else if (this.getAttribute('status') == "online"){
 		 	          	controlOp.action = "shutdown";
-		 	       		$("#vm_menu button[name=shutVM]").switchClass("ui-state-disabled","ui-state-enabled");
-		 	       	    $("#vm_menu button[name=startVM]").switchClass("ui-state-enabled","ui-state-disabled");
+		 	          	$("#vm_menu button[name=shutVM]").property("disabled","true");
+		 	       		$("#vm_menu button[name=startVM]").property("disabled","false");
+		 	       		//$("#vm_menu button[name=shutVM]").switchClass("ui-state-disabled","ui-state-enabled");
+		 	       	    //$("#vm_menu button[name=startVM]").switchClass("ui-state-enabled","ui-state-disabled");
 		 	       	}
       	
-		 	       $("#vm_menu").dialog("open");
+		 	       $("#vm_menu").modal("show");
 		 	       
 	    	 }); 
 	    	 
@@ -315,10 +320,28 @@
 	<div id="hypervisormenu"></div>
 </div>
 
-<div id="vm_menu" class="ui-helper-hidden">
+<!-- <div id="vm_menu" class="ui-helper-hidden">
 	<button name="startVM" onclick="controlHypervisor()" style="width:'20px';" class="ui-state-disabled">Avvia VM</button>
 	<button name="shutVM" onclick="controlHypervisor()" style="width:'20px';" class="ui-state-disabled">Spegni VM</button>
 	<button name="stopVM" onclick="controlHypervisor()" style="width:'20px';">Elimina VM</button>
+</div> -->
+<div class="modal fade" id="vm_menu" tabindex="-1" role="dialog" aria-labelledby="vm_menu_title" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color:#DDD">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="vm_menu_title"></h4>
+      </div>
+      <div class="modal-body">
+      	<h3>Choose an option</h3>  
+      </div>
+      <div class="modal-footer" style="background-color:#DDD">
+      <button name="startVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-success btn-lg btn-block " disabled="false">Start VM</button>
+	  <button name="shutVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-primary btn-lg btn-block" disabled="true">ShutDown VM</button>
+	  <button name="stopVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-danger btn-lg btn-block">Delete VM</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal fade" id="vm_creation" tabindex="-1" role="dialog" aria-labelledby="vm_creation_title" aria-hidden="true">
