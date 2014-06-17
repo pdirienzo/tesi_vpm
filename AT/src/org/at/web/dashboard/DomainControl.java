@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.util.UUID;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -19,13 +20,13 @@ import org.at.db.Database;
 import org.at.db.ISCSITarget;
 import org.at.db.VolumeAllocation;
 import org.at.libvirt.HypervisorConnection;
-import org.at.storage.StorageClient;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
 import org.json.JSONObject;
+import org.libvirt.Domain;
 import org.libvirt.LibvirtException;
 import org.libvirt.StoragePool;
 
@@ -36,12 +37,12 @@ import org.libvirt.StoragePool;
 public class DomainControl extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
+	private static final String XML_VM_FILEPATH = "./xml_definitions/vm_template.xml";
 	/**
 	 * @see HttpServlet#HttpServlet()
 	 */
 	public DomainControl() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 	
 	private String randomMACAddress(){
@@ -76,9 +77,9 @@ public class DomainControl extends HttpServlet {
 		return found;
 	}
 	
-	private String getVMDescription() throws IOException{
+	private String getVMDescription(String vmname, String iscsiPath) throws IOException{
 		SAXBuilder builder = new SAXBuilder();
-		File xmlFile = new File(XML_NETWORK_FILEPATH);
+		File xmlFile = new File(XML_VM_FILEPATH);
  
 		Document doc = null;
 		try{
@@ -88,22 +89,44 @@ public class DomainControl extends HttpServlet {
 		}
 		
 		Element rootNode = doc.getRootElement();
-		rootNode.getChild("name").setText(NETWORK_NAME);
-		rootNode.getChild("bridge").setAttribute("name",BRIDGE_NAME);
+		rootNode.getChild("name").setText(vmname);
+		rootNode.getChild("uuid").setText(UUID.randomUUID().toString());
+		
+		Element devicesNode = rootNode.getChild("devices");
+		
+		//settings iscsi
+		devicesNode.getChild("disk").getChild("source").setAttribute("dev",iscsiPath);
+		
+		//setting mac address
+		devicesNode.getChild("interface").getChild("mac").setAttribute("address",randomMACAddress());
+		
+		//setting network
+		String network_name = ((Properties)getServletContext().getAttribute("properties")).getProperty("network_name");
+		
+		devicesNode.getChild("interface").getChild("source").setAttribute("network",network_name);
 		
 		return new XMLOutputter().outputString(doc);
 	}
 	
 	private void createVM(HypervisorConnection conn, String hypervisorId, String vmName, boolean autostart) throws IOException, LibvirtException{
 		Database d = (Database)getServletContext().getAttribute(Database.DATABASE);
-		int iscsiID = d.getHypervisorById(hypervisorId).getISCSI();
-		ISCSITarget iscsiTarget = d.getTargetById(iscsiID);
+		d.connect();
 		
+		int iscsiID = d.getHypervisorById(hypervisorId).getISCSI();
+		
+		System.out.println("the iscsi id for hypervisor "+hypervisorId+ " is "+iscsiID);
+		ISCSITarget iscsiTarget = d.getTargetById(iscsiID);
+		List<VolumeAllocation> allocations = d.getISCSIVolumes(iscsiID);
+		
+		d.close();
+		
+		System.out.println(iscsiTarget.name);
 		StoragePool sp = conn.storagePoolLookupByName(iscsiTarget.name);
 		
 		
-		List<VolumeAllocation> allocations = d.getISCSIVolumes(iscsiID);
+		
 		String[] volumes = sp.listVolumes();
+		System.out.println(allocations.size() + "/" + volumes.length);
 		
 		if(allocations.size() == volumes.length) //following code will be executed just if there is at least a free LUN
 			throw new IOException("The ISCSI Target for this hypervisor has no free LUNs. Add some more or delete some vms from other hypervisors");
@@ -112,6 +135,7 @@ public class DomainControl extends HttpServlet {
 		boolean found = false;
 		int i = 0;
 		while( (!found) && (i<volumes.length)){
+			System.out.println("checkin "+volumes[i]);
 			if(!volumeIsIn(volumes[i], allocations))
 				found = true; //found a free volume
 			else
@@ -124,7 +148,9 @@ public class DomainControl extends HttpServlet {
 		
 		//creating (finally)
 		
-		
+		Domain newDomain = conn.domainDefineXML(getVMDescription(vmName, iscsiFullPath));
+		if(autostart)
+			newDomain.create();
 		
 	}
 
@@ -150,11 +176,12 @@ public class DomainControl extends HttpServlet {
 				conn.bootDomain(guestName);
 				jResponse.put("result", "success");
 			}else if(action.equals("create")){
-				
+				createVM(conn, hypervisorId, guestName, Boolean.parseBoolean(request.getParameter("autostart")));
+				jResponse.put("result", "success");
 			}else if(action.equals("shutdown")){
 				conn.shutdownDomain(guestName);
 				jResponse.put("result", "success");
-			}else if(action.equals("list_flavours")){
+			}/*else if(action.equals("list_flavours")){
 				Properties props = (Properties)getServletContext().getAttribute("properties");
 				StorageClient sClient = new StorageClient(props.getProperty("image_server_addr"), 
 						Integer.parseInt(props.getProperty("image_server_port")));
@@ -167,7 +194,7 @@ public class DomainControl extends HttpServlet {
 					jResponse.put("details","impossible contact image server");
 				}
 
-			}else if(action.equals("destroy")){
+			}*/else if(action.equals("destroy")){
 				
 			}else{
 				jResponse.put("result", "error");
@@ -176,7 +203,7 @@ public class DomainControl extends HttpServlet {
 
 
 
-		}catch(LibvirtException ex){
+		}catch(IOException | LibvirtException ex){
 			jResponse.put("result", "error");
 			jResponse.put("details",ex.getMessage());
 		}

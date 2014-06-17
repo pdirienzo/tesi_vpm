@@ -152,7 +152,7 @@ public class Database {
 				rs.close();
 				s.close();
 			}else{
-				throw new IOException("can't find iscsi "+id);
+				throw new IOException("can't find iscsi for host H"+id);
 			}
 		}catch (SQLException ex) {
 			ex.printStackTrace();

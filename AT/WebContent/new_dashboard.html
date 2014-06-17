@@ -93,7 +93,8 @@
  }); 
  
  function controlHypervisor(){
-	 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest,function(result){
+	 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
+			 + "&autostart=" + controlOp.autostart, function(result){
      		if(result.result == "error"){
      			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Request failed: "+result.details);
      		}

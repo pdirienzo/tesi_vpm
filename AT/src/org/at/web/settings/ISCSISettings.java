@@ -55,6 +55,7 @@ public class ISCSISettings extends HttpServlet {
 				jsonTarget.put("name", target.name);
 				jsonTarget.put("hostname", target.hostname);
 				jsonTarget.put("iqn", target.iqn);
+				jsonTarget.put("port", target.port);
 
 				targets.put(jsonTarget);
 			}

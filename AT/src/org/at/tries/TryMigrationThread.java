@@ -9,8 +9,8 @@ import org.libvirt.LibvirtException;
 public class TryMigrationThread{
 
 	public static void main(String[] args) throws LibvirtException, IOException {
-		Hypervisor h1 = new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514);
-		Hypervisor h2 = new Hypervisor("sprom", "sprom-Dell", 16514);
+		Hypervisor h1 = new Hypervisor("pasquale", "pasquale-VPCEB1A4E", 16514,0);
+		Hypervisor h2 = new Hypervisor("sprom", "sprom-Dell", 16514,0);
 		
 		
 		System.out.println("we are starting");

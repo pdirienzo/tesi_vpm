@@ -15,7 +15,7 @@ public class TryCPUStats {
 	public static void main(String[] args) throws IOException, LibvirtException {
 		HypervisorConnection hc = HypervisorConnection.getConnectionWithTimeout(
 				new Hypervisor("pasquale", "pasquale-VPCEB1A4E",
-						16514), true, 3000);
+						16514,0), true, 3000);
 		
 		String[] pools = hc.listStoragePools();
 		StoragePool pool = hc.storagePoolLookupByName("lun_atico");

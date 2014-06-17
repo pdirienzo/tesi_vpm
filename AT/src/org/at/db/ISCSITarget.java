@@ -13,5 +13,6 @@ public class ISCSITarget {
 		this.name = name;
 		this.hostname = hostname;
 		this.iqn = iqn;
+		this.port = port;
 	}
 }
