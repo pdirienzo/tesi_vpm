@@ -1,5 +1,12 @@
 <!--  Script part -->
-
+<style>
+	div .table-resized {
+		width: 100px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+</style>
 <script>
 
 	/* $("#set-controller-dialog").dialog({
@@ -76,8 +83,8 @@
 				var html = "";
 				for (i = 0; i < response.length; i++) {
 					html += "<tr>";
-					html += "<td>" + response[i].username + "</td>";
-					html += "<td style=\"text-overflow:ellipsis\">" + response[i].hostname + "</td>";
+					html += "<td><div class=\"table-resized\">" + response[i].username + "</div></td>";
+					html += "<td><div class=\"table-resized\">" + response[i].hostname + "</div></td>";
 					html += "<td>" + response[i].port + "</td>";
 					html += "<td><button id=\""
 							+ response[i].hostname
@@ -153,8 +160,9 @@
 				for(var i=0;i<targets.length;i++){
 					html += "<tr>";
 					html += "<td>" + targets[i].name + "</td>";
-					html += "<td style=\"text-overflow:ellipsis\">" + targets[i].hostname + "</td>";
-					html += "<td style=\"text-overflow:ellipsis\">" + targets[i].iqn + "</td>";
+					html += "<td><div class=\"table-resized\">" + targets[i].hostname + "</div></td>";
+					html += "<td><div class=\"table-resized\"><a href=\"#\" data-toggle=\"tooltip\""+ 
+					"title=\""+targets[i].iqn+"\">" + targets[i].iqn + "</div></td>";
 					html += "<td><button id=\"ISCSI-"
 							+ targets[i].id
 							+ "\" class=\"btn btn-danger\" onclick=\"removeISCSI(event);\">Elimina</button></td>";
