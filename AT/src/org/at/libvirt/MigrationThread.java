@@ -11,7 +11,7 @@ import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
 import org.at.network.types.VPMGraph;
 import org.at.network.types.VPMGraphHolder;
-import org.at.web.network.path.VPMPathManager;
+import org.at.web.network.path.DefaultVPMPathManager;
 import org.at.web.network.path.types.VPMPathInfo;
 import org.libvirt.Domain;
 import org.libvirt.DomainJobInfo;
@@ -79,7 +79,7 @@ public class MigrationThread extends Thread {
 			DefaultOvsdbClient ovsSrc = new DefaultOvsdbClient(src.getHostname(), Integer.parseInt(props.getProperty("ovs_manager_port")));
 			String srcDpid = ovsSrc.getBridgeDpid(ovsSrc.getOvsdbNames()[0], props.getProperty("bridge_name"));
 
-			VPMPathManager pathManager = (VPMPathManager)ctx.getAttribute(VPMPathManager.VPM_PATH_MANAGER);
+			DefaultVPMPathManager pathManager = (DefaultVPMPathManager)ctx.getAttribute(DefaultVPMPathManager.VPM_PATH_MANAGER);
 			//adding a new path for the destination
 			synchronized (pathManager) {
 				VPMPathInfo existingPath = pathManager.getPath(srcDpid);

@@ -17,7 +17,7 @@ import org.at.network.types.OvsSwitch;
 import org.at.network.types.Port;
 import org.at.network.types.VPMGraph;
 import org.at.network.types.VPMGraphHolder;
-import org.at.web.network.path.VPMPathManager;
+import org.at.web.network.path.DefaultVPMPathManager;
 import org.at.web.network.path.types.VPMSwitchInfo;
 import org.json.JSONObject;
 
@@ -33,12 +33,12 @@ public class VPMEventListener extends HttpServlet {
 	private enum VM_OP { ADD, REMOVE };
 	private enum TOPOLOGY_OP { ADD, REMOVE };
 
-	private VPMPathManager pathManager;
+	private DefaultVPMPathManager pathManager;
 
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		pathManager = (VPMPathManager)getServletContext().getAttribute(VPMPathManager.VPM_PATH_MANAGER);
+		pathManager = (DefaultVPMPathManager)getServletContext().getAttribute(DefaultVPMPathManager.VPM_PATH_MANAGER);
 	}
 
 	/**
@@ -68,7 +68,7 @@ public class VPMEventListener extends HttpServlet {
 
 		while((flow == null) && it.hasNext()){
 			String key = it.next();
-			if(key.startsWith(VPMPathManager.TO_VNET_FLOW))
+			if(key.startsWith(DefaultVPMPathManager.TO_VNET_FLOW))
 				flow = infos.flows.get(key);
 		}
 
@@ -81,7 +81,7 @@ public class VPMEventListener extends HttpServlet {
 
 		while((flow == null) && it.hasNext()){
 			String key = it.next();
-			if(key.equals(VPMPathManager.FROM_VNET_FLOW + vnetN + "_" + infos.sw.dpid.replace(":", "")))
+			if(key.equals(DefaultVPMPathManager.FROM_VNET_FLOW + vnetN + "_" + infos.sw.dpid.replace(":", "")))
 				flow = infos.flows.get(key);
 		}
 
@@ -95,7 +95,7 @@ public class VPMEventListener extends HttpServlet {
 
 		while((flow == null) && it.hasNext()){
 			String key = it.next();
-			if(key.equals(VPMPathManager.PASSBY_FLOW+infos.sw.dpid.replace(":", "")))
+			if(key.equals(DefaultVPMPathManager.PASSBY_FLOW+infos.sw.dpid.replace(":", "")))
 				flow = infos.flows.get(key);
 
 		}
@@ -176,12 +176,12 @@ public class VPMEventListener extends HttpServlet {
 								//now we have to create a couple rules
 								//first to vnet
 								JSONObject toVnet = new JSONObject(passBy);
-								toVnet.put("name", VPMPathManager.TO_VNET_FLOW+swInfos.sw.dpid.replace(":", ""));
+								toVnet.put("name", DefaultVPMPathManager.TO_VNET_FLOW+swInfos.sw.dpid.replace(":", ""));
 								toVnet.put("actions", swInfos.getCurrentVnetActionString());
 
 								//from vnet
 								fromVnet = new JSONObject(passBy)
-								.put("name", VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""))
+								.put("name", DefaultVPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""))
 								.put("ingress-port", vnetPort.number);
 
 								System.out.println("removing "+passBy.getString("name"));
@@ -212,25 +212,25 @@ public class VPMEventListener extends HttpServlet {
 								//altering rule to vnet to exclude this vnet from output ports
 								controller.addStaticFlow(flow);
 								//removing the rule from this vnet to external
-								controller.deleteFlow(swInfos.sw.dpid, VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
+								controller.deleteFlow(swInfos.sw.dpid, DefaultVPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
 
 								swInfos.flows.put(flow.getString("name"), flow);
-								swInfos.flows.remove(VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
+								swInfos.flows.remove(DefaultVPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
 
 							}else{ //there was just one vnet so now we need to remove 2 rules and install a passby one
 
 								//adding passByrule
 								JSONObject passBy = new JSONObject(getFromVnetFlow(swInfos, vnetPort.number));
 								passBy.remove("ingress-port"); 
-								passBy.put("name", VPMPathManager.PASSBY_FLOW+swInfos.sw.dpid.replace(":", ""));
+								passBy.put("name", DefaultVPMPathManager.PASSBY_FLOW+swInfos.sw.dpid.replace(":", ""));
 
-								controller.deleteFlow(swInfos.sw.dpid, VPMPathManager.TO_VNET_FLOW + swInfos.sw.dpid.replace(":", ""));
-								controller.deleteFlow(swInfos.sw.dpid, VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
+								controller.deleteFlow(swInfos.sw.dpid, DefaultVPMPathManager.TO_VNET_FLOW + swInfos.sw.dpid.replace(":", ""));
+								controller.deleteFlow(swInfos.sw.dpid, DefaultVPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
 								controller.addStaticFlow(passBy);
 
 
-								swInfos.flows.remove(VPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
-								swInfos.flows.remove(VPMPathManager.TO_VNET_FLOW + swInfos.sw.dpid.replace(":", ""));
+								swInfos.flows.remove(DefaultVPMPathManager.FROM_VNET_FLOW+vnetPort.number+ "_" + swInfos.sw.dpid.replace(":", ""));
+								swInfos.flows.remove(DefaultVPMPathManager.TO_VNET_FLOW + swInfos.sw.dpid.replace(":", ""));
 								swInfos.flows.put(passBy.getString("name"), passBy);
 							}
 						}

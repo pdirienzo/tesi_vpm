@@ -27,7 +27,7 @@ import org.at.network.types.OvsSwitch;
 import org.at.network.types.Port;
 import org.at.network.types.VPMGraph;
 import org.at.network.types.VPMGraphHolder;
-import org.at.web.network.path.VPMPathManager;
+import org.at.web.network.path.DefaultVPMPathManager;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
 import org.json.JSONObject;
 import org.opendaylight.ovsdb.lib.notation.OvsDBSet;
@@ -551,7 +551,7 @@ public class NetworkTopology extends HttpServlet {
 				}
 
 				//resetting path manager
-				getServletContext().setAttribute(VPMPathManager.VPM_PATH_MANAGER, new VPMPathManager());
+				getServletContext().setAttribute(DefaultVPMPathManager.VPM_PATH_MANAGER, new DefaultVPMPathManager());
 
 				holder.addGraph(jgraph);
 				jResponse.put("status", "ok");

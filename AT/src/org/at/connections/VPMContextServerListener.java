@@ -11,7 +11,6 @@ import java.util.Properties;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import javax.servlet.ServletException;
 
 import org.at.db.Database;
 import org.at.db.DatabaseEventDispatcher;
@@ -21,6 +20,7 @@ import org.at.network.types.LinkConnection;
 import org.at.network.types.OvsSwitch;
 import org.at.network.types.VPMGraph;
 import org.at.network.types.VPMGraphHolder;
+import org.at.web.network.path.DefaultVPMPathManager;
 import org.at.web.network.path.VPMPathManager;
 
 import com.mxgraph.io.mxCodec;
@@ -131,7 +131,7 @@ public class VPMContextServerListener implements ServletContextListener {
 			
 			c.getServletContext().setAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER, 
 					new VPMGraphHolder());
-			c.getServletContext().setAttribute(VPMPathManager.VPM_PATH_MANAGER, new VPMPathManager());
+			c.getServletContext().setAttribute(VPMPathManager.VPM_PATH_MANAGER, new DefaultVPMPathManager());
 			
 			Database.initialize(Database.DEFAULT_DBPATH);
 			c.getServletContext().setAttribute(Database.DATABASE, new Database());
