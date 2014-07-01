@@ -149,6 +149,7 @@ public class DomainControl extends HttpServlet {
 			Domain newDomain = conn.domainDefineXML(getVMDescription(vmName, iscsiFullPath));
 			//if no exceptions so far we can set this new assign in the iscsi LUN assignation table
 			VolumeAllocation alloc = new VolumeAllocation(iscsiID, volumes[i], Integer.parseInt(hypervisorId.split("H")[1]) , vmName);
+			
 			d.insertVolumeAllocation(alloc);
 			if(autostart)
 				newDomain.create();
@@ -159,28 +160,19 @@ public class DomainControl extends HttpServlet {
 
 	}
 	
-	private String[] getStorageInfos(Domain d) throws IOException, LibvirtException{
-		SAXBuilder builder = new SAXBuilder();
-		Document doc = null;
-		try{
-			String[] result = new String[2];
-			doc = (Document) builder.build(new ByteArrayInputStream(d.getXMLDesc(0).getBytes()));
-			String iscsiPath = doc.getRootElement().getChild("devices").getChild("disk").getChild("source").getAttribute("dev").getValue();
-			String[] splitted = iscsiPath.split("-");
-			result[0] = splitted[splitted.length-3].split(":")[1];
-			result[1] = splitted[splitted.length-1];
-			
-			return result;
-		}catch(JDOMException ex){
-			throw new IOException(ex.getMessage());
-		}
-		
-	}
 	
 	private void deleteVM(HypervisorConnection conn, String guest) throws LibvirtException, IOException{
 		Domain domain = conn.domainLookupByName(guest);
+		Database d = (Database)getServletContext().getAttribute(Database.DATABASE);
+
+		d.connect();
+		try{
+			domain.undefine();
+			d.deleteVolumeAllocation(Integer.parseInt(conn.getHypervisor().getId().split("H")[1]), guest);
+		}finally{
+			d.close();
+		}
 		
-		System.out.println(getStorageInfos(domain)[0]+getStorageInfos(domain)[1]);
 		//domain.undefine();
 	}
 
@@ -196,12 +188,10 @@ public class DomainControl extends HttpServlet {
 		response.setContentType("application/json");
 		JSONObject jResponse = new JSONObject();
 
-
 		VPMHypervisorConnectionManager manager = (VPMHypervisorConnectionManager)getServletContext().getAttribute(
 				VPMHypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		HypervisorConnection conn = manager.getActiveConnection(hypervisorId);
 
-		System.out.println("action "+action+" iscsi: "+request.getParameter("iscsi"));
 		try{
 			if(action.equals("boot")){
 				conn.bootDomain(guestName);
@@ -226,7 +216,6 @@ public class DomainControl extends HttpServlet {
 			jResponse.put("result", "error");
 			jResponse.put("details",ex.getMessage());
 		}
-
 
 		out.println(jResponse.toString());
 		out.close();

@@ -89,6 +89,10 @@
 }); 
  
  function controlHypervisor(){
+	 $("#vm_creation_body").hide();
+	 $("#vm_error_title").html("Loading <i class=\"fa fa-spinner fa-spin fa-lg\"></i>");
+	 $('#vm_creation_loader').show();
+	 $("#vm_error").modal("show");
 	 if(event.target.name == "startVM"){
 		 controlOp.action = "boot";
 	 }else if(event.target.name == "stopVM"){
@@ -96,47 +100,65 @@
 	 }else if(event.target.name == "delVM"){
 		 controlOp.action = "delete";
 	 }
-	 
 	 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
 			 + "&autostart=" + controlOp.autostart, function(result){
      		if(result.result == "error"){
-     			showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>","Request failed: "+result.details);
+     			
+     			$('#vm_creation_loader').fadeOut(2000,function(){
+     				$("#vm_error_title").empty();
+     				$("#vm_error_title").html("Error <i class=\"fa fa-warning fa-lg\"></i>");
+     				$("#vm_creation_body").html("Request failed:"+result.details);
+		 			$("#vm_creation_body").show();
+		 		});
      		}
-     		
-     		if(result.action == "delete"){
-     			var current_index = $("#tabs").tabs("option","active");
-    			$("#tabs").tabs('load',current_index);
-    			//$("#vm_menu").modal("hide");
+     		else {
+     			
+     			$('#vm_creation_loader').fadeOut(2000,function(){
+     				$("#vm_error_title").empty();
+     				$("#vm_error_title").html("Success <i class=\"fa fa-check fa-lg\"></i>");
+     				$("#vm_creation_body").html("Request successful completed");
+			 		$("#vm_creation_body").show();
+		 		});
+     		}
+     		if(result.action=="delete" || result.action=="shutdown"){
+     			refreshTab(result.result);
      		}
      });
 	 
  	 //$("#vm_menu").modal("hide");
-	 showDialog2("Info <i class=\"fa fa-info-circle fa-lg\"></i>","Sending a "+controlOp.action+" request for "+controlOp.guest);
+	 
  }
  
  function createVM(){
 	 var vmName = $('#new_vm_name input').val();
 		if(vmName != ""){
-			$("#vm_error_title").html("Loading <i class=\"fa fa-spinner fa-spin fa-lg\"></i>");
-			$('#vm_creation_loader').show();
-			$("#vm_error").modal("show");
+			
 			controlOp.flavour = $('#new_vm_flavour select :selected').text();
 			controlOp.guest = "VPM-"+vmName;
 			controlOp.autostart = $('#new_vm_run input').switchButton("option","checked"); 
 			controlOp.iscsi = $('#new_vm_iscsi > select').val();
+			$("#vm_error_title").html("Loading <i class=\"fa fa-spinner fa-spin fa-lg\"></i>");
+			$("#vm_creation_body").hide();
+			$('#vm_creation_loader').show();
+			$("#vm_error").modal("show");
 			$.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
 					+"&iscsi="+controlOp.iscsi+"&autostart="+controlOp.autostart,function(result){
 				
+					console.log(result.result);
 				 	if(result.result == "error"){
 				 		$('#vm_creation_loader').fadeOut(1000,function(){
+					 		$("#vm_error_title").empty();
 				 			$("#vm_error_title").html("Error <i class=\"fa fa-warning fa-lg\"></i>");	
-				 			$("#vm_error .modal-body").html("Request failed:"+result.details);
+				 			$("#vm_creation_body").html("Request failed:"+result.details);
+				 			$("#vm_creation_body").show();
 				 		});
 				 	}
 				 	else {
 				 		$('#vm_creation_loader').fadeOut(1000,function(){
+				 			$("#vm_error_title").empty();
 				 			$("#vm_error_title").html("Success <i class=\"fa fa-check fa-lg\"></i>");
-					 		$("#vm_error .modal-body").html("Request successful completed");
+					 		$("#vm_creation_body").html("Request successful completed");
+					 		$("#vm_creation_body").show();
 				 		});
 				 		
 				 	}
@@ -222,11 +244,11 @@
 	 	       		
 		 	       	if(this.getAttribute('status') == "offline"){
 		 	       	    
-		 	       		$("#vm_menu button[name=shutVM]").prop("disabled", true);
+		 	       		$("#vm_menu button[name=stopVM]").prop("disabled", true);
 		 	       		$("#vm_menu button[name=startVM]").prop("disabled",false);
 		 	       	}else if (this.getAttribute('status') == "online"){
 		 	          	
-		 	          	$("#vm_menu button[name=shutVM]").prop("disabled", false);
+		 	          	$("#vm_menu button[name=stopVM]").prop("disabled", false);
 		 	       		$("#vm_menu button[name=startVM]").prop("disabled", true);
 		 	       	}
       	
@@ -341,7 +363,7 @@
       </div>
       <div class="modal-footer" style="background-color:#DDD">
       <button name="startVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-success btn-lg btn-block " data-dismiss="modal" disabled="false">Start VM</button>
-	  <button name="stopVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-primary btn-lg btn-block" data-dismiss="mdal" disabled="true">ShutDown VM</button>
+	  <button name="stopVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" disabled="true">ShutDown VM</button>
 	  <button name="delVM" onclick="controlHypervisor()" style="width:'20px';" class="btn btn-danger btn-lg btn-block" data-dismiss="modal">Delete VM</button>
       </div>
     </div>
@@ -367,7 +389,7 @@
 		</div>
 		<label style="font-weight: bold;margin-top:10px;" for="new_vm_run">Avvia dopo creazione</label>
 		<div id="new_vm_run">
-			<input type="checkbox" value="1" checked>
+			<input type="checkbox" value="1"></input>
 		</div>
 		</div>
       </div>
@@ -388,11 +410,12 @@
         <h4 class="modal-title" id="vm_error_title"></h4>
       </div>
       <div class="modal-body">
-        <div id="vm_creation_loader" hidden="true"
+        <div id="vm_creation_loader" hidden="false"
 	     style="background: none repeat scroll 0% 0% rgb(255, 255, 255); margin-top: 0px; width: inherit; height: inherit;">
 		<img src="images/loading.gif" width="260px">
 		<p>This operation can take some minutes..</p>
 		</div>
+		<div id="vm_creation_body"></div>
       </div>
       <div class="modal-footer" style="background-color:#DDD">
         <button type="button" class="btn btn-primary btn-block btn-lg" data-dismiss="modal">Okay</button>

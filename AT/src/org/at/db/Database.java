@@ -179,7 +179,7 @@ public class Database {
 		try {
 			Statement s = connection.createStatement();
 			s.execute("insert into storage_allocations (iscsi, iscsi_volume, hypervisor, vm) values("+ 
-					alloc.iscsiID + " ,\"" + alloc.volume +"\" , " + alloc.hostID +"," + alloc.vmName + ");"); 
+					alloc.iscsiID + " ,\"" + alloc.volume +"\" , " + alloc.hostID +",\"" + alloc.vmName + "\");"); 
 
 			ResultSet rs = s.executeQuery("SELECT last_insert_rowid()");
 			rs.next();
@@ -221,7 +221,18 @@ public class Database {
 		return l;
 	}
 	
-	//TODO public void deleteVolumeAllocation()
+	public void deleteVolumeAllocation(int hypervisorID, String guest) throws IOException{
+		try {
+
+			Statement s = connection.createStatement();
+			s.execute("delete from storage_allocations where hypervisor = " + hypervisorID + " and vm=\""+guest+"\";");
+			s.close();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+	}
 	
 	//******************* Hypervisor Part ***********************************
 
