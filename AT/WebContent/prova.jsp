@@ -91,9 +91,9 @@
 
 <div id="box">
 
-	<%@page import="org.at.db.Controller"%>
-	<%@page import="org.at.db.Database"%>
-	<%@page import="org.at.db.Hypervisor" %>
+	<%@page import="it.unina.cini.platino.db.Controller"%>
+	<%@page import="it.unina.cini.platino.db.Database"%>
+	<%@page import="it.unina.cini.platino.db.Hypervisor" %>
 	<%@page import="java.util.List" %>
 	
 	<% 

@@ -1,0 +1,52 @@
+package it.unina.cini.platino.web.settings;
+
+import it.unina.cini.platino.db.Controller;
+import it.unina.cini.platino.db.Database;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.json.JSONObject;
+
+/**
+ * Servlet implementation class GetControllerSettings
+ */
+@WebServlet("/GetControllerSettings")
+public class GetControllerSettings extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+ 
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException{
+		PrintWriter out = response.getWriter();
+		response.setContentType("application/json");
+		
+		Database d = new Database();
+		d.connect();
+		Controller c = d.getController();
+		d.close();
+		
+		JSONObject json;
+		if(c !=null) //a controller exists
+		{
+			json = new JSONObject()
+				.put("hostname",c.getHostAddress())
+				.put("port", c.getPort())
+				.put("ui_url", "http://"+c.getHostAddress()+":8080/ui/index.html");
+		} else {
+			json = new JSONObject()
+				.put("hostname", "Non configurato")
+				.put("port", "Non configurato")
+				.put("ui_url", "Non configurato");
+		}
+		
+		out.println(json);
+		out.close();
+		
+	}
+
+}

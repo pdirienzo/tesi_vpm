@@ -17,7 +17,7 @@
 <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css" />
 
 <%@page import="java.util.Properties"%>
-<%@page import="org.at.network.types.OvsSwitch.Type"%>
+<%@page import="it.unina.cini.platino.network.types.OvsSwitch.Type"%>
 <script type="text/javascript">
 	
 	<%

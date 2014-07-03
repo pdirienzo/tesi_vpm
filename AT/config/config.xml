@@ -13,7 +13,7 @@
 	<entry key="warning_treshold">60.0</entry>
 	<entry key="danger_treshold">90.0</entry>
 	
-	<!-- storage -->
-	<entry key="storage_name">streaming</entry>
+	<entry key="path_manager_class">it.unina.cini.platino.web.network.path.DefaultVPMPathManager</entry>
+	
 	
 </properties>
