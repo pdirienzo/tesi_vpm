@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Live migration</title>
+<link rel="icon" type="image/x-icon" href="images/vpmicon.ico" />
 <link href="css/smoothness/jquery-ui-1.10.4.css" rel="stylesheet" />
 <link href="css/jquery.switchButton.css" rel="stylesheet" />
 <link href="css/tabs_style.css" rel="stylesheet" />
@@ -121,18 +122,23 @@
   	<div class="container">
   	
     	<div class="row">
-            <div class="span4" style="float:left">
-            	<div class="span4 text-center"><br />
+            <div class="span3" style="float:left">
+            	<div class="span3 text-center"><br />
+            	<a href="#"><img src="images/vpmLogo.png" alt="Virtual Puppet Master"/></a>
+        		</div>
+        	</div>
+            <div class="span3" style="float:left">
+            	<div class="span3 text-center"><br />
             	<a href="https://sites.google.com/site/progettoplatino/" target="_blank"><img src="images/customLogo.png" alt="PLATINO" /></a>
         		</div>
            	</div>
-            <div class="span4" style="float:left">
-            	<div class="span4 text-center"><br />
+            <div class="span3" style="float:left">
+            	<div class="span3 text-center"><br />
             	<a href="http://www.consorzio-cini.it/" target="_blank"><img src="images/garland_logo.gif" alt="CINI" /></a>
         		</div>
         	</div>
-        	<div class="span4" style="float:left">
-            	<div class="span4 text-center"><br />
+        	<div class="span3" style="float:left">
+            	<div class="span3 text-center"><br />
             	<a href="http://www.unina.it/" target="_blank"><img src="images/federico2.png" alt="FEDERICO II"/></a>
         		</div>
         	</div>
