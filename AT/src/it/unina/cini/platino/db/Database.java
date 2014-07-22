@@ -29,8 +29,9 @@ public class Database {
 	}
 
 	public synchronized static void initialize(String dbPath) throws IOException{
-		boolean newDb = !((new File(dbPath)).exists());
-		if(newDb){
+		boolean newDb = (new File(dbPath)).exists();
+		if(!newDb){
+			(new File(dbPath)).getParentFile().mkdir();
 			Database d = new Database();
 			d.connect();
 			try {
