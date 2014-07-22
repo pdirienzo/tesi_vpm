@@ -10,6 +10,7 @@ import it.unina.cini.platino.web.network.path.types.VPMPathInfo;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
+import java.util.Properties;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -29,6 +30,8 @@ import com.mxgraph.util.mxXmlUtils;
 @WebServlet("/NetworkPath")
 public class NetworkPath extends HttpServlet {
 	private static final long serialVersionUID = 1L;
+	
+	private String portPrefix;
 
 	//TODO stupid workaround
 	private OvsSwitch findOriginal(VPMGraph<OvsSwitch, LinkConnection> graph, OvsSwitch ovs){
@@ -42,6 +45,12 @@ public class NetworkPath extends HttpServlet {
 		}
 
 		return found;
+	}
+	
+	@Override
+	public void init() throws ServletException {
+		super.init();
+		portPrefix = ((Properties)getServletContext().getAttribute("properties")).getProperty("network_interface_prefix");
 	}
 
 	/**
@@ -118,8 +127,8 @@ public class NetworkPath extends HttpServlet {
 
 						pathToClient = (pathManager.installShortestPath(currentGraph, 
 								findOriginal(currentGraph, new OvsSwitch(srcDpid,jsReq.getString("src_ip"))), 
-								findOriginal(currentGraph, new OvsSwitch(targetdpid, jsReq.getString("dst_ip"))), external)).path;
-
+								findOriginal(currentGraph, new OvsSwitch(targetdpid, jsReq.getString("dst_ip"))), external,
+								portPrefix)).path;
 					}
 
 					mxCodec codec = new mxCodec();	

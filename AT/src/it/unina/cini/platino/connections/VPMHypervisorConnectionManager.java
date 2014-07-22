@@ -30,6 +30,7 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 	
 	//network settings
 	private final String NETWORK_NAME;
+	private final String NETWORK_PREFIX;
 	private final String BRIDGE_NAME;
 	
 	private boolean active;
@@ -94,10 +95,12 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 	 * @param dbPath path to the sqlite db
 	 * @throws IOException 
 	 */
-	public VPMHypervisorConnectionManager(int retryTimeout,String dbPath,String network_name,String bridge_name) {
+	public VPMHypervisorConnectionManager(int retryTimeout,String dbPath,String network_name,
+			String bridge_name, String netPrefix) {
 		this.retryTimout = retryTimeout;
 		this.NETWORK_NAME = network_name;
 		this.BRIDGE_NAME = bridge_name;
+		this.NETWORK_PREFIX = netPrefix;
 		activeConnections = new ArrayList<NetHypervisorConnection>();
 		offlineConnections = new ArrayList<Hypervisor>();
 		d = new Database(dbPath);
@@ -111,8 +114,9 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 	 * @param retryTimeout 0 for no retry
 	 * @throws IOException 
 	 */
-	public VPMHypervisorConnectionManager(int retryTimeout,String network_name,String bridge_name) throws IOException{
-		this(retryTimeout,Database.DEFAULT_DBPATH,network_name,bridge_name);
+	public VPMHypervisorConnectionManager(int retryTimeout,String network_name,String bridge_name,
+			String netPrefix) throws IOException{
+		this(retryTimeout,Database.DEFAULT_DBPATH,network_name,bridge_name,netPrefix);
 	}
 	
 	void start() throws IOException{
@@ -133,7 +137,8 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 	
 	public synchronized void addHypervisor(Hypervisor h,String networkDescr){
 		try {
-			NetHypervisorConnection conn = NetHypervisorConnection.getConnectionWithTimeout(h,NETWORK_NAME,networkDescr,
+			NetHypervisorConnection conn = NetHypervisorConnection.getConnectionWithTimeout(h,
+					NETWORK_NAME,NETWORK_PREFIX, networkDescr,
 					CONNECTION_TIMEOUT); 
 			activeConnections.add(conn);
 		} catch (IOException e) {
@@ -243,7 +248,8 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 				try {
 					//this constructor call will either succeed or throw exception, in this last case we can
 					//assume the hypervisor is still offline and so we do nothing
-					NetHypervisorConnection c = NetHypervisorConnection.getConnectionWithTimeout(h, NETWORK_NAME,
+					NetHypervisorConnection c = NetHypervisorConnection.getConnectionWithTimeout(h, 
+							NETWORK_NAME, NETWORK_PREFIX,
 							getNetworkDescription(),CONNECTION_TIMEOUT);
 					getActiveHypervisors().add(c);
 					getOfflineHypervisors().remove(h);

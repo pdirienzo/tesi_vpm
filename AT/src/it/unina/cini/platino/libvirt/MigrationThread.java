@@ -99,7 +99,7 @@ public class MigrationThread extends Thread {
 							graph, 
 							findOriginal(graph, existingPath.path.getStartVertex()), 
 							findOriginal(graph, new OvsSwitch(dstDpid,dstH.getHostname())), 
-							existingPath.externalAddress);
+							existingPath.externalAddress, existingPath.portPrefix);
 						
 				}
 				

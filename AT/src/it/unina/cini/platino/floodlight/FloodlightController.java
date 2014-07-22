@@ -92,10 +92,11 @@ public class FloodlightController {
 		return res;
 	}
 	
-	public List<Port> getVnetPorts(OvsSwitch sw){
+	public List<Port> getVnetPorts(OvsSwitch sw, String prefix){
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
 		obj.put("port-name", "vnetx");
+		obj.put("port-prefix", prefix);
 		JSONObject res = RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj);
 		List<Port> vnets = new ArrayList<Port>();
 		for(JSONObject o : res.getJSONArray("result"))

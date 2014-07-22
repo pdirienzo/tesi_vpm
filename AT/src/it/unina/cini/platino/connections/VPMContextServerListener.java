@@ -138,8 +138,10 @@ public class VPMContextServerListener implements ServletContextListener {
 			
 			restoreNetwork(c.getServletContext());
 			
-			VPMHypervisorConnectionManager manager = new VPMHypervisorConnectionManager(MANAGER_RETRY_TIME,props.getProperty("network_name"),
-					props.getProperty("bridge_name"));
+			VPMHypervisorConnectionManager manager = new VPMHypervisorConnectionManager(MANAGER_RETRY_TIME,
+					props.getProperty("network_name"),
+					props.getProperty("bridge_name"),
+					props.getProperty("network_interface_prefix"));
 			DatabaseEventDispatcher.addListener(manager);
 			manager.start();
 			

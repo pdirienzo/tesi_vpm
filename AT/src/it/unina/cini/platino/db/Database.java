@@ -195,6 +195,25 @@ public class Database {
 		}
 	}
 	
+	public VolumeAllocation getAllocationFromVolume(String volumeName) throws IOException{
+		VolumeAllocation vol = null;
+		
+		try{
+			Statement s = connection.createStatement();
+			ResultSet rs = s.executeQuery(
+				"select * from storage_allocations where iscsi_volume='"+volumeName+"'");
+			if(rs.next())
+				vol = new VolumeAllocation(rs.getInt(1),rs.getInt(2), rs.getString(3), rs.getInt(4),rs.getString(5));
+			rs.close();
+			s.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+		
+		return vol;
+	}
+	
 	/**
 	 * Returns allocations for specified iscsiID
 	 * @param iscsiID
