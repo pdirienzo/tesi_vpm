@@ -8,7 +8,6 @@ import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
 import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.network.types.VPMGraphHolder;
-import it.unina.cini.platino.web.network.path.DefaultVPMPathManager;
 import it.unina.cini.platino.web.network.path.VPMPathManager;
 
 import java.io.BufferedReader;
