@@ -7,6 +7,7 @@ import it.unina.cini.platino.floodlight.FloodlightController;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Properties;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -33,8 +34,13 @@ public class AddController extends HttpServlet {
 			d.close();
 			
 			FloodlightController f = new FloodlightController(c);
-			f.registerListener(VPMContextServerListener.FLOODLIGHT_CALLBACK_URI);
-			
+			try{
+				f.registerListener(VPMContextServerListener.FLOODLIGHT_CALLBACK_URI,
+						((Properties)getServletContext().getAttribute("properties"))
+						.getProperty("network_interface_prefix"));
+			}catch(IOException ex2){
+				ex2.printStackTrace();
+			}
 			message.put("status", "controller settings edited");
 		}catch(IOException ex){
 			message.put("status", "failed to add controller: "+ex.getMessage());

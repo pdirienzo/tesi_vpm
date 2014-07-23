@@ -8,12 +8,9 @@ import it.unina.cini.platino.network.types.Port;
 import it.unina.cini.platino.network.types.VPMGraph;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,16 +65,20 @@ public class FloodlightController {
 		return switches;
 	}
 	
-	public void registerListener(String callbackURI) throws IOException{
-		RestRequest.post(baseURL+"/vpm/topology/listener/register", callbackURI);
-		/*HttpURLConnection conn = (HttpURLConnection)((new URL(baseURL+"/vpm/topology/listener/register")).openConnection());
-		System.out.println("Sending registration request to"+baseURL);
-		conn.setRequestMethod("POST");
-		conn.setDoOutput(true);
-		DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
-		dos.writeBytes(callbackURI);
-		dos.flush();
-		dos.close();*/
+	public void registerListener(String callbackURI, String vnetPrefix) throws IOException{
+		JSONObject data = new JSONObject();
+		data.put("op", "SUBSCRIBE")
+		.put("callback", callbackURI)
+		.put("vnet-prefix", vnetPrefix);
+		System.out.println(data.toString());
+		RestRequest.postJson(baseURL+"/vpm/topology/listener/register", data);	
+	}
+	
+	public void deregisterListener(String callbackURI) throws IOException{
+		JSONObject data = new JSONObject();
+		data.put("op", "UNSUBSCRIBE")
+		.put("callback", callbackURI);
+		RestRequest.postJson(baseURL+"/vpm/topology/listener/register", data);	
 	}
 	
 	public String getUrl(){
@@ -112,7 +113,7 @@ public class FloodlightController {
 		return res;
 	}
 	
-	public List<Port> getVnetPorts(OvsSwitch sw, String prefix){
+	public List<Port> getVnetPorts(OvsSwitch sw, String prefix) throws IOException{
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
 		obj.put("port-name", "vnetx");

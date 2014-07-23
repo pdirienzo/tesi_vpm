@@ -70,8 +70,7 @@ public class VPMContextServerListener implements ServletContextListener {
 			System.out.println("getting old graph if existent...");
 			FloodlightController controller = FloodlightController.getDbController();
 			//registering listener
-			System.out.println("registering listener");
-			controller.registerListener(FLOODLIGHT_CALLBACK_URI);
+			controller.registerListener(FLOODLIGHT_CALLBACK_URI, props.getProperty("network_interface_prefix"));
 			
 			mxGraph savedmxGraph = topologyFromFile();
 			if(savedmxGraph != null){
@@ -119,6 +118,7 @@ public class VPMContextServerListener implements ServletContextListener {
 				}
 			}
 		} catch (IOException e) {
+			System.out.println("error contacting controller");
 			e.printStackTrace();
 		}
 	}

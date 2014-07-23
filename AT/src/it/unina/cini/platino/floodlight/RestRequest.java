@@ -79,21 +79,16 @@ public class RestRequest {
 		return json;
 	}
 	
-	public static JSONObject postJson(String url, JSONObject data){
+	public static JSONObject postJson(String url, JSONObject data) throws IOException{
 		return new JSONObject(post(url,data.toString()));
 	}
 
-	public static String post(String url, String data) {
+	public static String post(String url, String data) throws IOException{
 		/* POST Method */
 		final HttpPost post = new HttpPost(url);
-		try {
-			post.setEntity(new StringEntity(data));
-			String res = EntityUtils.toString(client.execute(post).getEntity());
-			return res;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
+		post.setEntity(new StringEntity(data));
+		String res = EntityUtils.toString(client.execute(post).getEntity());
+		return res;
 	}
 	
 	public static String put(String url, String data) {

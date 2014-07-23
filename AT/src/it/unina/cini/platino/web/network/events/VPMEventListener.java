@@ -1,7 +1,5 @@
 package it.unina.cini.platino.web.network.events;
 
-import it.unina.cini.platino.db.Controller;
-import it.unina.cini.platino.db.Database;
 import it.unina.cini.platino.floodlight.FloodlightController;
 import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
@@ -96,6 +94,7 @@ public class VPMEventListener extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		JSONObject event = new JSONObject(request.getParameter("data"));
+		System.out.println("Received  "+event.toString());
 		switch(Event.valueOf(event.getString("type"))){
 
 		case TOPOLOGY:

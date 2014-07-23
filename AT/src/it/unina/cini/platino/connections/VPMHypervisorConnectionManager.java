@@ -3,11 +3,13 @@ package it.unina.cini.platino.connections;
 import it.unina.cini.platino.db.Database;
 import it.unina.cini.platino.db.DatabaseListener;
 import it.unina.cini.platino.db.Hypervisor;
+import it.unina.cini.platino.libvirt.HypervisorConnection;
 import it.unina.cini.platino.libvirt.NetHypervisorConnection;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -89,6 +91,26 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 		return new XMLOutputter().outputString(doc);
 	}
 	
+	/**
+	 * Finds an hypervisor connection among active connections
+	 * @param h the hypervisor we are searching relative connection
+	 * @return
+	 */
+	private NetHypervisorConnection getActiveConnection(Hypervisor h){
+		int i = 0;
+		NetHypervisorConnection conn = null;
+		
+		
+		while((conn == null) && (i<activeConnections.size())){
+			if(activeConnections.get(i).getHypervisor().equals(h)){//found
+				conn = activeConnections.get(i);
+			}else
+				i++;
+		}
+		
+		return conn;
+	}
+	
 	//<--------------------------------------------------------------------------------
 	/**
 	 * Creates a connection manager with a specified timeout in order to
@@ -140,47 +162,70 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 		}
 	}
 	
-	public synchronized void addHypervisor(Hypervisor h,String networkDescr){
-		try {
-			NetHypervisorConnection conn = NetHypervisorConnection.getConnectionWithTimeout(h,
-					NETWORK_NAME,NETWORK_PREFIX, networkDescr,
-					CONNECTION_TIMEOUT); 
-			activeConnections.add(conn);
-		} catch (IOException e) {
-			System.err.println("Hypervisor "+h+" was offline, adding it to offline list");
-			offlineConnections.add(h);
-		} catch (LibvirtException e1){
-			e1.printStackTrace();
-		}
-	}
-	
-	//TODO to solve
-	synchronized void stop() throws IOException{
+	void stop() throws IOException{
 		
 		if(retryTimout != 0){//polling thread was active
 			setActive(false);
 			timer.cancel();
 		}
 		
-		System.out.println("before active conn");
 		connectionsLock.lock();
 		
 		//closing every active connection
-		for(NetHypervisorConnection hc : activeConnections)
-			removeHypervisor(hc.getHypervisor());
+		Iterator<NetHypervisorConnection> iterator = activeConnections.iterator();
+		while(iterator.hasNext()){
+			removeHypervisor(iterator.next().getHypervisor());
+		}
 		
 		connectionsLock.unlock();
-		System.out.println("after active conn");
+		//TODO to solve
 		
 	}
 	
-	public synchronized void removeHypervisor(Hypervisor h){
+	
+	/**
+	 * Adds a new hypervisor to the connection manager.
+	 * Manager will attempt to establish a connection with given hypervisor and will classify it as
+	 * either online or offline
+	 * @param h the hypervisor to be added
+	 * @param networkDescr a description of the network to be run on this hypervisor
+	 */
+	public void addHypervisor(Hypervisor h,String networkDescr){
+		try {
+			NetHypervisorConnection conn = NetHypervisorConnection.getConnectionWithTimeout(h,
+					NETWORK_NAME,NETWORK_PREFIX, networkDescr,
+					CONNECTION_TIMEOUT);
+			
+			connectionsLock.lock();
+			activeConnections.add(conn);
+			connectionsLock.unlock();
+			
+		} catch (IOException e) {
+			System.err.println("Hypervisor "+h+" was offline, adding it to offline list");
+			connectionsLock.lock();
+			offlineConnections.add(h);
+			connectionsLock.unlock();
+		} catch (LibvirtException e1){
+			e1.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Removes an hypervisor from the manager, regardless of its current status
+	 * @param h the hypervisor to be removed
+	 */
+	public void removeHypervisor(Hypervisor h){
+		
+		connectionsLock.lock();
+		
 		//we check if it is among the offlines
 		if(offlineConnections.contains(h)){
 			offlineConnections.remove(h); //easy!
 			
-		}else{ //we have to check if it is among active connections
-			int i = 0;
+		}else{ //we have to find it among active connections
+			HypervisorConnection hc = getActiveConnection(h);
+			activeConnections.remove(hc);
+			/*int i = 0;
 			boolean result = false;
 			while((!result) && (i<activeConnections.size())){
 				if(activeConnections.get(i).getHypervisor().equals(h)){//found
@@ -194,34 +239,22 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 					}
 				}else
 					i++;
-			}	
+			}
+			*/	
 		}
+		
+		connectionsLock.unlock();
 	}
 	
-	public synchronized List<NetHypervisorConnection> getActiveHypervisors(){
+	public List<NetHypervisorConnection> getActiveConnections(){
 		return this.activeConnections;
 	}
 	
-	public synchronized List<Hypervisor> getOfflineHypervisors(){
+	public List<Hypervisor> getOfflineHypervisors(){
 		return this.offlineConnections;
 	}
 	
-	public synchronized NetHypervisorConnection getActiveConnection(Hypervisor h){
-		int i = 0;
-		NetHypervisorConnection conn = null;
-		
-		
-		while((conn == null) && (i<activeConnections.size())){
-			if(activeConnections.get(i).getHypervisor().equals(h)){//found
-				conn = activeConnections.get(i);
-			}else
-				i++;
-		}
-		
-		return conn;
-	}
-	
-	public synchronized NetHypervisorConnection getActiveConnection(String hypervisorId){
+	public NetHypervisorConnection getActiveConnection(String hypervisorId){
 		int i = 0;
 		NetHypervisorConnection conn = null;
 		
