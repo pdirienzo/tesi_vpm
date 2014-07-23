@@ -44,7 +44,6 @@ public class VPMTopologyGetPortResource extends ServerResource {
 		boolean isPopulated = false;
 		try {
 			mp=jsonToStorageEntry(fmJson);
-		
 			if(mp.get("port-name").equals("vnetx")){ // user wants every vnet port
 				StringBuilder sb = new StringBuilder();
 				sb.append("{\"result\":[");
@@ -104,6 +103,8 @@ public class VPMTopologyGetPortResource extends ServerResource {
                 entry.put("switch-dpid", jp.getText());
             else if (n == "port-name")
                 entry.put("port-name", jp.getText());
+            else if (n == "port-prefix")
+            	entry.put("port-prefix", jp.getText());
         }
         
         return entry;

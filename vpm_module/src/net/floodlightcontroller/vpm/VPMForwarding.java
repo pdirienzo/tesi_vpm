@@ -56,7 +56,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	public static final int FORWARDING_APP_ID=20;
 	private IRoutingService router;
 	private VPMNetworkTopologyListener netListener = null;
-	private static final String CALLBACK_URI = "http://192.168.1.179:8081/VPM/VPMEventListener";
+	private static final String CALLBACK_URI = "http://192.168.1.180:8080/VPM/VPMEventListener";
 
 	@Override
 	public Collection<Class<? extends IFloodlightService>> getModuleServices() {

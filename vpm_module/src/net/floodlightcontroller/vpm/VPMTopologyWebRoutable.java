@@ -14,6 +14,7 @@ public class VPMTopologyWebRoutable implements RestletRoutable{
 		router.attach("/forwarding/reset", VPMForwardingResource.class);
 		router.attach("/links/json",VPMTopologyResource.class);
 		router.attach("/portInfo/json",VPMTopologyGetPortResource.class);
+		router.attach("/listener/register",VPMRegistration.class);
 		return router;
 	}
 
