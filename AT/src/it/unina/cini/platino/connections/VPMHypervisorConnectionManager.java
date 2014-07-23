@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -42,6 +44,7 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 		active = v;
 	}
 	
+	private Lock connectionsLock;
 	
 	private List<NetHypervisorConnection> activeConnections;
 	private List<Hypervisor> offlineConnections;
@@ -105,6 +108,8 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 		offlineConnections = new ArrayList<Hypervisor>();
 		d = new Database(dbPath);
 		timer = new Timer();
+		
+		connectionsLock = new ReentrantLock();
 	}
 	
 	/**
@@ -157,9 +162,15 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 			timer.cancel();
 		}
 		
+		System.out.println("before active conn");
+		connectionsLock.lock();
+		
 		//closing every active connection
-		for(NetHypervisorConnection hc : getActiveHypervisors())
+		for(NetHypervisorConnection hc : activeConnections)
 			removeHypervisor(hc.getHypervisor());
+		
+		connectionsLock.unlock();
+		System.out.println("after active conn");
 		
 	}
 	
@@ -244,6 +255,8 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 
 		@Override
 		public void run() {
+			connectionsLock.lock();
+			
 			for(Hypervisor h : getOfflineHypervisors()){
 				try {
 					//this constructor call will either succeed or throw exception, in this last case we can
@@ -251,16 +264,20 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 					NetHypervisorConnection c = NetHypervisorConnection.getConnectionWithTimeout(h, 
 							NETWORK_NAME, NETWORK_PREFIX,
 							getNetworkDescription(),CONNECTION_TIMEOUT);
-					getActiveHypervisors().add(c);
+					activeConnections.add(c);
 					getOfflineHypervisors().remove(h);
 				} catch (IOException | LibvirtException e) {
 					//System.err.println(h+" is still offline");
 				}
 			}
+			
+			connectionsLock.unlock();
 		
 			if(retryTimout!= 0 && isActive()){
 				timer.schedule(new ConnectionCheckerThread(), retryTimout);
 			}
+			
+			System.out.println("exited timed");
 		}
 		
 	}

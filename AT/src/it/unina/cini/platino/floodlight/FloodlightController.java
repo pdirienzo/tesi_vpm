@@ -294,7 +294,7 @@ public class FloodlightController {
 
 	
 	public static void main(String[] args) throws IOException{
-		System.out.println(InetAddress.getLocalHost());
+		
 		FloodlightController f = new FloodlightController(
 				new Controller("192.168.1.181", 8080));
 		
