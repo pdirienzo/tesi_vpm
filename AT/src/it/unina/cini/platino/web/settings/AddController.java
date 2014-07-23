@@ -1,7 +1,9 @@
 package it.unina.cini.platino.web.settings;
 
+import it.unina.cini.platino.connections.VPMContextServerListener;
 import it.unina.cini.platino.db.Controller;
 import it.unina.cini.platino.db.Database;
+import it.unina.cini.platino.floodlight.FloodlightController;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,9 +31,13 @@ public class AddController extends HttpServlet {
 			d.connect();
 			d.insertController(c);
 			d.close();
-			message.put("status", "controller modificato");
+			
+			FloodlightController f = new FloodlightController(c);
+			f.registerListener(VPMContextServerListener.FLOODLIGHT_CALLBACK_URI);
+			
+			message.put("status", "controller settings edited");
 		}catch(IOException ex){
-			message.put("status", "fallito inserimento controller: "+ex.getMessage());
+			message.put("status", "failed to add controller: "+ex.getMessage());
 			ex.printStackTrace();
 		}finally{
 			response.setContentType("application/json");

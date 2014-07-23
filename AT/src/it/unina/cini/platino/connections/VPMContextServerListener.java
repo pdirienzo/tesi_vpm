@@ -28,6 +28,7 @@ import com.mxgraph.view.mxGraph;
 
 public class VPMContextServerListener implements ServletContextListener {
 
+	public static final String FLOODLIGHT_CALLBACK_URI = ":8080/VPM/VPMEventListener";
 	private static final String TOPOLOGY_XML = "./topology/topology.xml";
 	private static final int MANAGER_RETRY_TIME = 5000;	
 	private static final String PROPERTIES_PATH = "config/config.xml";
@@ -63,16 +64,20 @@ public class VPMContextServerListener implements ServletContextListener {
 		BR_PORT = Integer.parseInt(props.getProperty("ovs_manager_port"));
 		VLAN_ID = Integer.parseInt(props.getProperty("vpm_vlan_id"));
 
-		//we'll get a previous topology if saved
+		//we'll get a previous topology if saved, following code will be executed just if a valid instance of the controller
+		//is present
 		try {
 			System.out.println("getting old graph if existent...");
-
+			FloodlightController controller = FloodlightController.getDbController();
+			//registering listener
+			System.out.println("registering listener");
+			controller.registerListener(FLOODLIGHT_CALLBACK_URI);
+			
 			mxGraph savedmxGraph = topologyFromFile();
 			if(savedmxGraph != null){
-				VPMGraph<OvsSwitch, LinkConnection> savedGraph = NetworkConverter.mxToJgraphT(savedmxGraph, true);
-				
+				VPMGraph<OvsSwitch, LinkConnection> savedGraph = NetworkConverter.mxToJgraphT(savedmxGraph, true);	
 				System.out.println("A saved graph has been found, checking if still valid...");
-				FloodlightController controller = FloodlightController.getDbController();
+				
 				VPMGraph<OvsSwitch, LinkConnection> actualGraph = controller.getTopology();
 				//we have to check if every tree edge defined in the saved graph still exists
 				//(just tree edges are phisical links and so visible by the controller)

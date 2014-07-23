@@ -8,9 +8,12 @@ import it.unina.cini.platino.network.types.Port;
 import it.unina.cini.platino.network.types.VPMGraph;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +39,8 @@ public class FloodlightController {
 	/**
 	 * Gets an instance of the floodlight controller from the data saved into the db.
 	 * 
-	 * @return an instance of floodlight controller or null if it doesn't exist
+	 * @throws IOException if no controller is defined or specified one is not reachable
+	 * @return an instance of floodlight controller
 	 */
 	public static FloodlightController getDbController() throws IOException{
 		Database d = new Database();
@@ -64,6 +68,22 @@ public class FloodlightController {
 		return switches;
 	}
 	
+	public void registerListener(String callbackURI) throws IOException{
+		RestRequest.post(baseURL+"/vpm/topology/listener/register", callbackURI);
+		/*HttpURLConnection conn = (HttpURLConnection)((new URL(baseURL+"/vpm/topology/listener/register")).openConnection());
+		System.out.println("Sending registration request to"+baseURL);
+		conn.setRequestMethod("POST");
+		conn.setDoOutput(true);
+		DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+		dos.writeBytes(callbackURI);
+		dos.flush();
+		dos.close();*/
+	}
+	
+	public String getUrl(){
+		return baseURL;
+	}
+	
 	public VPMGraph<OvsSwitch, LinkConnection> getTopology() throws IOException{
 		VPMGraph<OvsSwitch, LinkConnection> jgraph = new VPMGraph<OvsSwitch,LinkConnection>(LinkConnection.class);
 		HashMap<String,OvsSwitch> switches = getSwitches();
@@ -78,10 +98,6 @@ public class FloodlightController {
 					new Port(o.getString("dst-port")),true); //if they are visible by the controller it means they are tree edges
 		}
 		return jgraph;
-	}
-	
-	public void registerListener(String callbackURL){
-		//int res = RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj)
 	}
 
 	public int getPortNumber(OvsSwitch sw, String portName) throws IOException{

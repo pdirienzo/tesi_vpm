@@ -276,8 +276,6 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 			if(retryTimout!= 0 && isActive()){
 				timer.schedule(new ConnectionCheckerThread(), retryTimout);
 			}
-			
-			System.out.println("exited timed");
 		}
 		
 	}
