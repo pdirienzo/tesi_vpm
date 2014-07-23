@@ -56,7 +56,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	public static final int FORWARDING_APP_ID=20;
 	private IRoutingService router;
 	private VPMNetworkTopologyListener netListener = null;
-	private static final String CALLBACK_URI = "http://192.168.1.180:8080/VPM/VPMEventListener";
+	//private static final String CALLBACK_URI = "http://192.168.1.180:8080/VPM/VPMEventListener";
 
 	@Override
 	public Collection<Class<? extends IFloodlightService>> getModuleServices() {
@@ -399,11 +399,12 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 		this.staticFlowPusher.deleteFlow("DHCP_REQUEST("+switchId+")");
 		this.staticFlowPusher.deleteFlow("DHCP_RESPONSE("+switchId+")");
 		System.out.println("CALLED SWITCH PORT CHANGED!");
+		
 		if(port.getName().startsWith("vnet")){
 			try {
-				HttpURLConnection conn = (HttpURLConnection)((new URL(CALLBACK_URI)).openConnection());
+				/*HttpURLConnection conn = (HttpURLConnection)((new URL(CALLBACK_URI)).openConnection());
 				conn.setRequestMethod("POST");
-				conn.setDoOutput(true);
+				conn.setDoOutput(true);*/
 				vnetUpdate = new StringBuilder();
 				vnetUpdate.append("{");
 				vnetUpdate.append("\"type\":\"VM\",");
@@ -413,22 +414,23 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 					vnetUpdate.append("\"op\":\"REMOVE\"");
 					vnetUpdate.append("}");
 					log.info("VPMFORWARDING: "+vnetUpdate.toString());
-					DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+					/*DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
 					dos.writeBytes("data="+vnetUpdate.toString());
 					dos.flush();
 					dos.close();
-					System.out.println(conn.getResponseCode());
+					System.out.println(conn.getResponseCode());*/
 				}
 				else if(type==PortChangeType.UP){
 					vnetUpdate.append("\"op\":\"ADD\"");
 					vnetUpdate.append("}");
 					log.info("VPMFORWARDING: "+vnetUpdate.toString());
-					DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+					/*DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
 					dos.writeBytes("data="+vnetUpdate.toString());
 					dos.flush();
 					dos.close();
-					System.out.println(conn.getResponseCode());
+					System.out.println(conn.getResponseCode());*/
 				}
+				VPMNotificationService.notifyEvent(vnetUpdate.toString());
 				
 			} catch (Exception e) {
 				e.printStackTrace();

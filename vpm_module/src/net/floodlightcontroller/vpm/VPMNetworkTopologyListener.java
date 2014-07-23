@@ -24,7 +24,7 @@ import org.restlet.resource.ServerResource;
 
 public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwitchListener {
 
-	private static final String CALLBACK_URI = "http://192.168.1.180:8080/VPM/VPMEventListener";
+	//private static final String CALLBACK_URI = "http://192.168.1.180:8080/VPM/VPMEventListener";
 	private static final int TIMEOUT = 1000;
 
 	private IFloodlightProviderService ifps = null;
@@ -164,8 +164,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 	private class FaultSender extends TimerTask{
 
 
-		private void post(String url, String data) {
-			/* POST Method */
+		/*private void post(String url, String data) {
 			try {
 				HttpURLConnection conn = (HttpURLConnection)((new URL(url)).openConnection());
 				conn.setRequestMethod("POST");
@@ -178,7 +177,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 
 		@Override
 		public void run() {
@@ -193,7 +192,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 
 				if( nRequests > 0 ){ //sometimes we just get notifies about link creation 
 					System.out.println("LDUPDATE: "+topologyUpdate);
-					post(CALLBACK_URI,topologyUpdate.toString());
+					VPMNotificationService.notifyEvent(topologyUpdate.toString());//post(CALLBACK_URI,topologyUpdate.toString());
 				}else
 					System.out.println("it will not be sent as does not contain destruction of links");
 
