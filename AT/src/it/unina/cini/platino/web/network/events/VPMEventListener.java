@@ -39,6 +39,7 @@ public class VPMEventListener extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		super.init();
+		
 		pathManager = (DefaultVPMPathManager)getServletContext().getAttribute(DefaultVPMPathManager.VPM_PATH_MANAGER);
 	}
 

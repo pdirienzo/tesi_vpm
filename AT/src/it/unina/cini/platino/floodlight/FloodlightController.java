@@ -80,6 +80,10 @@ public class FloodlightController {
 		return jgraph;
 	}
 	
+	public void registerListener(String callbackURL){
+		//int res = RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj)
+	}
+
 	public int getPortNumber(OvsSwitch sw, String portName) throws IOException{
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
@@ -290,11 +294,13 @@ public class FloodlightController {
 
 	
 	public static void main(String[] args) throws IOException{
+		System.out.println(InetAddress.getLocalHost());
 		FloodlightController f = new FloodlightController(
 				new Controller("192.168.1.181", 8080));
 		
 		JSONArray flows = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
 		System.out.println(((JSONObject)flows.get(2)).get("actions"));
+		
 		/*JSONObject jos = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
 		for(Object s : jos.keySet()){
 			
