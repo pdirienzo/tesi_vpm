@@ -29,8 +29,9 @@ public class Database {
 	}
 
 	public synchronized static void initialize(String dbPath) throws IOException{
-		boolean newDb = !((new File(dbPath)).exists());
-		if(newDb){
+		boolean newDb = (new File(dbPath)).exists();
+		if(!newDb){
+			(new File(dbPath)).getParentFile().mkdir();
 			Database d = new Database();
 			d.connect();
 			try {
@@ -192,6 +193,25 @@ public class Database {
 			e.printStackTrace();
 			throw new IOException(e.getMessage());
 		}
+	}
+	
+	public VolumeAllocation getAllocationFromVolume(String volumeName) throws IOException{
+		VolumeAllocation vol = null;
+		
+		try{
+			Statement s = connection.createStatement();
+			ResultSet rs = s.executeQuery(
+				"select * from storage_allocations where iscsi_volume='"+volumeName+"'");
+			if(rs.next())
+				vol = new VolumeAllocation(rs.getInt(1),rs.getInt(2), rs.getString(3), rs.getInt(4),rs.getString(5));
+			rs.close();
+			s.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+		
+		return vol;
 	}
 	
 	/**
