@@ -15,11 +15,16 @@ import net.floodlightcontroller.core.ImmutablePort;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
 
 import org.openflow.util.HexString;
+import org.restlet.Context;
+import org.restlet.Request;
+import org.restlet.Response;
+import org.restlet.resource.Post;
+import org.restlet.resource.ServerResource;
 
 
 public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwitchListener {
 
-	private static final String CALLBACK_URI = "http://192.168.1.179:8081/VPM/VPMEventListener";
+	//private static final String CALLBACK_URI = "http://192.168.1.180:8080/VPM/VPMEventListener";
 	private static final int TIMEOUT = 1000;
 
 	private IFloodlightProviderService ifps = null;
@@ -30,6 +35,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 
 	private final ReentrantLock lock;
 
+		
 	public VPMNetworkTopologyListener(
 			IFloodlightProviderService floodlightProvider) {
 
@@ -50,24 +56,8 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 		}
 
 	}
+	
 
-	/*public List<LDUpdate> findDuplicate (List<LDUpdate> lupd){
-		List<LDUpdate> ld = new ArrayList<LDUpdate>();
-		while (lupd.size()>0){
-			LDUpdate l = lupd.remove(0);
-			for (LDUpdate link : lupd){
-
-				if (l.getSrc() == link.getDst() && l.getSrcPort() == link.getDstPort() &&
-						l.getDst() == link.getSrc() && l.getDstPort() == link.getSrcPort()){
-					lupd.remove(link);
-					break;
-				}
-
-			}
-			ld.add(l);
-		}
-		return ld;
-	}*/
 	@Override
 	public void switchAdded(long switchId) {
 		// TODO Auto-generated method stub
@@ -174,8 +164,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 	private class FaultSender extends TimerTask{
 
 
-		private void post(String url, String data) {
-			/* POST Method */
+		/*private void post(String url, String data) {
 			try {
 				HttpURLConnection conn = (HttpURLConnection)((new URL(url)).openConnection());
 				conn.setRequestMethod("POST");
@@ -188,7 +177,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 
 		@Override
 		public void run() {
@@ -203,7 +192,7 @@ public class VPMNetworkTopologyListener implements ILinkDiscoveryListener,IOFSwi
 
 				if( nRequests > 0 ){ //sometimes we just get notifies about link creation 
 					System.out.println("LDUPDATE: "+topologyUpdate);
-					post(CALLBACK_URI,topologyUpdate.toString());
+					VPMNotificationService.notifyEvent(topologyUpdate.toString());//post(CALLBACK_URI,topologyUpdate.toString());
 				}else
 					System.out.println("it will not be sent as does not contain destruction of links");
 

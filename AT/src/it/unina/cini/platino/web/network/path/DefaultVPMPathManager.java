@@ -25,6 +25,11 @@ public class DefaultVPMPathManager implements VPMPathManager{
 	private VPMSwitchInfoHolder switchInfos;
 	private VPMPathInfoHolder pathInfos;
 	
+	public DefaultVPMPathManager(){
+		switchInfos = new VPMSwitchInfoHolder();
+		pathInfos = new VPMPathInfoHolder();
+	}
+	
 	private String computePathName(String dpidSrc,String dpidDst){
 		StringBuilder sb = new StringBuilder();
 
@@ -42,11 +47,6 @@ public class DefaultVPMPathManager implements VPMPathManager{
 	
 	public VPMSwitchInfo getSwitchInfos(String dpid){
 		return switchInfos.get(dpid);
-	}
-	
-	public DefaultVPMPathManager(){
-		switchInfos = new VPMSwitchInfoHolder();
-		pathInfos = new VPMPathInfoHolder();
 	}
 	
 	public VPMPathInfo getPath(String rootDpid, String leafDpid){
@@ -71,13 +71,13 @@ public class DefaultVPMPathManager implements VPMPathManager{
 	}
 	
 	public VPMPathInfo installShortestPath(VPMGraph<OvsSwitch, LinkConnection> graph, 
-			OvsSwitch src, OvsSwitch dest, String external) throws IOException{
+			OvsSwitch src, OvsSwitch dest, String external, String portPrefix) throws IOException{
 		
 		DijkstraShortestPath<OvsSwitch, LinkConnection> shortest = new DijkstraShortestPath<OvsSwitch, LinkConnection>(graph, src, dest);
-		addFlows(shortest.getPath(), external);
+		addFlows(shortest.getPath(), external,portPrefix);
 		
 		String pathName = computePathName(src.dpid, dest.dpid); 
-		pathInfos.put(pathName, new VPMPathInfo(shortest.getPath(), external));
+		pathInfos.put(pathName, new VPMPathInfo(shortest.getPath(), external, portPrefix));
 	
 		return pathInfos.get(pathName);
 	}
@@ -92,11 +92,10 @@ public class DefaultVPMPathManager implements VPMPathManager{
 		}
 	}
 	
-	private void addFlows(GraphPath<OvsSwitch,LinkConnection> jpath, String externalBcast) throws IOException{
+	private void addFlows(GraphPath<OvsSwitch,LinkConnection> jpath, String externalBcast, String portPrefix) throws IOException{
 
 		FloodlightController controller = FloodlightController.getDbController();
 		List<OvsSwitch> nodes = Graphs.getPathVertexList(jpath);
-
 
 		for(int i=0;i<nodes.size();i++){
 			//this is a template with informations common to each flow we are going to install
@@ -125,7 +124,7 @@ public class DefaultVPMPathManager implements VPMPathManager{
 				//As VM are always there, just one rule is enough regardless
 				//of the number of paths traversing this switch
 				if(infos.getCounter() == 0 && infos.sw.type != OvsSwitch.Type.ROOT){
-					for(Port vnet : controller.getVnetPorts(infos.sw))
+					for(Port vnet : controller.getVnetPorts(infos.sw,portPrefix))
 						infos.addVnetPort(vnet.number);
 
 					if(infos.getVnetNumber() > 0){ 

@@ -10,17 +10,12 @@ import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.network.types.VPMGraphHolder;
 import it.unina.cini.platino.web.network.path.DefaultVPMPathManager;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.servlet.ServletException;
@@ -49,7 +44,7 @@ public class NetworkTopology extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String TOPOLOGY_XML = "./topology/topology.xml";
 
-	private void topologyToFile(mxGraph topo) throws FileNotFoundException{
+	private void topologyToFile(mxGraph topo) throws IOException{
 		mxCodec codec = new mxCodec();	
 		String xmlString =  mxXmlUtils.getXml(codec.encode(topo.getModel()));
 
@@ -59,11 +54,12 @@ public class NetworkTopology extends HttpServlet {
 		pw.close();
 	}
 
-	/**
-	 * @see HttpServlet#HttpServlet()
-	 */
-	public NetworkTopology() {
-		super();
+	@Override
+	public void init() throws ServletException {
+		super.init();
+		File filepath = new File(TOPOLOGY_XML);
+		if(!filepath.exists())
+			filepath.getParentFile().mkdir();
 	}
 
 	/*

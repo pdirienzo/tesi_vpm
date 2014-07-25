@@ -16,7 +16,7 @@ public interface VPMPathManager {
 	public static final String FROM_VNET_FLOW = "RTP_FROMVNET";
 
 	public VPMPathInfo installShortestPath(VPMGraph<OvsSwitch, LinkConnection> graph, 
-			OvsSwitch src, OvsSwitch dest, String external) throws IOException;
+			OvsSwitch src, OvsSwitch dest, String external, String portPrefix) throws IOException;
 	
 	public void uninstallPath(String rootDpid, String leafDpid) throws IOException;
 	

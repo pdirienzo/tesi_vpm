@@ -1,7 +1,5 @@
 package it.unina.cini.platino.web.network.events;
 
-import it.unina.cini.platino.db.Controller;
-import it.unina.cini.platino.db.Database;
 import it.unina.cini.platino.floodlight.FloodlightController;
 import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
@@ -39,6 +37,7 @@ public class VPMEventListener extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		super.init();
+		
 		pathManager = (DefaultVPMPathManager)getServletContext().getAttribute(DefaultVPMPathManager.VPM_PATH_MANAGER);
 	}
 
@@ -47,20 +46,6 @@ public class VPMEventListener extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		response.sendError(HttpServletResponse.SC_NOT_FOUND);
-	}
-
-	private FloodlightController getController() throws IOException{
-		Database d = new Database();
-		d.connect();
-		Controller c = d.getController();
-		d.close();
-
-		if(c==null)
-			throw new IOException("couldn't contact controller");
-
-		FloodlightController controller = new FloodlightController(c);
-
-		return controller;
 	}
 
 	private JSONObject getToVnetFlow(VPMSwitchInfo infos){
@@ -109,6 +94,7 @@ public class VPMEventListener extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		JSONObject event = new JSONObject(request.getParameter("data"));
+		System.out.println("Received  "+event.toString());
 		switch(Event.valueOf(event.getString("type"))){
 
 		case TOPOLOGY:
@@ -142,7 +128,7 @@ public class VPMEventListener extends HttpServlet {
 					if(swInfos.sw.type != OvsSwitch.Type.ROOT){ //we are creating a new rule only if sw is not a root 
 						VM_OP vmOp = VM_OP.valueOf(event.getString("op"));
 						Port vnetPort = new Port(event.getString("vnet"));
-						FloodlightController controller = getController();
+						FloodlightController controller = FloodlightController.getDbController();
 						if(vmOp == VM_OP.ADD){
 							System.out.println("added a new vm "+vnetPort);
 

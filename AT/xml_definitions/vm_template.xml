@@ -32,6 +32,7 @@
     <interface type='network'>
       <mac address='52:54:00:d3:4c:c2'/>
       <source network='ovs-network' portgroup='vlan-stream'/>
+      <target dev='vpm_'/>
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>

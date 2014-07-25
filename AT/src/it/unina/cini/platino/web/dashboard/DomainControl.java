@@ -5,6 +5,7 @@ import it.unina.cini.platino.db.Database;
 import it.unina.cini.platino.db.ISCSITarget;
 import it.unina.cini.platino.db.VolumeAllocation;
 import it.unina.cini.platino.libvirt.HypervisorConnection;
+import it.unina.cini.platino.libvirt.NetHypervisorConnection;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -114,7 +115,7 @@ public class DomainControl extends HttpServlet {
 		return new XMLOutputter().outputString(doc);
 	}
 
-	private void createVM(HypervisorConnection conn, String hypervisorId, String vmName, int iscsiID, boolean autostart) throws IOException, LibvirtException{
+	private void createVM(HypervisorConnection conn, String hypervisorId, String vmName, int iscsiID) throws IOException, LibvirtException{
 		Database d = (Database)getServletContext().getAttribute(Database.DATABASE);
 
 		d.connect();
@@ -152,8 +153,6 @@ public class DomainControl extends HttpServlet {
 			VolumeAllocation alloc = new VolumeAllocation(iscsiID, volumes[i], Integer.parseInt(hypervisorId.split("H")[1]) , vmName);
 			
 			d.insertVolumeAllocation(alloc);
-			if(autostart)
-				newDomain.create();
 
 		}finally{
 			d.close();
@@ -198,7 +197,11 @@ public class DomainControl extends HttpServlet {
 				conn.bootDomain(guestName);
 				jResponse.put("result", "success");
 			}else if(action.equals("create")){
-				createVM(conn, hypervisorId, guestName, Integer.parseInt(request.getParameter("iscsi")),Boolean.parseBoolean(request.getParameter("autostart")));
+				boolean autostart = Boolean.parseBoolean(request.getParameter("autostart"));
+				createVM(conn, hypervisorId, guestName, Integer.parseInt(request.getParameter("iscsi")));
+				if(autostart){
+					conn.bootDomain(guestName);
+				}
 				jResponse.put("result", "success");
 			}else if(action.equals("shutdown")){
 				conn.shutdownDomain(guestName);

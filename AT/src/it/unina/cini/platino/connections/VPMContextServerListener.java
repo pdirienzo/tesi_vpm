@@ -8,7 +8,6 @@ import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
 import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.network.types.VPMGraphHolder;
-import it.unina.cini.platino.web.network.path.DefaultVPMPathManager;
 import it.unina.cini.platino.web.network.path.VPMPathManager;
 
 import java.io.BufferedReader;
@@ -29,6 +28,7 @@ import com.mxgraph.view.mxGraph;
 
 public class VPMContextServerListener implements ServletContextListener {
 
+	public static final String FLOODLIGHT_CALLBACK_URI = ":8080/VPM/VPMEventListener";
 	private static final String TOPOLOGY_XML = "./topology/topology.xml";
 	private static final int MANAGER_RETRY_TIME = 5000;	
 	private static final String PROPERTIES_PATH = "config/config.xml";
@@ -64,16 +64,19 @@ public class VPMContextServerListener implements ServletContextListener {
 		BR_PORT = Integer.parseInt(props.getProperty("ovs_manager_port"));
 		VLAN_ID = Integer.parseInt(props.getProperty("vpm_vlan_id"));
 
-		//we'll get a previous topology if saved
+		//we'll get a previous topology if saved, following code will be executed just if a valid instance of the controller
+		//is present
 		try {
 			System.out.println("getting old graph if existent...");
-
+			FloodlightController controller = FloodlightController.getDbController();
+			//registering listener
+			controller.registerListener(FLOODLIGHT_CALLBACK_URI, props.getProperty("network_interface_prefix"));
+			
 			mxGraph savedmxGraph = topologyFromFile();
 			if(savedmxGraph != null){
-				VPMGraph<OvsSwitch, LinkConnection> savedGraph = NetworkConverter.mxToJgraphT(savedmxGraph, true);
-				
+				VPMGraph<OvsSwitch, LinkConnection> savedGraph = NetworkConverter.mxToJgraphT(savedmxGraph, true);	
 				System.out.println("A saved graph has been found, checking if still valid...");
-				FloodlightController controller = FloodlightController.getDbController();
+				
 				VPMGraph<OvsSwitch, LinkConnection> actualGraph = controller.getTopology();
 				//we have to check if every tree edge defined in the saved graph still exists
 				//(just tree edges are phisical links and so visible by the controller)
@@ -115,6 +118,7 @@ public class VPMContextServerListener implements ServletContextListener {
 				}
 			}
 		} catch (IOException e) {
+			System.out.println("error contacting controller");
 			e.printStackTrace();
 		}
 	}
@@ -139,8 +143,10 @@ public class VPMContextServerListener implements ServletContextListener {
 			
 			restoreNetwork(c.getServletContext());
 			
-			VPMHypervisorConnectionManager manager = new VPMHypervisorConnectionManager(MANAGER_RETRY_TIME,props.getProperty("network_name"),
-					props.getProperty("bridge_name"));
+			VPMHypervisorConnectionManager manager = new VPMHypervisorConnectionManager(MANAGER_RETRY_TIME,
+					props.getProperty("network_name"),
+					props.getProperty("bridge_name"),
+					props.getProperty("network_interface_prefix"));
 			DatabaseEventDispatcher.addListener(manager);
 			manager.start();
 			

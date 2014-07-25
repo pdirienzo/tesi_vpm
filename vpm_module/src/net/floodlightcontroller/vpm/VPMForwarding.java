@@ -1,8 +1,5 @@
 package net.floodlightcontroller.vpm;
 
-import java.io.DataOutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -16,13 +13,11 @@ import net.floodlightcontroller.core.IOFSwitch;
 import net.floodlightcontroller.core.IOFSwitch.PortChangeType;
 import net.floodlightcontroller.core.IOFSwitchListener;
 import net.floodlightcontroller.core.ImmutablePort;
-import net.floodlightcontroller.core.internal.ISwitchDriverRegistry;
 import net.floodlightcontroller.core.module.FloodlightModuleContext;
 import net.floodlightcontroller.core.module.FloodlightModuleException;
 import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
 import net.floodlightcontroller.core.util.AppCookie;
-import net.floodlightcontroller.counter.ICounterStoreService;
 import net.floodlightcontroller.devicemanager.IDevice;
 import net.floodlightcontroller.devicemanager.IDeviceService;
 import net.floodlightcontroller.devicemanager.SwitchPort;
@@ -34,13 +29,13 @@ import net.floodlightcontroller.routing.IRoutingService;
 import net.floodlightcontroller.staticflowentry.IStaticFlowEntryPusherService;
 import net.floodlightcontroller.topology.ITopologyService;
 import net.floodlightcontroller.topology.NodePortTuple;
+import net.floodlightcontroller.vpm.json.VPMEventForwarding;
 
 import org.openflow.protocol.OFFlowMod;
 import org.openflow.protocol.OFMatch;
 import org.openflow.protocol.OFMessage;
 import org.openflow.protocol.OFPacketIn;
 import org.openflow.protocol.OFType;
-import org.openflow.protocol.OFPacketIn.OFPacketInReason;
 import org.openflow.protocol.action.OFAction;
 import org.openflow.protocol.action.OFActionOutput;
 import org.openflow.util.HexString;
@@ -56,7 +51,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 	public static final int FORWARDING_APP_ID=20;
 	private IRoutingService router;
 	private VPMNetworkTopologyListener netListener = null;
-	private static final String CALLBACK_URI = "http://192.168.1.179:8081/VPM/VPMEventListener";
+	//private static final String CALLBACK_URI = "http://192.168.1.180:8080/VPM/VPMEventListener";
 
 	@Override
 	public Collection<Class<? extends IFloodlightService>> getModuleServices() {
@@ -388,52 +383,34 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 		// TODO Auto-generated method stub
 
 	}
-
+	
+	
 	@Override
 	public void switchPortChanged(long switchId, ImmutablePort port,
 			PortChangeType type) {
-		StringBuilder vnetUpdate = null;
-		//TODO FALLO!
 		this.staticFlowPusher.deleteFlow("ARP_REQUEST("+switchId+")");
 		this.staticFlowPusher.deleteFlow("ARP_RESPONSE("+switchId+")");
 		this.staticFlowPusher.deleteFlow("DHCP_REQUEST("+switchId+")");
 		this.staticFlowPusher.deleteFlow("DHCP_RESPONSE("+switchId+")");
 		System.out.println("CALLED SWITCH PORT CHANGED!");
-		if(port.getName().startsWith("vnet")){
-			try {
-				HttpURLConnection conn = (HttpURLConnection)((new URL(CALLBACK_URI)).openConnection());
-				conn.setRequestMethod("POST");
-				conn.setDoOutput(true);
-				vnetUpdate = new StringBuilder();
-				vnetUpdate.append("{");
-				vnetUpdate.append("\"type\":\"VM\",");
-				vnetUpdate.append("\"switch\":\""+HexString.toHexString(switchId)+"\",");
-				vnetUpdate.append("\"vnet\":\""+port.getName()+"/"+port.getPortNumber()+"\",");
-				if (type==PortChangeType.DELETE){
-					vnetUpdate.append("\"op\":\"REMOVE\"");
-					vnetUpdate.append("}");
-					log.info("VPMFORWARDING: "+vnetUpdate.toString());
-					DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
-					dos.writeBytes("data="+vnetUpdate.toString());
-					dos.flush();
-					dos.close();
-					System.out.println(conn.getResponseCode());
-				}
-				else if(type==PortChangeType.UP){
-					vnetUpdate.append("\"op\":\"ADD\"");
-					vnetUpdate.append("}");
-					log.info("VPMFORWARDING: "+vnetUpdate.toString());
-					DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
-					dos.writeBytes("data="+vnetUpdate.toString());
-					dos.flush();
-					dos.close();
-					System.out.println(conn.getResponseCode());
-				}
-				
-			} catch (Exception e) {
-				e.printStackTrace();
+		VPMEventForwarding vpmev = null;
+		try {
+
+			if (type==PortChangeType.DELETE){
+				vpmev = new VPMEventForwarding("VM",HexString.toHexString(switchId),
+						port.getName()+"/"+port.getPortNumber(),"REMOVE");
+
 			}
-			
+			else if(type==PortChangeType.UP){
+				vpmev = new VPMEventForwarding("VM",HexString.toHexString(switchId),
+						port.getName()+"/"+port.getPortNumber(),"ADD");
+
+			}
+			if(vpmev != null){				
+				VPMNotificationService.notifyEventForwarding(vpmev);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 

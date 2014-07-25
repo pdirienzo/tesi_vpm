@@ -11,7 +11,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +36,8 @@ public class FloodlightController {
 	/**
 	 * Gets an instance of the floodlight controller from the data saved into the db.
 	 * 
-	 * @return an instance of floodlight controller or null if it doesn't exist
+	 * @throws IOException if no controller is defined or specified one is not reachable
+	 * @return an instance of floodlight controller
 	 */
 	public static FloodlightController getDbController() throws IOException{
 		Database d = new Database();
@@ -65,6 +65,26 @@ public class FloodlightController {
 		return switches;
 	}
 	
+	public void registerListener(String callbackURI, String vnetPrefix) throws IOException{
+		JSONObject data = new JSONObject();
+		data.put("op", "SUBSCRIBE")
+		.put("callback", callbackURI)
+		.put("vnet-prefix", vnetPrefix);
+		System.out.println(data.toString());
+		RestRequest.postJson(baseURL+"/vpm/topology/listener/register", data);	
+	}
+	
+	public void deregisterListener(String callbackURI) throws IOException{
+		JSONObject data = new JSONObject();
+		data.put("op", "UNSUBSCRIBE")
+		.put("callback", callbackURI);
+		RestRequest.postJson(baseURL+"/vpm/topology/listener/register", data);	
+	}
+	
+	public String getUrl(){
+		return baseURL;
+	}
+	
 	public VPMGraph<OvsSwitch, LinkConnection> getTopology() throws IOException{
 		VPMGraph<OvsSwitch, LinkConnection> jgraph = new VPMGraph<OvsSwitch,LinkConnection>(LinkConnection.class);
 		HashMap<String,OvsSwitch> switches = getSwitches();
@@ -80,7 +100,7 @@ public class FloodlightController {
 		}
 		return jgraph;
 	}
-	
+
 	public int getPortNumber(OvsSwitch sw, String portName) throws IOException{
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
@@ -93,10 +113,11 @@ public class FloodlightController {
 		return res;
 	}
 	
-	public List<Port> getVnetPorts(OvsSwitch sw){
+	public List<Port> getVnetPorts(OvsSwitch sw, String prefix) throws IOException{
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
 		obj.put("port-name", "vnetx");
+		obj.put("port-prefix", prefix);
 		JSONObject res = RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj);
 		List<Port> vnets = new ArrayList<Port>();
 		for(JSONObject o : res.getJSONArray("result"))
@@ -290,11 +311,13 @@ public class FloodlightController {
 
 	
 	public static void main(String[] args) throws IOException{
+		
 		FloodlightController f = new FloodlightController(
 				new Controller("192.168.1.181", 8080));
 		
 		JSONArray flows = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
 		System.out.println(((JSONObject)flows.get(2)).get("actions"));
+		
 		/*JSONObject jos = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
 		for(Object s : jos.keySet()){
 			

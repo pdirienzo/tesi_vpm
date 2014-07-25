@@ -51,7 +51,7 @@ public class HypervisorInfo extends HttpServlet {
 		VPMHypervisorConnectionManager manager = (VPMHypervisorConnectionManager)getServletContext()
 				.getAttribute(VPMHypervisorConnectionManager.HYPERVISOR_CONNECTION_MANAGER);
 		
-		List<NetHypervisorConnection> hypervisors = manager.getActiveHypervisors();
+		List<NetHypervisorConnection> hypervisors = manager.getActiveConnections();
 		
 		GetHypervisorStatsThread[] threads = new GetHypervisorStatsThread[hypervisors.size()];
 		List<Future<?>> futures = new ArrayList<Future<?>>();

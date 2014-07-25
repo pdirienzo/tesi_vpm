@@ -1,5 +1,6 @@
 package it.unina.cini.platino.libvirt;
 
+import it.unina.cini.platino.db.Database;
 import it.unina.cini.platino.db.Hypervisor;
 
 import java.io.ByteArrayInputStream;
@@ -25,6 +26,7 @@ import org.libvirt.Network;
 public class NetHypervisorConnection extends HypervisorConnection{
 	
 	private Network net;
+	private String prefix;
 	
 	private boolean networkExists(String networkName) throws LibvirtException{
 		boolean result = false;
@@ -40,9 +42,11 @@ public class NetHypervisorConnection extends HypervisorConnection{
 		return result;
 	}
 	
-	private NetHypervisorConnection(Hypervisor h, String method, String networkName,String networkDefinition) throws LibvirtException{
+	private NetHypervisorConnection(Hypervisor h, String method, 
+			String networkName, String netPrefix, String networkDefinition) throws LibvirtException{
 		super(h,method, false);
 		
+		this.prefix = netPrefix;
 		if(networkExists(networkName)){
 			net = super.networkLookupByName(networkName);
 		}else{
@@ -50,22 +54,24 @@ public class NetHypervisorConnection extends HypervisorConnection{
 		}
 	}
 	
-	private NetHypervisorConnection(Hypervisor h,String networkName,String networkDefinition) throws LibvirtException{
-		this(h,DEFAULT_CONN_METHOD,networkName,networkDefinition);
+	private NetHypervisorConnection(Hypervisor h, String networkName, 
+			String netPrefix, String networkDefinition) throws LibvirtException{
+		this(h, DEFAULT_CONN_METHOD, networkName, netPrefix, networkDefinition);
 	}
 	
 	public final static NetHypervisorConnection getConnectionWithTimeout(
-			Hypervisor h, String method, String networkName,String networkDefinition, int timeout) throws IOException, LibvirtException{
+			Hypervisor h, String method, String networkName, String netPrefix,
+			String networkDefinition, int timeout) throws IOException, LibvirtException{
 		
 		checkConnection(h, timeout);		
-		return new NetHypervisorConnection(h, method,networkName,networkDefinition);
+		return new NetHypervisorConnection(h, method,networkName,netPrefix,networkDefinition);
 	}
 	
 	public final static NetHypervisorConnection getConnectionWithTimeout(Hypervisor h,String networkName,
-			String networkDefinition,int timeout) throws IOException, LibvirtException{
+			String netPrefix, String networkDefinition, int timeout) throws IOException, LibvirtException{
 		
 		checkConnection(h, timeout);
-		return new NetHypervisorConnection(h,networkName,networkDefinition);
+		return new NetHypervisorConnection(h,networkName,netPrefix,networkDefinition);
 	}
 	
 	public Network getNetwork(){
@@ -91,8 +97,14 @@ public class NetHypervisorConnection extends HypervisorConnection{
 		try{
 			String descr = d.getXMLDesc(2); //2=VIR_DOMAIN_XML_INACTIVE, we are looking at an inactive domain
 			doc = (Document) builder.build(new ByteArrayInputStream(descr.getBytes()));
+			
+			String volID = doc.getRootElement().getChild("devices").getChild("disk")
+					.getChild("source").getAttribute("dev").getValue();
+			volID = volID.substring(volID.length()-1);
+			
 			Element networkNode = doc.getRootElement().getChild("devices").getChild("interface");
 			networkNode.setAttribute("type","network");
+			networkNode.getChild("target").setAttribute("dev",prefix+volID);
 			networkNode.getChild("source").setAttribute("network",net.getName());
 			d.free();
 			d = super.domainCreateXML(new XMLOutputter().outputString(doc), 0);
@@ -109,7 +121,8 @@ public class NetHypervisorConnection extends HypervisorConnection{
 			throws LibvirtException, IOException {
 		
 		NetHypervisorConnection destConn = 
-				NetHypervisorConnection.getConnectionWithTimeout(destination,net.getName(),net.getXMLDesc(1),
+				NetHypervisorConnection.getConnectionWithTimeout(destination,net.getName(),
+						prefix, net.getXMLDesc(1),
 						DEFAULT_TIMEOUT);
 		Domain domain = super.domainLookupByName(domainName);
 		Domain newDomain = null;
