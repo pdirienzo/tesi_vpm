@@ -245,7 +245,7 @@
 	//this function populates the screen with hypervisor boxes and guests inside them
     function getList() {
     	$("#infopanel").empty();
-		$("#infopanel").hide();      //nascondiamo il pannello info
+		$("#infopanel").hide();      //hiding info panel
        $.getJSON("HypervisorInfo?type=\"LEAF_TYPE\"", function(hypervisorList){
      	
         //hypervisorList = getDummy();
@@ -258,7 +258,7 @@
         	}
             html += "<div class='left span3 '>";
 
-            var hypervisor = hypervisorList[i];
+            var hypervisor = hypervisorList[i]; 
             
             if (hypervisor.status == "online") {
                 if(hypervisor.cpuUsage > WARNING_THRESHOLD && hypervisor.cpuUsage < DANGER_THRESHOLD){
@@ -443,14 +443,14 @@
                 	$("#"+response.id+"-mem").html(text);
                
                 setTimeout(refreshProgress(response.id), 500);
-            } else if(response.state == "-1"){
+            } else if(response.state == "-1"){ //handling error
                 showDialog2("Impossible to complete migration",response.error);
                 $("#"+response.id+"-mem").html("<p>Failed</p>");
                 $.getJSON("GetElapsedTime?lmid="+response.id, function(response) {
                    //$("#vmboxes").dialog("close");
                 });
             }else
-            	setTimeout(refreshProgress(response.id), 500);
+            	setTimeout(refreshProgress(response.id), 500); //refresh the progess bar
         });
     }
 </script>

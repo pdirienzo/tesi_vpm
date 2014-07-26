@@ -9,24 +9,6 @@
 </style>
 <script>
 
-	/* $("#set-controller-dialog").dialog({
-		title : "Modifica impostazioni controller",
-		buttons : [ {
-			text : "Applica",
-			click : function() {
-				applyControllerSettings();
-			}
-		}, {
-			text : "Annulla",
-			click : function() {
-				$(this).dialog("close");
-			}
-		} ],
-		autoOpen : false,
-		hide : "explode",
-		modal : true
-	});
-*/
 	$("#set-controller").button().click(function() {
 		$("#set-controller-dialog").modal("show");
 	});
@@ -34,25 +16,7 @@
 	$("#add-iscsi").button().click(function() {
 		$("#add-iscsi-dialog").modal("show");
 	});
-/*
-	$("#add-host-dialog").dialog({
-		title : "Aggiunta Hypervisor",
-		buttons : [ {
-			text : "Aggiungi",
-			click : function() {
-				addNewHypervisor();
-			}
-		}, {
-			text : "Annulla",
-			click : function() {
-				$(this).dialog("close");
-			}
-		} ],
-		autoOpen : false,
-		hide : "explode",
-		modal : true
-	});
-*/
+
 	$("#addNewHypervisor").button().click(function() {
 		$("#add-host-dialog").modal("show");	
 	});
@@ -72,7 +36,7 @@
 							+ "\" class=\"btn btn-danger\" onclick=\"removeHypervisor(event);\">Elimina</button></td>";
 					html += "</tr>";
 				}
-				//$("#Hypervisor-list").empty();
+				
 				$("#Hypervisor-list").html(html);
 
 			});
@@ -190,9 +154,8 @@
 				alert(response.details);
 		});
 	}
-
-	//chiamate quando il doc è pronto
 	
+	//called when document is ready
 	getControllerSettings();
 	getHypervisorSettings();
 	getISCSISettings();

@@ -45,7 +45,7 @@
 				graph.getView().updateStyle = true;
 				
 				var previous = graph.model.getStyle;
-				
+				//set own style for edges and each vertex based on the type of this latter 
 				graph.model.getStyle = function(cell)
 				{
 					if (cell != null)
@@ -166,7 +166,8 @@
 				    }else
 				      return null; //else we don't
 				 };
-				  
+				
+				 //handler for DEL button
 				keyHandler = new mxKeyHandler(graph);
 				keyHandler.bindKey(46, function(evt){
 					if(graph.getSelectionCell().isEdge())
@@ -188,6 +189,7 @@
 				eStyle[mxConstants.STYLE_ENDARROW] = "none";
 				createMenu();
 				getNetwork();
+				//adding zoom button
 				document.getElementById("zoom").appendChild(mxUtils.button('+', function()
 				{
 					graph.zoomIn();
@@ -203,6 +205,7 @@
 			}
 		}
 		
+		//createTooltip shows a modal dialog with all the VMs running on the node selected
 		function createTooltip(tooltip,ip){
 			var hasVm = false;
 			var html = "<ul class=\"list-group\">";
@@ -230,7 +233,7 @@
 			$("#myVm").modal('show');
 		}
 		
-		
+		//Get all the list of all the VMs in the entire network
 		function getVM(){
 			$.getJSON("HypervisorInfo", function(hvList){
 			    var hypervisorList = hvList;
@@ -362,8 +365,10 @@
 		}
 		
 		function getNetwork(){
+			//Request sent for the network
 			$.getJSON("NetworkTopology",function(data){
 				if(data.status == "ok" || data.status == "ok_no_network"){
+					//old network has been detected or there is no network
 					xml=data.graph;
 					console.log(xml);
 					var doc = mxUtils.parseXml(xml);
@@ -374,6 +379,7 @@
 					layout.execute(graph.getDefaultParent());
 					if (data.status == "ok_no_network"){
 						//alert(data.details);
+						//no network first time execution
 						showDialog2("Info <i class=\"fa fa-info-circle fa-lg\"></i>","First Time execution or Topology Changed!");
 					}
 				}else{
@@ -404,7 +410,7 @@ $( "#sendChangesB" ).button().click(function( event ) {
 		var result = encoder.encode(graph.getModel());
 	
 		var exml = mxUtils.getXml(result);
-		
+		//create the network topology
 		$.post("NetworkTopology",{"xml":exml},function(data){
 			   if(data.status == "ok"){
 				   graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));			   

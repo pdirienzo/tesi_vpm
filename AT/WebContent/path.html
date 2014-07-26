@@ -83,7 +83,7 @@
 			graphPath.getView().updateStyle = true;
 
 			var previous = graphPath.model.getStyle;
-
+			//set the style for edges and vertexes
 			graphPath.model.getStyle = function(cell) {
 				if (cell != null) {
 					var style = previous.apply(this, arguments);
@@ -163,7 +163,7 @@
 
 				return ''; //returning empty string for edges and other stuff
 			};
-			//setting style for vertexes
+			//setting default style for vertexes
 			var vStyle = graphPath.getStylesheet().getDefaultVertexStyle();
 			vStyle[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE;
 			vStyle[mxConstants.STYLE_IMAGE] = "images/router.png";
@@ -196,6 +196,7 @@
 	}
 	
 	function createCellOverlay(overlay,path,tooltip,dpid){
+		//shows all the flows installed on the switch
 		var overlay = new mxCellOverlay(new mxImage(
 				path, 26, 26), tooltip);
 		overlay.addListener(mxEvent.CLICK, function(sender, evt){
@@ -207,11 +208,7 @@
 					showDialogModal(tooltip+" "+dpid,new Date()+str);
 				}else{
 					alert(resp.details);
-				}
-				//mxUtils.alert(tooltip + '\nFlow update: ' + new Date()+ "\n"+"Ciao");
-				
-		//
-		
+				}		
 			});
 		});
 		
@@ -255,7 +252,7 @@
 				'</mxCell></link></root></mxGraphModel>'); */
 				
 				var x = doc.getElementsByTagName("switch");
-
+				//Fill the dropdown lists
 				for (i = 0; i < x.length; i++) {
 					if (x[i].getAttribute("type") == LEAF_TYPE) {
 						var element = document.getElementById("leaf_id");
@@ -329,35 +326,12 @@
 		$('#graph-pnl').css("visibility", "hidden");
 		$("#dPath").addClass("disabled");
 		$("#dPath").prop("disabled",true);
-		//var data = getDummies();
-		//console.log("data: "+data[0].status);
+		//get the path for the root and the leaf selected
 		$.getJSON("NetworkPath?src_dpid="+src+"&dst_dpid="+dst, function(data) {
 			if (data.status == "ok_path") {
 				graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 				xmlPath = data.path;
 				var doc = mxUtils.parseXml(xmlPath);
-				/* var doc = mxUtils.parseXml('<mxGraphModel>'+
-						'<root><mxCell id="0"/><mxCell id="1" parent="0"/>'+
-						'<switch dpid="00:00:16:d1:61:6a:85:49" id="2" ip="192.168.1.180" type="RELAY">'+
-						'<mxCell parent="1" vertex="1">'+
-						'<mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977664" y="348.6817188995533"/>'+
-						'</mxCell></switch>'+
-						'<switch dpid="00:00:82:f2:6a:f6:15:4a" id="3" ip="192.168.1.103" type="LEAF">'+
-						'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="344.6817188995533" y="179.34085944977664"/>'+
-						'</mxCell></switch>'+
-						'<switch dpid="00:00:72:a7:06:77:4a:48" id="4" ip="192.168.1.102" type="ROOT">'+
-						'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="179.34085944977667" y="10.0"/>'+
-						'</mxCell></switch><switch dpid="00:00:72:5b:2d:c5:15:46" id="5" ip="192.168.1.101" type="LEAF">'+
-						'<mxCell parent="1" vertex="1"><mxGeometry as="geometry" height="50.0" width="100.0" x="9.0" y="179.34085944977662"/>'+
-						'</mxCell></switch><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="6" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
-						'<mxCell edge="1" parent="1" source="4" target="3"><mxGeometry as="geometry" relative="1"/></mxCell></link>'+
-						'<link dstDpid="00:00:16:d1:61:6a:85:49" dstPort="0" id="7" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
-						'<mxCell edge="1" parent="1" source="4" target="2"><mxGeometry as="geometry" relative="1"/></mxCell>'+
-						'</link><link dstDpid="00:00:72:5b:2d:c5:15:46" dstPort="0" id="8" srcDpid="00:00:72:a7:06:77:4a:48" srcPort="0">'+
-						'<mxCell edge="1" parent="1" source="4" target="5"><mxGeometry as="geometry" relative="1"/></mxCell>'+
-						'</link><link dstDpid="00:00:82:f2:6a:f6:15:4a" dstPort="0" id="9" srcDpid="00:00:72:5b:2d:c5:15:46" srcPort="0">'+
-						'<mxCell edge="1" parent="1" source="5" target="3"><mxGeometry as="geometry" relative="1"/>'+
-						'</mxCell></link></root></mxGraphModel>');*/
 				var decoder = new mxCodec(doc);
 				$("#ipv6").val(data.external);
 				decoder.decode(doc.documentElement, graphPath.getModel());
@@ -401,9 +375,11 @@
 			console.log(req);
 			$("#loadingMaskP").css("visibility", "show");
 			$('#graph-pnl').css("visibility", "hidden");
+			//send a request in order to create a new path
 			$.post("NetworkPath", {"path" : JSON.stringify(req)}, function(data) {
 
 				if (data.status == "ok") {
+					//in case the path has been created shows the result on a new graph
 					console.log(data.path);
 					graphPath.removeCells(graphPath.getChildVertices(graphPath.getDefaultParent()));
 					
@@ -451,6 +427,7 @@
 		};
 		$("#loadingMaskP").css("visibility", "show");
 		$('#graph-pnl').css("visibility", "hidden");
+		//delete the path selected
 		$.post("NetworkPath", {"path" : JSON.stringify(req)}, function(data) {
 
 			if (data.status == "ok") {

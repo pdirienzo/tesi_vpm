@@ -85,10 +85,10 @@
  var controlOp = new Object(); //this is a shared object containing details about current control operation
  
  $(document).ready(function(){
-	 getHypervisor(true);
+	 getHypervisor(true); //get hypervisors list
 }); 
  
- function controlHypervisor(){
+ function controlHypervisor(){ 
 	 $("#vm_creation_body").hide();
 	 $("#vm_error_title").html("Loading <i class=\"fa fa-spinner fa-spin fa-lg\"></i>");
 	 $('#vm_creation_loader').show();
@@ -100,6 +100,7 @@
 	 }else if(event.target.name == "delVM"){
 		 controlOp.action = "delete";
 	 }
+	//send a request in order to start/delete/shutdown the VM
 	 $.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
 			 + "&autostart=" + controlOp.autostart, function(result){
      		if(result.result == "error"){
@@ -141,6 +142,7 @@
 			$("#vm_creation_body").hide();
 			$('#vm_creation_loader').show();
 			$("#vm_error").modal("show");
+			//sending a request to create a new Virtual Machines
 			$.getJSON("DomainControl?action="+controlOp.action+"&hypervisorId="+controlOp.hypervisor+"&guestName="+controlOp.guest
 					+"&iscsi="+controlOp.iscsi+"&autostart="+controlOp.autostart,function(result){
 				
@@ -162,6 +164,7 @@
 				 		});
 				 		
 				 	}
+				 	//refresh the tab
 				 	refreshTab(result.result);
 			});
 			
@@ -210,7 +213,7 @@
 	     		event.preventDefault();
 	     		controlOp.hypervisor = this.parentNode.id.split("_")[0];
 	     		controlOp.action = "create";
-	     		
+	     		//get ISCSI target lists
 	     		$.getJSON("ISCSISettings", function(response) {
 	     			if(response.status == "ok"){
 	     				var targets = response.data;
@@ -327,7 +330,7 @@
 	 }
  	
  	//$('#vm_error').on('hidden.bs.modal', function() {refreshTab(); })
- 	
+ 	//Utility function to reload the current tab
  	function refreshTab(result){
  		
  		$('#vm_error').on('hidden.bs.modal', function() {
@@ -346,11 +349,6 @@
 	<div id="hypervisormenu"></div>
 </div>
 
-<!-- <div id="vm_menu" class="ui-helper-hidden">
-	<button name="startVM" onclick="controlHypervisor()" style="width:'20px';" class="ui-state-disabled">Avvia VM</button>
-	<button name="shutVM" onclick="controlHypervisor()" style="width:'20px';" class="ui-state-disabled">Spegni VM</button>
-	<button name="stopVM" onclick="controlHypervisor()" style="width:'20px';">Elimina VM</button>
-</div> -->
 <div class="modal fade" id="vm_menu" tabindex="-1" role="dialog" aria-labelledby="vm_menu_title" aria-hidden="true">
   <div class="modal-dialog modal-sm">
     <div class="modal-content">
