@@ -1,9 +1,9 @@
 package it.unina.cini.platino.web.network.path;
 
 import it.unina.cini.platino.floodlight.FloodlightController;
+import it.unina.cini.platino.floodlight.FloodlightPort;
 import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
-import it.unina.cini.platino.network.types.Port;
 import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.web.network.path.types.VPMPathInfo;
 import it.unina.cini.platino.web.network.path.types.VPMPathInfoHolder;
@@ -124,7 +124,7 @@ public class DefaultVPMPathManager implements VPMPathManager{
 				//As VM are always there, just one rule is enough regardless
 				//of the number of paths traversing this switch
 				if(infos.getCounter() == 0 && infos.sw.type != OvsSwitch.Type.ROOT){
-					for(Port vnet : controller.getVnetPorts(infos.sw,portPrefix))
+					for(FloodlightPort vnet : controller.getVnetPorts(infos.sw,portPrefix))
 						infos.addVnetPort(vnet.number);
 
 					if(infos.getVnetNumber() > 0){ 

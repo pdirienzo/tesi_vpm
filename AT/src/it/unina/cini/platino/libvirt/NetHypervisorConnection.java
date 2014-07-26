@@ -1,6 +1,5 @@
 package it.unina.cini.platino.libvirt;
 
-import it.unina.cini.platino.db.Database;
 import it.unina.cini.platino.db.Hypervisor;
 
 import java.io.ByteArrayInputStream;
@@ -17,12 +16,21 @@ import org.libvirt.Network;
 
 /**
  * Same of HypervisorConnection, but supports a network definition too. 
- * Adding/starting/stopping/removing a vm using this class will automagically attach/detach the vm to/from the created network
- * As we are modifying some resources the connection estabilished by this class will always be read-write
+ * Adding/starting/stopping/removing a VM using this class will automagically attach/detach 
+ * the vm to/from the created network.
+ * As we are modifying some resources the connection made by this class will always 
+ * be read-write, so unlike HypervisorConnection class you cannot specify this aspect.
  * 
- * @author pasquale
- *
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
  */
+
 public class NetHypervisorConnection extends HypervisorConnection{
 	
 	private Network net;

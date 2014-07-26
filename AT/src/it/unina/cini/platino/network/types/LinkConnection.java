@@ -1,15 +1,30 @@
 package it.unina.cini.platino.network.types;
 
+import it.unina.cini.platino.floodlight.FloodlightPort;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+/**
+ * A JGraphT edge extension class to represent a VPM connection
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 public class LinkConnection extends DefaultWeightedEdge {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	private Port sourceP;
-	private Port targetP;
+	private FloodlightPort sourceP;
+	private FloodlightPort targetP;
 	public boolean isTree;	
 	
 	
@@ -27,11 +42,11 @@ public class LinkConnection extends DefaultWeightedEdge {
 	}*/
 	
 	//these setters can be called just by classes belonging to the same package
-	public void setSourceP(Port source){
+	public void setSourceP(FloodlightPort source){
 		this.sourceP = source;	
 	}
 	
-	public void setTargetP(Port target){
+	public void setTargetP(FloodlightPort target){
 		this.targetP = target;
 	}
 	
@@ -40,11 +55,11 @@ public class LinkConnection extends DefaultWeightedEdge {
 		return (OvsSwitch)super.getSource();
 	}
 	
-	public Port getSrcPort(){
+	public FloodlightPort getSrcPort(){
 		return this.sourceP;
 	}
 	
-	public Port getTargetPort(){
+	public FloodlightPort getTargetPort(){
 		return this.targetP;
 	}
 	

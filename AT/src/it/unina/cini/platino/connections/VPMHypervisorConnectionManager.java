@@ -23,6 +23,20 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
 import org.libvirt.LibvirtException;
 
+/**
+ * This class holds a reference to each hypervisor connection.
+ * It also starts a thread which will keep polling unavailable connections at specific
+ * time intervals so to notice any hypervisor returning online.
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 public class VPMHypervisorConnectionManager implements DatabaseListener{
 	
 	private static final int CONNECTION_TIMEOUT = 500;

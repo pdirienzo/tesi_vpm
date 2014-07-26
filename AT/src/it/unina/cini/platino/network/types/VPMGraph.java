@@ -1,5 +1,7 @@
 package it.unina.cini.platino.network.types;
 
+import it.unina.cini.platino.floodlight.FloodlightPort;
+
 import org.jgrapht.WeightedGraph;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 
@@ -19,8 +21,8 @@ ListenableUndirectedWeightedGraph<V, E>{
 		super(graph);
 	}
 
-	public LinkConnection addLinkConnection(V sourceVertex, Port sourcePort, 
-			V targetVertex, Port targetPort){
+	public LinkConnection addLinkConnection(V sourceVertex, FloodlightPort sourcePort, 
+			V targetVertex, FloodlightPort targetPort){
 		
 		LinkConnection l = (LinkConnection)super.addEdge(sourceVertex, targetVertex);
 		l.setSourceP(sourcePort);
@@ -39,8 +41,8 @@ ListenableUndirectedWeightedGraph<V, E>{
 			return null;*/
 	}
 
-	public LinkConnection addLinkConnection(V sourceVertex, Port sourcePort, 
-			V targetVertex, Port targetPort, boolean isTree){
+	public LinkConnection addLinkConnection(V sourceVertex, FloodlightPort sourcePort, 
+			V targetVertex, FloodlightPort targetPort, boolean isTree){
 
 		LinkConnection l = this.addLinkConnection(sourceVertex, sourcePort, targetVertex, targetPort);
 		l.isTree = isTree;

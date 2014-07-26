@@ -1,9 +1,9 @@
 package it.unina.cini.platino.web.network.events;
 
 import it.unina.cini.platino.floodlight.FloodlightController;
+import it.unina.cini.platino.floodlight.FloodlightPort;
 import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
-import it.unina.cini.platino.network.types.Port;
 import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.network.types.VPMGraphHolder;
 import it.unina.cini.platino.web.network.path.DefaultVPMPathManager;
@@ -127,7 +127,7 @@ public class VPMEventListener extends HttpServlet {
 				if(swInfos != null){
 					if(swInfos.sw.type != OvsSwitch.Type.ROOT){ //we are creating a new rule only if sw is not a root 
 						VM_OP vmOp = VM_OP.valueOf(event.getString("op"));
-						Port vnetPort = new Port(event.getString("vnet"));
+						FloodlightPort vnetPort = new FloodlightPort(event.getString("vnet"));
 						FloodlightController controller = FloodlightController.getDbController();
 						if(vmOp == VM_OP.ADD){
 							System.out.println("added a new vm "+vnetPort);

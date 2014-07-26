@@ -2,10 +2,10 @@ package it.unina.cini.platino.web.network;
 
 import it.unina.cini.platino.connections.VPMContextServerListener;
 import it.unina.cini.platino.floodlight.FloodlightController;
+import it.unina.cini.platino.floodlight.FloodlightPort;
 import it.unina.cini.platino.network.NetworkConverter;
 import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
-import it.unina.cini.platino.network.types.Port;
 import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.network.types.VPMGraphHolder;
 import it.unina.cini.platino.web.network.path.DefaultVPMPathManager;
@@ -512,7 +512,7 @@ public class NetworkTopology extends HttpServlet {
 						String srcPortName = computePortName(l.getSource().dpid,l.getTarget().dpid);
 						client.addPort(ovs, VPMContextServerListener.BR_NAME, srcPortName, Interface.Type.gre.name(),0,trunks,opts);
 
-						l.setSourceP(new Port(srcPortName,controller.getPortNumber(l.getSource(), srcPortName)));
+						l.setSourceP(new FloodlightPort(srcPortName,controller.getPortNumber(l.getSource(), srcPortName)));
 
 						//2. now the other one
 						currentDpid = l.getTarget().dpid;
@@ -522,7 +522,7 @@ public class NetworkTopology extends HttpServlet {
 						String targetPortName = computePortName(l.getTarget().dpid,l.getSource().dpid);
 						client.addPort(ovs, VPMContextServerListener.BR_NAME, targetPortName, Interface.Type.gre.name(),0,trunks,opts);
 
-						l.setTargetP(new Port(targetPortName,controller.getPortNumber(l.getTarget(), targetPortName)));
+						l.setTargetP(new FloodlightPort(targetPortName,controller.getPortNumber(l.getTarget(), targetPortName)));
 						//System.out.println("Creating "+computePortName(l.getSource().dpid,l.getTarget().dpid)+" on "+l.getSource());
 						//System.out.println("Creating "+computePortName(l.getTarget().dpid,l.getSource().dpid)+" on "+l.getTarget());
 

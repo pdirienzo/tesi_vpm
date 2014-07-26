@@ -1,8 +1,8 @@
 package it.unina.cini.platino.network;
 
+import it.unina.cini.platino.floodlight.FloodlightPort;
 import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
-import it.unina.cini.platino.network.types.Port;
 import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.network.types.OvsSwitch.Type;
 
@@ -24,6 +24,19 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.util.mxDomUtils;
 import com.mxgraph.view.mxGraph;
 
+/**
+ * Utility class used to convert network representations from/to JGraphT and mxGraph
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 public final class NetworkConverter {
 
 	private static OvsSwitch domToSwitch(Element el){
@@ -76,11 +89,11 @@ public final class NetworkConverter {
 			
 			LinkConnection link = null;
 			if(markTreeLinks)
-				link = myGraph.addLinkConnection(source, new Port(((Element)cell.getValue()).getAttribute("srcPort")), target, 
-					new Port(((Element)cell.getValue()).getAttribute("dstPort")), Boolean.valueOf(((Element)cell.getValue()).getAttribute("isTree")));
+				link = myGraph.addLinkConnection(source, new FloodlightPort(((Element)cell.getValue()).getAttribute("srcPort")), target, 
+					new FloodlightPort(((Element)cell.getValue()).getAttribute("dstPort")), Boolean.valueOf(((Element)cell.getValue()).getAttribute("isTree")));
 			else
-				link = myGraph.addLinkConnection(source, new Port(((Element)cell.getValue()).getAttribute("srcPort")), target, 
-						new Port(((Element)cell.getValue()).getAttribute("dstPort")));
+				link = myGraph.addLinkConnection(source, new FloodlightPort(((Element)cell.getValue()).getAttribute("srcPort")), target, 
+						new FloodlightPort(((Element)cell.getValue()).getAttribute("dstPort")));
 			
 			myGraph.setEdgeWeight(link, link.getSource().type.getValue() + link.getTarget().type.getValue());
 		}
@@ -423,14 +436,14 @@ public final class NetworkConverter {
 		myGraph.addVertex(h);
 		
 		LinkConnection[] conns = new LinkConnection[8];
-		conns[0] = myGraph.addLinkConnection(a, new Port("p1",1),b,new Port("p2",2));
-		conns[1] = myGraph.addLinkConnection(c, new Port("p2",2),b,new Port("p3",1));
-		conns[2] = myGraph.addLinkConnection(b, new Port("p3",1),d,new Port("p4",2));
-		conns[3] = myGraph.addLinkConnection(d, new Port("p1",4),e,new Port("p2",1));
-		conns[4] = myGraph.addLinkConnection(f, new Port("p1",4),b,new Port("p2",1));
-		conns[5] = myGraph.addLinkConnection(a, new Port("p5",5),f,new Port("p5",2));
-		conns[6] = myGraph.addLinkConnection(d, new Port("p6",7),g,new Port("p3",1));
-		conns[7] = myGraph.addLinkConnection(g, new Port("p6",7),h,new Port("p3",1));
+		conns[0] = myGraph.addLinkConnection(a, new FloodlightPort("p1",1),b,new FloodlightPort("p2",2));
+		conns[1] = myGraph.addLinkConnection(c, new FloodlightPort("p2",2),b,new FloodlightPort("p3",1));
+		conns[2] = myGraph.addLinkConnection(b, new FloodlightPort("p3",1),d,new FloodlightPort("p4",2));
+		conns[3] = myGraph.addLinkConnection(d, new FloodlightPort("p1",4),e,new FloodlightPort("p2",1));
+		conns[4] = myGraph.addLinkConnection(f, new FloodlightPort("p1",4),b,new FloodlightPort("p2",1));
+		conns[5] = myGraph.addLinkConnection(a, new FloodlightPort("p5",5),f,new FloodlightPort("p5",2));
+		conns[6] = myGraph.addLinkConnection(d, new FloodlightPort("p6",7),g,new FloodlightPort("p3",1));
+		conns[7] = myGraph.addLinkConnection(g, new FloodlightPort("p6",7),h,new FloodlightPort("p3",1));
 		
 		
 		VPMGraph<OvsSwitch, LinkConnection> myGraph2 = new VPMGraph<>(LinkConnection.class);
@@ -448,14 +461,14 @@ public final class NetworkConverter {
 		myGraph2.addVertex(h);
 		
 		LinkConnection[] conns2 = new LinkConnection[8];
-	    conns2[0] = myGraph2.addLinkConnection(a, new Port("p1",1),b,new Port("p2",2));
-		conns2[1] = myGraph2.addLinkConnection(c, new Port("p2",2),b,new Port("p3",1));
-		conns2[2] = myGraph2.addLinkConnection(b, new Port("p3",1),d,new Port("p4",2));
-		conns2[3] = myGraph2.addLinkConnection(d, new Port("p1",4),e,new Port("p2",1));
-		conns2[4] = myGraph2.addLinkConnection(f, new Port("p1",4),b,new Port("p2",1));
-		conns2[5] = myGraph2.addLinkConnection(a, new Port("p5",5),f,new Port("p5",2));
-	    conns2[6] = myGraph2.addLinkConnection(d, new Port("p6",7),g,new Port("p3",1));
-		conns2[7] = myGraph2.addLinkConnection(g, new Port("p6",7),h,new Port("p3",1));		
+	    conns2[0] = myGraph2.addLinkConnection(a, new FloodlightPort("p1",1),b,new FloodlightPort("p2",2));
+		conns2[1] = myGraph2.addLinkConnection(c, new FloodlightPort("p2",2),b,new FloodlightPort("p3",1));
+		conns2[2] = myGraph2.addLinkConnection(b, new FloodlightPort("p3",1),d,new FloodlightPort("p4",2));
+		conns2[3] = myGraph2.addLinkConnection(d, new FloodlightPort("p1",4),e,new FloodlightPort("p2",1));
+		conns2[4] = myGraph2.addLinkConnection(f, new FloodlightPort("p1",4),b,new FloodlightPort("p2",1));
+		conns2[5] = myGraph2.addLinkConnection(a, new FloodlightPort("p5",5),f,new FloodlightPort("p5",2));
+	    conns2[6] = myGraph2.addLinkConnection(d, new FloodlightPort("p6",7),g,new FloodlightPort("p3",1));
+		conns2[7] = myGraph2.addLinkConnection(g, new FloodlightPort("p6",7),h,new FloodlightPort("p3",1));		
 		
 		/*OvsSwitch b1 = new OvsSwitch("b","2");
 		OvsSwitch d1 = new OvsSwitch("d","4");

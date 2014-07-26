@@ -12,7 +12,21 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A class which gives access to an SQLLite DB. DB type can be changed
+ * by just changing the JDBC driver.
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 public class Database {
+	public static final String JDBC_DRIVER = "jdbc:sqlite:";
 	public static final String DEFAULT_DBPATH = "./data/vpm.db";
 	public static final String DATABASE = Database.class.getCanonicalName();
 	
@@ -48,7 +62,7 @@ public class Database {
 
 		try {
 			Class.forName("org.sqlite.JDBC");
-			connection = DriverManager.getConnection("jdbc:sqlite:"+dbPath);  
+			connection = DriverManager.getConnection(JDBC_DRIVER+dbPath);  
 			connection.setAutoCommit(true);
 
 			/*if(newDb) {

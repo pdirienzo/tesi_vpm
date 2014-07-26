@@ -1,10 +1,10 @@
 package it.unina.cini.platino.floodlight;
 
+import it.unina.cini.platino.connections.RestRequest;
 import it.unina.cini.platino.db.Controller;
 import it.unina.cini.platino.db.Database;
 import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
-import it.unina.cini.platino.network.types.Port;
 import it.unina.cini.platino.network.types.VPMGraph;
 
 import java.io.BufferedReader;
@@ -24,6 +24,19 @@ import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+/**
+ * A proxy class which grants interaction with an existing Floodlight controller.
+ * Actual communication is performed through REST APIs.
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 public class FloodlightController {
 
 	private String baseURL;
@@ -95,8 +108,8 @@ public class FloodlightController {
 		JSONArray result = RestRequest.getJSonArray(baseURL+"/vpm/topology/links/json");
 		for(JSONObject o : result){
 			jgraph.addLinkConnection(switches.get(o.getString("src-switch")),
-					new Port(o.getString("src-port")),switches.get(o.getString("dst-switch")),
-					new Port(o.getString("dst-port")),true); //if they are visible by the controller it means they are tree edges
+					new FloodlightPort(o.getString("src-port")),switches.get(o.getString("dst-switch")),
+					new FloodlightPort(o.getString("dst-port")),true); //if they are visible by the controller it means they are tree edges
 		}
 		return jgraph;
 	}
@@ -113,15 +126,15 @@ public class FloodlightController {
 		return res;
 	}
 	
-	public List<Port> getVnetPorts(OvsSwitch sw, String prefix) throws IOException{
+	public List<FloodlightPort> getVnetPorts(OvsSwitch sw, String prefix) throws IOException{
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
 		obj.put("port-name", "vnetx");
 		obj.put("port-prefix", prefix);
 		JSONObject res = RestRequest.postJson(baseURL+"/vpm/topology/portInfo/json",obj);
-		List<Port> vnets = new ArrayList<Port>();
+		List<FloodlightPort> vnets = new ArrayList<FloodlightPort>();
 		for(JSONObject o : res.getJSONArray("result"))
-			vnets.add(new Port(o.getString("port-name"),o.getInt("port-number")));
+			vnets.add(new FloodlightPort(o.getString("port-name"),o.getInt("port-number")));
 		
 		return vnets;
 	}

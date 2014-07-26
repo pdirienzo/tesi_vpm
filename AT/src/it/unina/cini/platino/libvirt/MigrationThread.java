@@ -20,6 +20,20 @@ import org.libvirt.LibvirtException;
 import org.opendaylight.ovsdb.lib.standalone.DefaultOvsdbClient;
 import org.opendaylight.ovsdb.lib.standalone.OvsdbException;
 
+/**
+ * A Thread whose task is to migrate a VM from an hypervisor to another. 
+ * It also performs a LIME-like algorithm to create a new path from root to new 
+ * leaf node.
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 public class MigrationThread extends Thread {
 
 	public static final int MIGRATION_IDLE = 0;
