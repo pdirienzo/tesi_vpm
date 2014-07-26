@@ -5,6 +5,20 @@ import it.unina.cini.platino.floodlight.FloodlightPort;
 import org.jgrapht.WeightedGraph;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 
+/**
+ * A class representing a VPM graph, made of OvsSwitch class as nodes and LinkConnection
+ * as links. It extends a JGraphT ListenableUndirectedWeightedGraph class so to be used
+ * to perform algorithms.
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 public class VPMGraph<V extends OvsSwitch, E extends LinkConnection> extends 
 ListenableUndirectedWeightedGraph<V, E>{
 

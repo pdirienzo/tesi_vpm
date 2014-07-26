@@ -37,7 +37,21 @@ import com.mxgraph.util.mxXmlUtils;
 import com.mxgraph.view.mxGraph;
 
 /**
- * Servlet implementation class GetNetworkTopology
+ * A servlet providing the user means to create and handle a network topology.
+ * It encapsulates mxGraph's server classes to correctly parse any topology client sends
+ * and makes use of the OVSDB-Standalone client class to actually create gre tunnels between
+ * switches. It also saves on a text file created topologies so to restore them if still
+ * valid.
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
  */
 @WebServlet("/NetworkTopology")
 public class NetworkTopology extends HttpServlet {

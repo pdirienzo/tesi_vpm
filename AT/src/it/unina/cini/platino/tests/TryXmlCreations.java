@@ -1,4 +1,4 @@
-package it.unina.cini.platino.tries;
+package it.unina.cini.platino.tests;
 
 import it.unina.cini.platino.db.Hypervisor;
 import it.unina.cini.platino.libvirt.HypervisorConnection;

@@ -14,7 +14,19 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
 
 /**
- * Servlet implementation class GetElapsedTime
+ * A servlet providing information about time taken to perform a specific migration.
+ * Said migration is identified by a lmID ( live migration ID) which has to be provided 
+ * as parameter by the client.
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
  */
 @WebServlet("/GetElapsedTime")
 public class GetElapsedTime extends HttpServlet {

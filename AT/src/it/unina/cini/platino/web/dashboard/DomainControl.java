@@ -5,9 +5,7 @@ import it.unina.cini.platino.db.Database;
 import it.unina.cini.platino.db.ISCSITarget;
 import it.unina.cini.platino.db.VolumeAllocation;
 import it.unina.cini.platino.libvirt.HypervisorConnection;
-import it.unina.cini.platino.libvirt.NetHypervisorConnection;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -34,7 +32,18 @@ import org.libvirt.LibvirtException;
 import org.libvirt.StoragePool;
 
 /**
- * Servlet implementation class DomainControl
+ * A servlet performing control operations such as creating, deleting, starting and stopping
+ * a virtual machine.
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
  */
 @WebServlet("/DomainControl")
 public class DomainControl extends HttpServlet {

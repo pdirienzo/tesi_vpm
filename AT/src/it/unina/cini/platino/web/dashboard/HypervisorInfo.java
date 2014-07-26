@@ -3,6 +3,7 @@ package it.unina.cini.platino.web.dashboard;
 import it.unina.cini.platino.connections.VPMHypervisorConnectionManager;
 import it.unina.cini.platino.db.Hypervisor;
 import it.unina.cini.platino.libvirt.NetHypervisorConnection;
+import it.unina.cini.platino.web.dashboard.utility.GetHypervisorStatsThread;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,7 +24,18 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * Servlet implementation class HypervisorInfo
+ * A servlet providing information about hypervisors. To be as more efficient as possible,
+ * for each hypervisor connection a new thread from a pool is instantiated.
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
  */
 @WebServlet("/HypervisorInfo")
 public class HypervisorInfo extends HttpServlet {
