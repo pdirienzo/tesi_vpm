@@ -5,8 +5,8 @@ import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
 import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.network.types.VPMGraphHolder;
-import it.unina.cini.platino.web.network.path.DefaultVPMPathManager;
-import it.unina.cini.platino.web.network.path.types.VPMPathInfo;
+import it.unina.cini.platino.web.network.path.backend.DefaultVPMPathManager;
+import it.unina.cini.platino.web.network.path.backend.VPMPathInfo;
 
 import java.io.IOException;
 import java.util.Iterator;

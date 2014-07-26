@@ -1,14 +1,10 @@
-package it.unina.cini.platino.web.network.path;
+package it.unina.cini.platino.web.network.path.backend;
 
 import it.unina.cini.platino.floodlight.FloodlightController;
 import it.unina.cini.platino.floodlight.FloodlightPort;
 import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
 import it.unina.cini.platino.network.types.VPMGraph;
-import it.unina.cini.platino.web.network.path.types.VPMPathInfo;
-import it.unina.cini.platino.web.network.path.types.VPMPathInfoHolder;
-import it.unina.cini.platino.web.network.path.types.VPMSwitchInfo;
-import it.unina.cini.platino.web.network.path.types.VPMSwitchInfoHolder;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -20,6 +16,31 @@ import org.jgrapht.Graphs;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.json.JSONObject;
 
+/**
+ * A default PathManager implementation for lazy bones. It is made of two parts:
+ * -basic part
+ * --automatically implemented. If no VMs are present on a switch along specified path 
+ * --it will install a flow which just makes application related packets flow to next switch,
+ * --while if one or more application related VM (recognized by its interface name) is on that 
+ * --switch it will install two flows: one to direct packets to those VMs and one from VMs
+ * --to next switch.
+ * 
+ * -extend part
+ * --flow match fields decided by the user through a json file present in the "flows_extended"
+ * --folder. By altering match files the user can identify application related flows to which
+ * --apply the basic part.
+ * 
+ * Note that this implementation of PathManager just works for the Floodlight controller.
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 public class DefaultVPMPathManager implements VPMPathManager{
 	
 	private VPMSwitchInfoHolder switchInfos;

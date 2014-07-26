@@ -6,8 +6,8 @@ import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
 import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.network.types.VPMGraphHolder;
-import it.unina.cini.platino.web.network.path.DefaultVPMPathManager;
-import it.unina.cini.platino.web.network.path.types.VPMSwitchInfo;
+import it.unina.cini.platino.web.network.path.backend.DefaultVPMPathManager;
+import it.unina.cini.platino.web.network.path.backend.VPMSwitchInfo;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -21,7 +21,18 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
 
 /**
- * Servlet implementation class VPMToleranceManager
+ * A servlet acting as a listener for the Floodlight controller module.
+ * It receives events and performs maintenance operations.
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
  */
 @WebServlet("/VPMEventListener")
 public class VPMEventListener extends HttpServlet {
@@ -97,6 +108,13 @@ public class VPMEventListener extends HttpServlet {
 		System.out.println("Received  "+event.toString());
 		switch(Event.valueOf(event.getString("type"))){
 
+		/*TODO fault handling
+		 * An automatic system should verify if there is any redundancy link
+		 * to use to restore the network. Any existing path should be kept.
+		 * If it is not possible to restore the topology anymore the existing
+		 * graph should be invalidated and a notify should be sent to the client
+		 * 
+		 */
 		case TOPOLOGY:
 			VPMGraph<OvsSwitch, LinkConnection> network = ((VPMGraphHolder)getServletContext().getAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER)).getGraph();
 			if(network != null){

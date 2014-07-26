@@ -16,7 +16,17 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * Servlet implementation class ISCSISettings
+ * A servlet allowing the user to get and set ISCSI related data from/into the Database
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
  */
 @WebServlet("/ISCSISettings")
 public class ISCSISettings extends HttpServlet {

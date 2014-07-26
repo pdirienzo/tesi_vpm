@@ -1,13 +1,26 @@
-package it.unina.cini.platino.web.network.path;
+package it.unina.cini.platino.web.network.path.backend;
 
 import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
 import it.unina.cini.platino.network.types.VPMGraph;
-import it.unina.cini.platino.web.network.path.types.VPMPathInfo;
-import it.unina.cini.platino.web.network.path.types.VPMSwitchInfo;
 
 import java.io.IOException;
 
+/**
+ * Interface which should be implemented by any class wanting to implement flow
+ * installations among switches. Once you do your nicely custom PathManager implementation
+ * you will have to register it in the VPM property file.
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 public interface VPMPathManager {
 	
 	public static final String VPM_PATH_MANAGER = "PathManager";

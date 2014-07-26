@@ -14,6 +14,19 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
 
 
+/**
+ * A servlet allowing the user to insert hypervisors related data into the Database
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
+ */
 @WebServlet("/AddHypervisor")
 public class AddHypervisor extends HttpServlet {
 	private static final long serialVersionUID = 1L;

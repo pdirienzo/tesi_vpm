@@ -5,7 +5,8 @@ import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
 import it.unina.cini.platino.network.types.VPMGraph;
 import it.unina.cini.platino.network.types.VPMGraphHolder;
-import it.unina.cini.platino.web.network.path.types.VPMPathInfo;
+import it.unina.cini.platino.web.network.path.backend.VPMPathInfo;
+import it.unina.cini.platino.web.network.path.backend.VPMPathManager;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -25,7 +26,19 @@ import com.mxgraph.io.mxCodec;
 import com.mxgraph.util.mxXmlUtils;
 
 /**
- * Servlet implementation class VPMPathManager
+ * A servlet accepting path requestes. By "path request" we mean a flow between the root
+ * and an existing leaf node. It makes use of a PathManager implementation to actually
+ * build flows.
+ * 
+ * 
+ * <p> 
+ * Copyright (C) 2014 University of Naples. All Rights Reserved.
+ * <p>
+ * This program is distributed under GPL Version 2.0, WITHOUT ANY WARRANTY
+ * 
+ * @author <a href="mailto:p.dirienzo@studenti.unina.it">p.dirienzo@studenti.unina.it</a>, 
+ * <a href="mailto:enr.demaio@studenti.unina.it">enr.demaio@studenti.unina.it</a>
+ * @version 1.0
  */
 @WebServlet("/NetworkPath")
 public class NetworkPath extends HttpServlet {
