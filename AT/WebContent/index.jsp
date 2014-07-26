@@ -1,7 +1,11 @@
+<!-- This Project is copyright of Università degli Studi di Napoli Federico II 
+	Author: Enrico De Maio, Pasquale Di Rienzo
+	Supervisor: Simon Pietro Romano
+ -->
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Live migration</title>
+<title>Virtual Puppet Master</title>
 <link rel="icon" type="image/x-icon" href="images/vpmicon.ico" />
 <link href="css/smoothness/jquery-ui-1.10.4.css" rel="stylesheet" />
 <link href="css/jquery.switchButton.css" rel="stylesheet" />
