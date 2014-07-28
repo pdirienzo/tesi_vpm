@@ -137,6 +137,14 @@ public class RestRequest {
 		}
 	}
 	
+	/**
+	 * Workaround in order to implement a Delete with body request by making use
+	 * of apache APIs as this request type is not explicitly supported
+	 * 
+	 * @author <a href="mailto:p.dirienzo@studenti.unina.it">Pasquale Di Rienzo</a>, 
+	 * <a href="mailto:enr.demaio@studenti.unina.it">Enrico De Maio</a>
+	 *
+	 */
 	private static class HttpDeleteWithBody extends HttpPost {
 		public HttpDeleteWithBody(String uri) {
 			super(uri);

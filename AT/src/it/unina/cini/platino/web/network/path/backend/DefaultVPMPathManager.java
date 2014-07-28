@@ -26,7 +26,7 @@ import org.json.JSONObject;
  * --to next switch.
  * 
  * -extend part
- * --flow match fields decided by the user through a json file present in the "flows_extended"
+ * --flow match fields decided by the user through a json file present in the "vpm_path_plugin"
  * --folder. By altering match files the user can identify application related flows to which
  * --apply the basic part.
  * 

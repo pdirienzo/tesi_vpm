@@ -14,7 +14,7 @@
 	<entry key="warning_treshold">60.0</entry>
 	<entry key="danger_treshold">90.0</entry>
 	
-	<entry key="path_manager_class">it.unina.cini.platino.web.network.path.DefaultVPMPathManager</entry>
+	<entry key="path_manager_class">it.unina.cini.platino.web.network.path.backend.DefaultVPMPathManager</entry>
 	
 	
 </properties>
