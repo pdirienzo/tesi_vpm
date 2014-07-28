@@ -6,10 +6,18 @@ import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
 import it.unina.cini.platino.network.types.VPMGraph;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+
+import oracle.jrockit.jfr.tools.ConCatRepository;
 
 import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
@@ -42,6 +50,8 @@ import org.json.JSONObject;
  * @version 1.0
  */
 public class DefaultVPMPathManager implements VPMPathManager{
+	
+	private static final String EXTENDED_FILEPATH = "vpm_path_plugin/Match.json";
 	
 	private VPMSwitchInfoHolder switchInfos;
 	private VPMPathInfoHolder pathInfos;
@@ -104,13 +114,24 @@ public class DefaultVPMPathManager implements VPMPathManager{
 	}
 	
 	
-	
 	public void uninstallPath(String rootDpid, String leafDpid) throws IOException{
 		VPMPathInfo info = getPath(rootDpid, leafDpid);
 		if(info != null){
 			deleteFlows(info.path);
 			pathInfos.remove(computePathName(rootDpid, leafDpid));
 		}
+	}
+	
+	private static JSONObject constructMatchingFlow() throws IOException{
+		JSONObject basicFlow = new JSONObject()
+		.put("cookie", (new Random()).nextInt(Integer.MAX_VALUE))
+		.put("priority", "100")
+		.put("active", "true");
+		
+		byte[] jsonData = Files.readAllBytes(Paths.get(EXTENDED_FILEPATH));
+		
+		JSONObject extended = new JSONObject(new String(jsonData));
+		return basicFlow.add(extended);
 	}
 	
 	private void addFlows(GraphPath<OvsSwitch,LinkConnection> jpath, String externalBcast, String portPrefix) throws IOException{
@@ -125,12 +146,12 @@ public class DefaultVPMPathManager implements VPMPathManager{
 			//-dpid 
 			//-ingress port (not always)
 			//-output rule
-			JSONObject basicFlow = new JSONObject()
+			JSONObject basicFlow = constructMatchingFlow();/*new JSONObject()
 			.put("cookie", (new Random()).nextInt())
 			.put("priority", "100")
 			.put("dst-ip", "10.0.0.255")
 			.put("ether-type", "0x0800")
-			.put("active", "true");
+			.put("active", "true");*/
 			
 			try{
 				VPMSwitchInfo infos = switchInfos.get(nodes.get(i).dpid);
@@ -218,15 +239,22 @@ public class DefaultVPMPathManager implements VPMPathManager{
 			VPMSwitchInfo infos = switchInfos.get(nodes.get(i).dpid);
 			
 			try{
+				/*new JSONObject()
+				.put("cookie", (new Random()).nextInt())
+				.put("priority", "100")
+				.put("dst-ip", "10.0.0.255")
+				.put("ether-type", "0x0800")
+				.put("active", "true");*/
 				
-				JSONObject basicFlow = new JSONObject()
+				JSONObject basicFlow = constructMatchingFlow();/*new JSONObject()
 				.put("switch", infos.sw.dpid)
 				.put("cookie", (new Random()).nextInt())
 				.put("priority", "100")
 				.put("dst-ip", "10.0.0.255")
 				.put("ether-type", "0x0800")
-				.put("active", "true");
+				.put("active", "true");*/
 				
+				basicFlow.put("switch", infos.sw.dpid);
 				
 				if(infos.getCounter() > 1){ //more than one path, we have to remove ports and rewrite rules
 						OvsSwitch ovsDst = nodes.get(i+1); //getting next switch 

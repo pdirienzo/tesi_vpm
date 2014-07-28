@@ -107,6 +107,35 @@ public class JSONObject {
      */
      private static HashMap keyPool = new HashMap(keyPoolSize);
 
+     
+     public void printContents(){
+    	Iterator it = this.keys();
+    	System.out.println("{");
+ 	    while (it.hasNext()) {
+ 	    	String key = (String)it.next();
+ 	    	System.out.println("\""+key+"\":\""+this.get(key)+"\",");
+ 	        it.remove(); // avoids a ConcurrentModificationException
+ 	    }
+ 	   System.out.println("}");
+     }
+     /**
+      * Adds another JSON object's values to this object. 
+      * In case some fields have same name, former object's ones will be overridden
+      * @param o
+      * @return
+      */
+     public JSONObject add(JSONObject o){
+    	 Iterator it = o.keys();
+    	    while (it.hasNext()) {
+    	    	String key = (String)it.next();
+    	    	this.put(key, o.get(key));
+    	        it.remove(); // avoids a ConcurrentModificationException
+    	    }
+    	    
+    	return this;
+     }
+     
+     
     /**
      * JSONObject.NULL is equivalent to the value that JavaScript calls null,
      * whilst Java's null is equivalent to the value that JavaScript calls
@@ -1545,6 +1574,8 @@ public class JSONObject {
      public Writer write(Writer writer) throws JSONException {
         return this.write(writer, 0, 0);
     }
+     
+     
 
 
     static final Writer writeValue(Writer writer, Object value,
@@ -1642,4 +1673,6 @@ public class JSONObject {
             throw new JSONException(exception);
         }
      }
+    
+    
 }

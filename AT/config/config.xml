@@ -15,6 +15,7 @@
 	<entry key="danger_treshold">90.0</entry>
 	
 	<entry key="path_manager_class">it.unina.cini.platino.web.network.path.backend.DefaultVPMPathManager</entry>
-	
+	<entry key="path_plugin_web_frontend">match_edit.html</entry>
+	<entry key="path_plugin_web_frontend_title">Match Rules</entry>
 	
 </properties>

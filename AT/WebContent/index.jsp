@@ -117,7 +117,17 @@
 					<li><a href="migration.html">Migration</a></li>
 					<li><a href="ovs_network.html">Networking</a></li>
 					<li><a href="path.html">Path</a></li>
-					<li><a href="settingsBootstrap.html">Setting</a></li> 
+					<li><a href="settingsBootstrap.html">Setting</a></li>
+					
+					<% String addition = props.getProperty("path_plugin_web_frontend"); 
+					   if(!addition.equals("")){
+						   String title = props.getProperty("path_plugin_web_frontend_title");
+					%>
+					   <li><a href="<%=addition%>"><%=title %></a></li>
+					<%	   
+					   }
+					%> 
+					
 				</ul>
 			</div>
 		</div>
