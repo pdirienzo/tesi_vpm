@@ -51,7 +51,7 @@ import org.json.JSONObject;
  */
 public class DefaultVPMPathManager implements VPMPathManager{
 	
-	private static final String EXTENDED_FILEPATH = "vpm_path_plugin/Match.json";
+	public static final String EXTENDED_FILEPATH = "vpm_path_plugin/Match.json";
 	
 	private VPMSwitchInfoHolder switchInfos;
 	private VPMPathInfoHolder pathInfos;
