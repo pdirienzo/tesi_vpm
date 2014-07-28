@@ -1,209 +1,181 @@
 <!--  Script part -->
 
 <script>
-	$("#set-controller-dialog").dialog({
-		title : "Modifica impostazioni controller",
-		buttons : [ {
-			text : "Applica",
-			click : function() {
-				applyControllerSettings();
+	function getDefault(){
+		$.getJSON("ChangeExtended",function(response) {
+			if(response.length > 0 ){
+				var html="";
+				for (i = 0; i < response.length; i++) {
+					var obj = response[i];
+					for(var key in obj){
+			            $("#match-"+key).val(obj[key]);
+			        }
+				}
 			}
-		}, {
-			text : "Annulla",
-			click : function() {
-				$(this).dialog("close");
+			else {
+				showDialog2("Info ","No previous field inserted");
 			}
-		} ],
-		autoOpen : false,
-		hide : "explode",
-		modal : true
-	});
-
-	$("#set-controller").button().click(function() {
-		$("#set-controller-dialog").dialog("open");
-	});
-
-	$("#add-host-dialog").dialog({
-		title : "Aggiunta Hypervisor",
-		buttons : [ {
-			text : "Aggiungi",
-			click : function() {
-				//addNewHypervisor();
-				$('#hypervisorform').submit();
-			}
-		}, {
-			text : "Annulla",
-			click : function() {
-				$(this).dialog("close");
-			}
-		} ],
-		autoOpen : false,
-		hide : "explode",
-		modal : true
-	});
-
-	$("#addNewHypervisor").button().click(function() {
-		$("#add-host-dialog").dialog("open");
-	});
-
-	
-	function applyControllerSettings() {
-		ip = document.getElementById("set-hostname").value;
-		port = document.getElementById("set-port").value;
-		$.getJSON("AddController?ip=" + ip + "&port=" + port,
-				function(response) {
-					alert(response.status);
-					getControllerSettings();
-					$("#set-controller-dialog").dialog("close");
-
-				});
-	}
-
-	function addNewHypervisor() {
-		username = document.getElementById("addhost-username").value;
-		host = document.getElementById("addhost-hostname").value;
-		port = document.getElementById("addhost-port").value;
-		$.getJSON("AddHypervisor?username=" + username + "&ip=" + host
-				+ "&port=" + port, function(response) {
-			alert(response.status);
-			$("#add-host-dialog").dialog("close");
-			getHypervisorSettings();
-
 		});
 	}
-
-	function removeHypervisor(event) {
-
-		hypervisor = event.target.id;
-
-		/*$.getJSON("DeleteHypervisor?hostname=" + hypervisor,
-				function(response) {
-					getHypervisorSettings();
-
-				});*/
-		
+	
+	var dataToSend=new Object();
+	
+	function validateTextBoxes()
+    {
+		var validated=false;
+        $("#match-table").find("input").each( function(){
+        	var currentId = $(this).attr('id');
+        	if ( currentId.indexOf("ip") >=0 )
+            {
+        		if(!$(this).val().match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/)){
+                	$(this).css("border-color","red");
+                	validated=false;
+                }else if(currentId.indexOf("src")>=0){
+                	$(this).css("border-color","green");
+                	dataToSend.srcip=$(this).val();
+                	validated=true;
+                }else if(currentId.indexOf("dst")>=0){
+                	$(this).css("border-color","green");
+                	dataToSend.dstip=$(this).val();
+                	validated=true;
+                }
+            }
+        	else if( currentId.indexOf("mac") >= 0 && ($(this).val() != "")){
+        		validated=true;
+        		if(currentId.indexOf("src")>=0){
+                	$(this).css("border-color","green");
+                	dataToSend.srcmac=$(this).val();
+                }else if(currentId.indexOf("dst")>=0){
+                	$(this).css("border-color","green");
+                	dataToSend.dstmac=$(this).val();
+                }
+        	}
+        	else if(currentId.indexOf("port") >= 0&& ($(this).val() != "")){
+        		if(currentId.indexOf("src")>=0){
+                	$(this).css("border-color","green");
+                	dataToSend.srcmac=$(this).val();
+                }else if(currentId.indexOf("dst")>=0){
+                	$(this).css("border-color","green");
+                	dataToSend.dstmac=$(this).val();
+                }
+        	}
+        	else if(currentId.indexOf("ether") >= 0&& ($(this).val() != "")){
+        		validated=true;
+        		dataToSend.ether=$(this).val();
+        	}
+			else if(currentId.indexOf("protocol") >= 0&& ($(this).val() != "")){
+        		validated=true;
+        		dataToSend.protocol=$(this).val();
+        	}
+        });
+        return validated;
+    }
+	
+	function setField(){
+		if(validateTextBoxes()){
+			console.log(JSON.stringify(dataToSend));
+			$.post("NetworkPath", {"extended" : JSON.stringify(dataToSend)}, function(result) {
+				console.log("result: "+result);
+			},"json");
+		}
 	}
 	
+	function resetField(){
+		    $("#match-table").find("input[type=text], textarea").removeAttr("style").val("");
+	}
+	
+	//getDefault();
 </script>
 
 <!--  HTML PART -->
 <link href="css/settings_style.css" rel="stylesheet" />
 
-<div id="box">
-
-	<%@page import="it.unina.cini.platino.db.Controller"%>
-	<%@page import="it.unina.cini.platino.db.Database"%>
-	<%@page import="it.unina.cini.platino.db.Hypervisor" %>
-	<%@page import="java.util.List" %>
-	
-	<% 
-	Database d = new Database();
-	d.connect();
-	
-	Controller c = d.getController();
-	List<Hypervisor> hypervisors = d.getAllHypervisors();
-	d.close();
-	
-	String hostname;
-	String port;
-	String webui;
-	
-	if(c!= null){
-		hostname = c.getHostAddress();
-		port = String.valueOf(c.getPort());
-		webui = "http://"+c.getHostAddress()+":8080/ui/index.html";
-	}else{
-		hostname = "Non configurato";
-		port = "Non configurato";
-		webui = "Non configurato";
-	}
-	%>
-	
-	
-	<div id="controller-box" class="cent">
-		<h3>Impostazioni Controller Openflow</h3>
-		<table>
-			<tr>
-				<td><b>Hostname</b></td>
-				<td id="current-controller-hostname"><%=hostname%></td>
-			</tr>
-			<tr>
-				<td><b>Port</b></td>
-				<td id="current-controller-port"><%=port%></td>
-			</tr>
-			<tr>
-				<td><b>Floodlight WebUi</b></td>
-				<td id="current-controller-webui"><%=webui %></td>
-			</tr>
-		</table>
-		<br>
-		<button id="set-controller">Modifica</button>
-
-		<!--  Message Box (Hidden by default) -->
-		<div id="set-controller-dialog" title="Set Controller" style="">
-			<h3>Impostazioni Openflow Controller</h3>
-			<label for="set-hostname">Hostname</label><br> <input
-				id="set-hostname" type="text" value="localhost" /><br> <label
-				for="set-port">Port</label><br> <input id="set-port"
-				type="text" value="8080" />
+<div class="container">
+	<div class="row">
+		<div class="offset3 span6">
+			<table id="match-table" cellspacing="8" class="table table-bordered table-hover">
+						<thead style="background-color: #CCC">
+					<tr>
+						<th>Field Name</th>
+						<th>Value</th>
+					</tr>
+				</thead>
+				<tbody id="match-list">
+					<tr>
+						<td>
+						<label class="control-label">src-ip</label>
+						</td>
+						<td>
+						<input id="match-src-ip" type="text" class="form-control" placeholder="Src IP Address">
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<label class="control-label">dst-ip</label>
+						</td>
+						<td>
+						<input id="match-dst-ip" type="text" class="form-control" placeholder="Ds IP Address">
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<label class="control-label">src-mac</label>
+						</td>
+						<td>
+						<input id="match-src-mac" type="text" class="form-control" placeholder="Src Mac Address">
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<label class="control-label">dst-mac</label>
+						</td>
+						<td>
+						<input id="match-dst-mac" type="text" class="form-control" placeholder="Dst Mac Address">
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<label  class="control-label">src-port</label>
+						</td>
+						<td>
+						<input id="match-src-port" type="text" class="form-control" placeholder="Src Port Number">
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<label class="control-label">dst-port</label>
+						</td>
+						<td>
+						<input id="match-dst-port" type="text" class="form-control" placeholder="Dst Port Number">
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<label class="control-label">protocol</label>
+						</td>
+						<td>
+						<input id="match-protocol" type="text" class="form-control" placeholder="0x0000">
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<label class="control-label">ether-type</label>
+						</td>
+						<td>
+						<input id="match-ether" type="text" class="form-control" placeholder="0x0000">
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<button type="button" id="btnSet" class="btn btn-success" onclick="setField()">Create</button>
+						</td>
+						<td>
+						<button type="button" id="btnReset" class="btn btn-danger" onclick="resetField()">Reset</button>
+						</td>
+					</tr>			
+				</tbody>
+			</table>
 		</div>
-
-	</div>
-
-	<br>
-	<hr>
-	<br>
-
-	<div id="hypervisors-box" class="cent">
-		<h3>Hypervisors Registrati</h3>
-		<table id="hyper-table" cellspacing="10"
-			class="ui-widget ui-widget-content">
-			<thead>
-				<tr>
-					<th>Username</th>
-					<th>Hostname</th>
-					<th>Port</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody id="Hypervisor-list">
-			<% for(Hypervisor h : hypervisors){ %>
-				<tr>
-					<td><%=h.getName()%></td>
-					<td><%=h.getHostname()%></td>
-					<td><%=h.getPort()%></td>
-					<td><button id="<%=h.getHostname()%>" onclick="removeHypervisor(event);">Elimina</button></td>
-				</tr>
-			<% } %>
-			</tbody>
-		</table>
-		<br>
-		<button id="addNewHypervisor">Aggiungi</button>
-
-		<!--  Message Box (Hidden by default) -->
-		<div id="add-host-dialog" title="Aggiunta Hypervisor" style="">
-			<h3>Aggiunta Hypervisor</h3>
-			<form id="hypervisorform" action="/AT/prova.jsp" method="POST">
-			
-			<label for="addhost-username">Username</label><br> <input
-				id="addhost-username" type="text" value="user" /><br> <label
-				for="addhost-hostname">Host</label><br> <input
-				id="addhost-hostname" type="text" value="localhost" /> <label
-				for="addhost-port">Port</label><br> <input id="addhost-port"
-				type="text" value="16514" />
-			
-			</form>
-		</div>
-
-	</div>
-	
-	<br>
-	<hr>
-	<br>
-	
-	<div id="settings-box" class="cent">
-		<h3>Altri settaggi</h3>
-		
 	</div>
 </div>
 
