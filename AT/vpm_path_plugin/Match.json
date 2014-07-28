@@ -1,0 +1,11 @@
+{
+	"active":"true",
+	"src-ip":"0.0.0.0",
+	"dst-ip":"0.0.0.0",
+	"src-mac":"00:00:00:00:00:00",
+	"dst-mac":"00:00:00:00:00:00",
+	"src-port":"-1",
+	"dst-port":"-1",
+	"protocol":"0x0000",
+	"ether-type":"0x0000"
+}
