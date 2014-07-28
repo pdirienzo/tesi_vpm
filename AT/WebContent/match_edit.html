@@ -11,7 +11,7 @@
 				
 			}
 			else {
-				showDialog2("Info ","No previous field inserted");
+				showDialog2("Info <i class=\"fa fa-warning fa-lg\"></i>","No previous field inserted");
 			}
 		});
 	}
@@ -25,18 +25,20 @@
         	var currentId = $(this).attr('id');
         	if ( currentId.indexOf("ip") >=0 )
             {
-        		if(!$(this).val().match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/)){
-                	$(this).css("border-color","red");
-                	validated=false;
-                }else if(currentId.indexOf("src")>=0){
-                	$(this).css("border-color","green");
-                	dataToSend["src-ip"]=$(this).val();
-                	validated=true;
-                }else if(currentId.indexOf("dst")>=0){
-                	$(this).css("border-color","green");
-                	dataToSend["dst-ip"]=$(this).val();
-                	validated=true;
-                }
+        		if($(this).val() != ""){
+	        		if(!$(this).val().match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/)){
+	                	$(this).css("border-color","red");
+	                	validated=false;
+	                }else if(currentId.indexOf("src")>=0){
+	                	$(this).css("border-color","green");
+	                	dataToSend["src-ip"]=$(this).val();
+	                	validated=true;
+	                }else if(currentId.indexOf("dst")>=0){
+	                	$(this).css("border-color","green");
+	                	dataToSend["dst-ip"]=$(this).val();
+	                	validated=true;
+	                }
+        		}
             }
         	else if( currentId.indexOf("mac") >= 0 && ($(this).val() != "")){
         		validated=true;
@@ -57,12 +59,14 @@
                 	dataToSend["dst-port"]=$(this).val();
                 }
         	}
-        	else if(currentId.indexOf("ether") >= 0&& ($(this).val() != "")){
+        	else if(currentId.indexOf("ether") >= 0 && ($(this).val() != "")){
         		validated=true;
+        		$(this).css("border-color","green");
         		dataToSend["ether-type"]=$(this).val();
         	}
-			else if(currentId.indexOf("protocol") >= 0&& ($(this).val() != "")){
+			else if(currentId.indexOf("protocol") >= 0 && ($(this).val() != "")){
         		validated=true;
+        		$(this).css("border-color","green");
         		dataToSend["protocol"]=$(this).val();
         	}
         });
@@ -74,6 +78,7 @@
 			console.log(JSON.stringify(dataToSend));
 			$.post("ChangeExtended", {"extended" : JSON.stringify(dataToSend)}, function(result) {
 				console.log("result: "+result);
+				showDialog2("Info <i class=\"fa fa-info fa-lg\"></i>",result.status);
 			},"json");
 		}
 	}
