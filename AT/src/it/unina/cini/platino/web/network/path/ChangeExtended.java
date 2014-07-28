@@ -2,6 +2,7 @@ package it.unina.cini.platino.web.network.path;
 
 import it.unina.cini.platino.web.network.path.backend.DefaultVPMPathManager;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -39,6 +40,24 @@ public class ChangeExtended extends HttpServlet {
     public ChangeExtended() {
         super();
         // TODO Auto-generated constructor stub
+    }
+    
+    @Override
+    public void init() throws ServletException {
+    	super.init();
+    	File filepath = new File(DefaultVPMPathManager.EXTENDED_FILEPATH);
+    	if(!(filepath).exists()){
+    		filepath.getParentFile().mkdir();
+    		try {
+				PrintWriter pw = new PrintWriter(filepath);
+				pw.println("{}");
+				pw.flush();
+				pw.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
     }
 
 	/**
