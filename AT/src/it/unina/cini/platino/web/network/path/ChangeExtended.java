@@ -62,12 +62,14 @@ public class ChangeExtended extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		JSONObject jRes = new JSONObject();
 		try{
+			System.out.println(request.getParameter("extended"));
 			PrintWriter pw = new PrintWriter(DefaultVPMPathManager.EXTENDED_FILEPATH);
 		
 			pw.println(request.getParameter("extended"));
 			pw.flush();
 			pw.close();
 			jRes.put("status", "ok");
+			throw new IOException("prova");
 		}catch(IOException ex){
 			jRes.put("status", "error");
 			jRes.put("details", ex.getMessage());

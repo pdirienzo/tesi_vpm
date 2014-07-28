@@ -3,14 +3,12 @@
 <script>
 	function getDefault(){
 		$.getJSON("ChangeExtended",function(response) {
-			if(response.length > 0 ){
-				var html="";
-				for (i = 0; i < response.length; i++) {
-					var obj = response[i];
-					for(var key in obj){
-			            $("#match-"+key).val(obj[key]);
-			        }
-				}
+			if(response){
+				var obj = response;
+				for(var key in obj){
+			    	$("#match-"+key).val(obj[key]);
+			   	}
+				
 			}
 			else {
 				showDialog2("Info ","No previous field inserted");
@@ -32,11 +30,11 @@
                 	validated=false;
                 }else if(currentId.indexOf("src")>=0){
                 	$(this).css("border-color","green");
-                	dataToSend.srcip=$(this).val();
+                	dataToSend["src-ip"]=$(this).val();
                 	validated=true;
                 }else if(currentId.indexOf("dst")>=0){
                 	$(this).css("border-color","green");
-                	dataToSend.dstip=$(this).val();
+                	dataToSend["dst-ip"]=$(this).val();
                 	validated=true;
                 }
             }
@@ -44,28 +42,28 @@
         		validated=true;
         		if(currentId.indexOf("src")>=0){
                 	$(this).css("border-color","green");
-                	dataToSend.srcmac=$(this).val();
+                	dataToSend["src-mac"]=$(this).val();
                 }else if(currentId.indexOf("dst")>=0){
                 	$(this).css("border-color","green");
-                	dataToSend.dstmac=$(this).val();
+                	dataToSend["dst-mac"]=$(this).val();
                 }
         	}
         	else if(currentId.indexOf("port") >= 0&& ($(this).val() != "")){
         		if(currentId.indexOf("src")>=0){
                 	$(this).css("border-color","green");
-                	dataToSend.srcmac=$(this).val();
+                	dataToSend["src-port"]=$(this).val();
                 }else if(currentId.indexOf("dst")>=0){
                 	$(this).css("border-color","green");
-                	dataToSend.dstmac=$(this).val();
+                	dataToSend["dst-port"]=$(this).val();
                 }
         	}
         	else if(currentId.indexOf("ether") >= 0&& ($(this).val() != "")){
         		validated=true;
-        		dataToSend.ether=$(this).val();
+        		dataToSend["ether-type"]=$(this).val();
         	}
 			else if(currentId.indexOf("protocol") >= 0&& ($(this).val() != "")){
         		validated=true;
-        		dataToSend.protocol=$(this).val();
+        		dataToSend["protocol"]=$(this).val();
         	}
         });
         return validated;
@@ -74,7 +72,7 @@
 	function setField(){
 		if(validateTextBoxes()){
 			console.log(JSON.stringify(dataToSend));
-			$.post("NetworkPath", {"extended" : JSON.stringify(dataToSend)}, function(result) {
+			$.post("ChangeExtended", {"extended" : JSON.stringify(dataToSend)}, function(result) {
 				console.log("result: "+result);
 			},"json");
 		}
@@ -84,7 +82,10 @@
 		    $("#match-table").find("input[type=text], textarea").removeAttr("style").val("");
 	}
 	
-	//getDefault();
+	$(document).ready(function(){
+		getDefault();
+	});
+	
 </script>
 
 <!--  HTML PART -->
@@ -162,7 +163,7 @@
 						<label class="control-label">ether-type</label>
 						</td>
 						<td>
-						<input id="match-ether" type="text" class="form-control" placeholder="0x0000">
+						<input id="match-ether-type" type="text" class="form-control" placeholder="0x0000">
 						</td>
 					</tr>
 					<tr>
