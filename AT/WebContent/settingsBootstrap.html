@@ -33,7 +33,7 @@
 					html += "<td>" + response[i].port + "</td>";
 					html += "<td><button id=\""
 							+ response[i].hostname
-							+ "\" class=\"btn btn-danger\" onclick=\"removeHypervisor(event);\">Elimina</button></td>";
+							+ "\" class=\"btn btn-danger\" onclick=\"removeHypervisor(event);\">Delete</button></td>";
 					html += "</tr>";
 				}
 				
@@ -109,7 +109,7 @@
 					"title=\""+targets[i].iqn+"\">" + targets[i].iqn + "</div></td>";
 					html += "<td><button id=\"ISCSI-"
 							+ targets[i].id
-							+ "\" class=\"btn btn-danger\" onclick=\"removeISCSI(event);\">Elimina</button></td>";
+							+ "\" class=\"btn btn-danger\" onclick=\"removeISCSI(event);\">Delete</button></td>";
 					html += "</tr>";
 				}
 				
@@ -241,7 +241,7 @@
 			</tbody>
 		</table>
 		<br>
-		<button id="addNewHypervisor" class="btn ">Aggiungi</button>
+		<button id="addNewHypervisor" class="btn ">Add</button>
 
 	</div>
 	
