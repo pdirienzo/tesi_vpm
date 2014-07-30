@@ -125,6 +125,10 @@ public class RestRequest {
 		}
 	}
 	
+	public static JSONObject deleteJson(String url, JSONObject data){
+		return new JSONObject(delete(url, data.toString()));
+	}
+	
 	public static String delete(String url, String data) {
 		/* DELETE Method */
 		final HttpDeleteWithBody delete = new HttpDeleteWithBody(url);

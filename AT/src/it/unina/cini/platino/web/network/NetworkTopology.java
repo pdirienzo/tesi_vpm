@@ -76,71 +76,7 @@ public class NetworkTopology extends HttpServlet {
 			filepath.getParentFile().mkdir();
 	}
 
-	/*
-	@Override
-	public void init() throws ServletException {
-		super.init();
-
-		Properties props = (Properties)getServletContext().getAttribute("properties");
-		BR_NAME = props.getProperty("bridge_name");
-		BR_PORT = Integer.parseInt(props.getProperty("ovs_manager_port"));
-		VLAN_ID = Integer.parseInt(props.getProperty("vpm_vlan_id"));
-
-		//we'll get a previous topology if saved
-		try {
-			System.out.println("getting old graph if existent...");
-
-			mxGraph savedmxGraph = topologyFromFile();
-			if(savedmxGraph != null){
-				VPMGraph<OvsSwitch, LinkConnection> savedGraph = NetworkConverter.mxToJgraphT(savedmxGraph, true);
-				
-				System.out.println("A saved graph has been found, checking if still valid...");
-				FloodlightController controller = FloodlightController.getDbController();
-				VPMGraph<OvsSwitch, LinkConnection> actualGraph = controller.getTopology();
-				//we have to check if every tree edge defined in the saved graph still exists
-				//(just tree edges are phisical links and so visible by the controller)
-				boolean valid = true;
-				int savedTreeEdgesCount = 0;
-
-				if(savedGraph.vertexSet().size() == actualGraph.vertexSet().size()){ //rough control: if the vertex size is different then it's 
-																					//100% different
-					
-					Iterator<LinkConnection> savedEdges = savedGraph.edgeSet().iterator();
-					while( (valid) && savedEdges.hasNext()){
-						LinkConnection tEdge = savedEdges.next();
-						if(tEdge.isTree){ //we just care about tree edges as they are the only phisical links the controller can see
-							savedTreeEdgesCount++;
-							valid = actualGraph.containsEdge(tEdge.getSource(),tEdge.getTarget());// || 
-									//(actualGraph.containsEdge(tEdge.getTarget(),tEdge.getSource()));//checking if exists
-
-							if(valid){ //between two different starts controller may have been restarted and so port ids could have
-								//been changed
-								tEdge = actualGraph.getEdge(tEdge.getTarget(), tEdge.getSource());
-							}
-						}
-					}
-
-					if(savedTreeEdgesCount != actualGraph.edgeSet().size())
-						valid = false;
-
-				}else
-					valid = false;
-
-
-				if(valid){
-					((VPMGraphHolder)
-							getServletContext().getAttribute(VPMGraphHolder.VPM_GRAPH_HOLDER)).addGraph(savedGraph);
-					System.out.println("Valid graph reverted back"+savedGraph);
-				}else{
-					//TODO send a message informing the user that saved graph is not valid anymore
-					System.err.println("Saved graph is not valid anymore");
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-*/
+	
 	private KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> createTree(VPMGraph<OvsSwitch,LinkConnection> graph){	
 
 		KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> k = new KruskalMinimumSpanningTree<OvsSwitch,LinkConnection>(graph);
@@ -158,32 +94,6 @@ public class NetworkTopology extends HttpServlet {
 		return k;
 	}
 
-
-	/*private void potateRelays(VPMGraph<OvsSwitch, LinkConnection> g){
-		for(OvsSwitch sw : g.vertexSet()){
-			if(sw.type == OvsSwitch.Type.RELAY || sw.type == OvsSwitch.Type.NULL){
-				boolean hasLeaf = false;
-				boolean hasRootRelay = false;
-
-				Set<LinkConnection> links = g.edgesOf(sw);
-				for(LinkConnection l : links){
-					if(l.isTree){
-						if( (l.getTarget().type == OvsSwitch.Type.LEAF) || (l.getSource().type == OvsSwitch.Type.LEAF))
-							hasLeaf = true;
-						else if( (l.getTarget().type == OvsSwitch.Type.RELAY || l.getTarget().type == OvsSwitch.Type.ROOT)
-								|| (l.getSource().type == OvsSwitch.Type.RELAY || l.getSource().type == OvsSwitch.Type.ROOT))
-							hasRootRelay = true;
-					}
-				}
-
-				if(!(hasLeaf && hasRootRelay) ){
-					for(LinkConnection l : g.edgesOf(sw))
-						if(l.isTree)
-							l.isTree = false;
-				}
-			}
-		}
-	}*/
 
 	private static void potateRelays(VPMGraph<OvsSwitch, LinkConnection> g){
 		for(OvsSwitch sw : g.vertexSet()){

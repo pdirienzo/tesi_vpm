@@ -55,7 +55,15 @@ public class MigrationThread extends Thread {
 
 	private String errorMessage;
 
-	//TODO stupid workaround
+	/**
+	 * This is a workaround in order to make JGraphT work. 
+	 * Some algorithms require that just the same object is passed to them,
+	 * references are not allowed and lead to exceptions. So, we pass a reference
+	 * to an ovs switch and we get the original object
+	 * @param graph
+	 * @param ovs
+	 * @return
+	 */
 	private OvsSwitch findOriginal(VPMGraph<OvsSwitch, LinkConnection> graph, OvsSwitch ovs){
 		OvsSwitch found = null;
 

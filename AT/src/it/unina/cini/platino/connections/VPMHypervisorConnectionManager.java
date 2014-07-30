@@ -66,6 +66,8 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 	private Database d;
 	
 	// listener methods----------------------------------------------------------->
+	// called when a new hypervisor is added/deleted to/from the database.
+	// makes sure that saved connections are constisten
 	@Override
 	public void hypervisorInserted(Hypervisor h) {
 		try {
@@ -234,22 +236,6 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 			}else{ //we have to find it among active connections
 				HypervisorConnection hc = getActiveConnection(h);
 				activeConnections.remove(hc);
-				/*int i = 0;
-			boolean result = false;
-			while((!result) && (i<activeConnections.size())){
-				if(activeConnections.get(i).getHypervisor().equals(h)){//found
-					try {
-						NetHypervisorConnection conn = activeConnections.get(i);
-						conn.close();
-						activeConnections.remove(i); //and then remove the element itself
-						result = true;
-					} catch (LibvirtException e) {
-						e.printStackTrace();
-					}
-				}else
-					i++;
-			}
-				 */	
 			}
 		}
 	}

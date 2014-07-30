@@ -82,6 +82,10 @@ public class NetHypervisorConnection extends HypervisorConnection{
 		return new NetHypervisorConnection(h,networkName,netPrefix,networkDefinition);
 	}
 	
+	/**
+	 * Returns the network associated with this NetHypervisorConnection object
+	 * @return
+	 */
 	public Network getNetwork(){
 		return net;
 	}

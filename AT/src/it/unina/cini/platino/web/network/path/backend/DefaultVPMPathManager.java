@@ -6,18 +6,12 @@ import it.unina.cini.platino.network.types.LinkConnection;
 import it.unina.cini.platino.network.types.OvsSwitch;
 import it.unina.cini.platino.network.types.VPMGraph;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-
-import oracle.jrockit.jfr.tools.ConCatRepository;
 
 import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
@@ -166,7 +160,7 @@ public class DefaultVPMPathManager implements VPMPathManager{
 				//As VM are always there, just one rule is enough regardless
 				//of the number of paths traversing this switch
 				if(infos.getCounter() == 0 && infos.sw.type != OvsSwitch.Type.ROOT){
-					for(FloodlightPort vnet : controller.getVnetPorts(infos.sw,portPrefix))
+					for(FloodlightPort vnet : controller.getVMPorts(infos.sw,portPrefix))
 						infos.addVnetPort(vnet.number);
 
 					if(infos.getVnetNumber() > 0){ 
@@ -239,20 +233,8 @@ public class DefaultVPMPathManager implements VPMPathManager{
 			VPMSwitchInfo infos = switchInfos.get(nodes.get(i).dpid);
 			
 			try{
-				/*new JSONObject()
-				.put("cookie", (new Random()).nextInt())
-				.put("priority", "100")
-				.put("dst-ip", "10.0.0.255")
-				.put("ether-type", "0x0800")
-				.put("active", "true");*/
 				
-				JSONObject basicFlow = constructMatchingFlow();/*new JSONObject()
-				.put("switch", infos.sw.dpid)
-				.put("cookie", (new Random()).nextInt())
-				.put("priority", "100")
-				.put("dst-ip", "10.0.0.255")
-				.put("ether-type", "0x0800")
-				.put("active", "true");*/
+				JSONObject basicFlow = constructMatchingFlow();
 				
 				basicFlow.put("switch", infos.sw.dpid);
 				

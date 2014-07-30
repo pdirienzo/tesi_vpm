@@ -124,6 +124,15 @@ public class DomainControl extends HttpServlet {
 		return new XMLOutputter().outputString(doc);
 	}
 
+	/**
+	 * Creates a new VM providing that specified ISCSI has some free LUNs
+	 * @param conn
+	 * @param hypervisorId
+	 * @param vmName
+	 * @param iscsiID
+	 * @throws IOException
+	 * @throws LibvirtException
+	 */
 	private void createVM(HypervisorConnection conn, String hypervisorId, String vmName, int iscsiID) throws IOException, LibvirtException{
 		Database d = (Database)getServletContext().getAttribute(Database.DATABASE);
 

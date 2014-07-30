@@ -186,7 +186,7 @@ public final class NetworkConverter {
 		return graph;
 	}
 	
-	//TODO ********************** remove this shit **********************************************************************
+	
 	private static KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> createTree(VPMGraph<OvsSwitch,LinkConnection> graph){	
 
 		KruskalMinimumSpanningTree<OvsSwitch, LinkConnection> k = new KruskalMinimumSpanningTree<OvsSwitch,LinkConnection>(graph);
@@ -213,6 +213,12 @@ public final class NetworkConverter {
 		return k;
 	}
 	
+	/**
+	 * This function removes not necessary edges from the graph before for it to be processed
+	 * by the Kruskal algorithm. That is, if a path ends up to a non leaf switch, links
+	 * will be removed as they are not necessary for the overall distribution network.  
+	 * @param g
+	 */
 	private static void potateRelays(VPMGraph<OvsSwitch, LinkConnection> g){
 		for(OvsSwitch sw : g.vertexSet()){
 			int k=0;
@@ -355,31 +361,37 @@ public final class NetworkConverter {
 		
 	}
  
+	/**
+	 * Auxiliary function for the potate tree method
+	 * @param sw
+	 * @param link
+	 * @param g
+	 * @return
+	 */
  private static String checkNode(OvsSwitch sw, LinkConnection link, VPMGraph<OvsSwitch,LinkConnection> g){
 	String ret = "";
 	int root=0;
 	int leaf=0;
-	int count = 0; // se count e uno significa che il relay e isolato e non dobbiamo considerarlo nell'albero
+	int count = 0; // if count is 1 it means that relay is isolated and should not be included in the final tree
 	Set<LinkConnection> links = g.edgesOf(sw);
 	for(LinkConnection l : links){
 		if(l.isTree && !l.equals(link)){
 			if( (l.getTarget().type == OvsSwitch.Type.RELAY) && (l.getSource().type == OvsSwitch.Type.RELAY)){
 			  if(l.getTarget().dpid != sw.dpid){
-				//Devo ottenere in qualche modo i,l relay dal target del link l
+				
 				ret=checkNode(l.getTarget(),l,g);
 			  }
 			  else {
-			   //Ottengo il prossimo relay dalla sorgente del link 
 			   
 			   ret=checkNode(l.getSource(),l,g);
 			  }
 			}
 			else if( (l.getTarget().type == OvsSwitch.Type.LEAF && l.getSource().type == OvsSwitch.Type.RELAY) || 
-			(l.getTarget().type == OvsSwitch.Type.RELAY && l.getSource().type == OvsSwitch.Type.LEAF)){ //relay connesso ad una foglia
-					leaf+=1; //ritorno 1 se direttamente attaccato ad una leaf; 
+			(l.getTarget().type == OvsSwitch.Type.RELAY && l.getSource().type == OvsSwitch.Type.LEAF)){ 
+					leaf+=1; //returning 1 if directly attached to a leaf
 			}
 			else if( (l.getTarget().type == OvsSwitch.Type.RELAY && l.getSource().type == OvsSwitch.Type.ROOT) || 
-			(l.getTarget().type == OvsSwitch.Type.ROOT && l.getSource().type == OvsSwitch.Type.RELAY)){ //relay connesso direttamente alla root
+			(l.getTarget().type == OvsSwitch.Type.ROOT && l.getSource().type == OvsSwitch.Type.RELAY)){ //relay connected to the root
 				root+=1;
 			}
 			count++;
@@ -393,18 +405,18 @@ public final class NetworkConverter {
 					 if(!ret.contains("LEAF")) 
 						ret+="LEAF"+","+"ROOT,";
 					 else
-						ret+="ROOT,"; //se gia vie e una foglia inserisco solo la radice nel valore di ritorno
+						ret+="ROOT,"; 
 				}
 				else ret+="LEAF"+","+"ROOT,";
 				
 			}
 			else if (ret != ""){
-				if(!ret.contains("LEAF")) //se nel valore di ritorno non vi e gia una foglia la inserisco
+				if(!ret.contains("LEAF"))
 					ret+="LEAF,";
 			}
 			else ret+="LEAF";
 		}
-		else if (root>0) ret+="ROOT,"; //ci sara solo una root
+		else if (root>0) ret+="ROOT,"; 
 		return ret;
 	}
 	else return "";
@@ -470,18 +482,6 @@ public final class NetworkConverter {
 	    conns2[6] = myGraph2.addLinkConnection(d, new FloodlightPort("p6",7),g,new FloodlightPort("p3",1));
 		conns2[7] = myGraph2.addLinkConnection(g, new FloodlightPort("p6",7),h,new FloodlightPort("p3",1));		
 		
-		/*OvsSwitch b1 = new OvsSwitch("b","2");
-		OvsSwitch d1 = new OvsSwitch("d","4");
-		
-		for(OvsSwitch o : myGraph.vertexSet()){
-			if(o.equals(b1))
-				b1 = o;
-			else if(o.equals(d1))
-				d1 = o;
-		}*/
-		
-		
-		
 		createTree(myGraph);
 		potateRelays(myGraph);
 		for(LinkConnection l : myGraph.edgeSet()){
@@ -489,167 +489,7 @@ public final class NetworkConverter {
 				System.out.println(l);
 		}
 		
-		
-		
 		//System.out.println(anotherJ.toString());
 	}
 	
-	/*private static LinkConnection domToLink(Element el){
-		return new LinkConnection(el.getAttribute("srcDpid"),el.getAttribute("dstDpid") ,
-				new Port(el.getAttribute("srcPort")), new Port(el.getAttribute("dstPort")));
-	}
-
-	private static Element linkToDom(Document doc, LinkConnection link){
-		org.w3c.dom.Element linkEl = doc.createElement("link");
-		linkEl.setAttribute("srcPort", link.srcPort.toString());
-		linkEl.setAttribute("dstPort", link.targetPort.toString());
-		linkEl.setAttribute("srcDpid", link.src.dpid);
-		linkEl.setAttribute("dstDpid", link.target.dpid);
-		linkEl.setAttribute("isTree", String.valueOf(link.isTree));
-
-		return linkEl;
-	}
-
-	private static OvsSwitch domToSwitch(Element el){
-		return new OvsSwitch( el.getAttribute("dpid"), el.getAttribute("ip") , Type.valueOf(el.getAttribute("type")));
-	}
-
-	private static Element switchToDom(Document doc, OvsSwitch sw){
-		org.w3c.dom.Element swEl = doc.createElement("switch");
-		swEl.setAttribute("dpid", sw.dpid);
-		swEl.setAttribute("ip", sw.ip);
-		swEl.setAttribute("type", sw.type.name());
-		
-		return swEl;
-	}
-
-	public static Graph<OvsSwitch,LinkConnection> mxToJgraphT(mxGraph graph){
-
-		ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> myGraph = 
-				new ListenableUndirectedWeightedGraph<>(LinkConnection.class);
-
-				HashMap<String, OvsSwitch> switches = new HashMap<String, OvsSwitch>();
-
-				for(Object cell : graph.getChildCells(graph.getDefaultParent(),true, false)){// getting vertexes
-					OvsSwitch sw = domToSwitch((Element)(((mxCell)cell).getValue())); //converting
-
-					myGraph.addVertex(sw); //putting it into the graph
-					switches.put(sw.dpid, sw);  // and into the hashtable so to get it later
-				}
-
-				for(Object cell : graph.getChildCells(graph.getDefaultParent(),false, true)){ //now links
-					LinkConnection link = domToLink((Element)(((mxCell)cell).getValue()));
-					myGraph.addEdge(switches.get(link.src.dpid), switches.get(link.target.dpid), link);
-					myGraph.setEdgeWeight(link, link.getSource().type.getValue() + link.getTarget().type.getValue());
-				}
-
-				return myGraph;
-	}
-	
-	public static ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> getJgraphTopology(List<OvsSwitch> swList,
-			List<LinkConnection> linkList) throws IOException{
-		
-		ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection> graph =
-				new ListenableUndirectedWeightedGraph<OvsSwitch, LinkConnection>(LinkConnection.class);
-		
-		HashMap<String, OvsSwitch> switches = new HashMap<String, OvsSwitch>();
-		
-		for(OvsSwitch sw : swList){// getting vertexes
-
-			graph.addVertex(sw); //putting it into the graph
-			switches.put(sw.dpid, sw);  // and into the hashtable so to get it later
-		}
-
-		for(LinkConnection link : linkList){ //now links
-			graph.addEdge(switches.get(link.src.dpid), switches.get(link.target.dpid), link);
-			graph.setEdgeWeight(link, link.getSource().type.getValue() + link.getTarget().type.getValue());
-		}
-		
-		return graph;
-		
-	}
-	
-	public static mxGraph getMxTopology(List<OvsSwitch> swList,
-			List<LinkConnection> linkList) throws IOException{
-		
-		mxGraph graph = new mxGraph();
-		try{
-			graph.getModel().beginUpdate();
-			org.w3c.dom.Document doc = mxDomUtils.createDocument();
-			HashMap<String, mxCell> vertexes = new HashMap<String, mxCell>();
-			
-			for(OvsSwitch sw : swList){
-				org.w3c.dom.Element swEl = switchToDom(doc,sw);
-				vertexes.put(sw.dpid, (mxCell)graph.insertVertex(graph.getDefaultParent(), null, swEl, 10, 10, 
-						100, 50));
-			}
-			
-			for(LinkConnection l : linkList){
-				Element linkEl = linkToDom(doc,l);
-
-				graph.insertEdge(graph.getDefaultParent(), null, linkEl, vertexes.get(l.src.dpid), 
-						vertexes.get(l.target.dpid));
-			}
-			
-		}finally{
-			graph.getModel().endUpdate();
-		}
-		
-		return graph;
-	}
-	
-	
-
-	public static mxGraph jgraphToMx(Graph<OvsSwitch, LinkConnection> graph){
-		mxGraph myGraph = new mxGraph();
-		
-		try{
-			myGraph.getModel().beginUpdate();
-			org.w3c.dom.Document doc = mxDomUtils.createDocument();
-
-			Iterator<OvsSwitch> switches = graph.vertexSet().iterator();
-			HashMap<String, mxCell> vertexes = new HashMap<String, mxCell>();
-
-			while(switches.hasNext()){
-				OvsSwitch sw = switches.next();
-				org.w3c.dom.Element swEl = switchToDom(doc,sw);
-
-				vertexes.put(sw.dpid, (mxCell)myGraph.insertVertex(myGraph.getDefaultParent(), null, swEl, 10, 10, 
-						100, 50));
-			}
-
-			Iterator<LinkConnection> links = graph.edgeSet().iterator();
-
-			while(links.hasNext()){
-				LinkConnection l = links.next();
-				Element linkEl = linkToDom(doc,l);
-
-				myGraph.insertEdge(myGraph.getDefaultParent(), null, linkEl, vertexes.get(l.src.dpid), 
-						vertexes.get(l.target.dpid));
-
-			}
-
-		}finally{
-			myGraph.getModel().endUpdate();
-		}
-		return myGraph;
-
-	}
-	
-	public List<LinkConnection> getLinkConnection(Graph<OvsSwitch, LinkConnection> graph){
-		List<LinkConnection> l = new ArrayList<LinkConnection>();
-		Iterator<LinkConnection> it = graph.edgeSet().iterator();
-		while(it.hasNext())
-			l.add(it.next());
-		return l;
-	}
-	
-	public List<LinkConnection> getLinkConnection(mxGraph graph){
-		List<LinkConnection> l = new ArrayList<LinkConnection>();
-		for(Object cell : graph.getChildCells(graph.getDefaultParent(),false,true)){
-			l.add(domToLink((Element)(((mxCell)cell).getValue())));
-		}
-		return l;
-		
-	}*/
 }

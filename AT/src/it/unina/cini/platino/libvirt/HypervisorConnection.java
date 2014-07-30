@@ -260,10 +260,5 @@ public class HypervisorConnection extends Connect{
 		return (newDomain != null);
 	}
 	
-	//TODO
-	public static void createStorage(HypervisorConnection hc){
-		
-	}
-	
 
 }

@@ -69,6 +69,11 @@ public class VPMContextServerListener implements ServletContextListener {
 		return graph;
 	}
 	
+	/**
+	 * Restores a previously saved network configuration. A check on the actual
+	 * network status is performed as well so to check if saved one is still valid.
+	 * @param ctx
+	 */
 	public void restoreNetwork(ServletContext ctx) {
 
 		Properties props = (Properties)ctx.getAttribute("properties");
@@ -178,6 +183,7 @@ public class VPMContextServerListener implements ServletContextListener {
 		}
 	}
 	
+
 	@Override
 	public void contextDestroyed(ServletContextEvent c) {
 		VPMHypervisorConnectionManager manager = (VPMHypervisorConnectionManager)c.getServletContext()

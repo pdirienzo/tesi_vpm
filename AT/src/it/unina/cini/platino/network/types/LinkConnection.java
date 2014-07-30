@@ -28,19 +28,6 @@ public class LinkConnection extends DefaultWeightedEdge {
 	public boolean isTree;	
 	
 	
-	/*
-	//this is just in order to make hashcode() work properly so these fields should
-	//always be private and never accessed. Use instead the getters methods which
-	//are inherited from the father class
-	private OvsSwitch src;
-	private OvsSwitch trg;
-	LinkConnection(OvsSwitch src, OvsSwitch trg, Port sourceP, Port targetP){
-		this.src = src;
-		this.trg = trg;
-		this.sourceP = sourceP;
-		this.targetP = targetP;
-	}*/
-	
 	//these setters can be called just by classes belonging to the same package
 	public void setSourceP(FloodlightPort source){
 		this.sourceP = source;	

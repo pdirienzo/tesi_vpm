@@ -44,15 +44,6 @@ ListenableUndirectedWeightedGraph<V, E>{
 		l.isTree = false;
 		
 		return l;
-		/*LinkConnection l = new LinkConnection(sourceVertex, targetVertex, sourcePort, 
-				targetPort);
-		
-		@SuppressWarnings("unchecked")
-		boolean added = super.addEdge(sourceVertex, targetVertex, (E)l);
-		if(added) 
-			return l;
-		else 
-			return null;*/
 	}
 
 	public LinkConnection addLinkConnection(V sourceVertex, FloodlightPort sourcePort, 
@@ -64,34 +55,6 @@ ListenableUndirectedWeightedGraph<V, E>{
 		return l;
 	}
 
-	/*public boolean equals(VPMGraph<OvsSwitch, LinkConnection> otherGraph){
-		boolean result = true;
-		
-		Set<OvsSwitch> vertexes1 = otherGraph.vertexSet();
-		Set<OvsSwitch> vertexes2 = (Set<OvsSwitch>) this.vertexSet();
-		
-		if(vertexes1.size() != vertexes2.size())
-			return false;
-		
-		for(OvsSwitch v : vertexes2){
-			if(!vertexes1.contains(v))
-				return false;
-		}
-		
-		Set<LinkConnection> edges1 = otherGraph.edgeSet();
-		Set<LinkConnection> edges2 = (Set<LinkConnection>) this.edgeSet();
-		
-		if(edges1.size() != edges2.size())
-			return false;
-		
-		for(LinkConnection e : edges2){
-			if(!edges1.contains(e))
-				return false;
-		}
-		
-		
-		return result;
-	}*/
 
 	/**
 	 * @deprecated use addLinkConnection instead

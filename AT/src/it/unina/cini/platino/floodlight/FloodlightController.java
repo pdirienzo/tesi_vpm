@@ -66,6 +66,11 @@ public class FloodlightController {
 		return controller;
 	}
 	
+	/**
+	 * 
+	 * @return a list of switches currently attached to this controller
+	 * @throws IOException
+	 */
 	private HashMap<String, OvsSwitch> getSwitches() throws IOException{
 	
 		HashMap<String, OvsSwitch> switches = new HashMap<String, OvsSwitch>();
@@ -78,6 +83,15 @@ public class FloodlightController {
 		return switches;
 	}
 	
+	/**
+	 * Registers a new listener for the notify service. 
+	 * Listener has to be an http servlet or any entity (cgi, ...) supporting POST requests, 
+	 * the notify system will send a POST to specified URI containing any updates
+	 * 
+	 * @param callbackURI the servlet's callback URI (where the POST request will be sent)
+	 * @param vnetPrefix prefix of the VM interface attached to the OVS 
+	 * @throws IOException
+	 */
 	public void registerListener(String callbackURI, String vnetPrefix) throws IOException{
 		JSONObject data = new JSONObject();
 		data.put("op", "SUBSCRIBE")
@@ -87,17 +101,34 @@ public class FloodlightController {
 		RestRequest.postJson(baseURL+"/vpm/topology/listener/register", data);	
 	}
 	
-	public void deregisterListener(String callbackURI) throws IOException{
+	/**
+	 * unregisters a previously registered listener
+	 * @param callbackURI
+	 * @throws IOException
+	 */
+	public void removeListener(String callbackURI) throws IOException{
 		JSONObject data = new JSONObject();
 		data.put("op", "UNSUBSCRIBE")
 		.put("callback", callbackURI);
 		RestRequest.postJson(baseURL+"/vpm/topology/listener/register", data);	
 	}
 	
+	/**
+	 * 
+	 * @return this floodlight's controller base URL
+	 */
 	public String getUrl(){
 		return baseURL;
 	}
 	
+	/**
+	 * Obtains the topology this floodlight controller can see.
+	 * It consists of every switch currently attached to the controller along with any
+	 * links
+	 * 
+	 * @return a VPMGraph object representing this network
+	 * @throws IOException
+	 */
 	public VPMGraph<OvsSwitch, LinkConnection> getTopology() throws IOException{
 		VPMGraph<OvsSwitch, LinkConnection> jgraph = new VPMGraph<OvsSwitch,LinkConnection>(LinkConnection.class);
 		HashMap<String,OvsSwitch> switches = getSwitches();
@@ -114,6 +145,14 @@ public class FloodlightController {
 		return jgraph;
 	}
 
+	/**
+	 * Given a port name (es. eth0) returns the port number assigned by floodlight
+	 * 
+	 * @param sw switch containing specified port
+	 * @param portName the port name
+	 * @return the port number associated with that port name
+	 * @throws IOException
+	 */
 	public int getPortNumber(OvsSwitch sw, String portName) throws IOException{
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
@@ -126,7 +165,14 @@ public class FloodlightController {
 		return res;
 	}
 	
-	public List<FloodlightPort> getVnetPorts(OvsSwitch sw, String prefix) throws IOException{
+	/**
+	 * Returns a list of ports associated with VMs
+	 * @param sw
+	 * @param prefix
+	 * @return
+	 * @throws IOException
+	 */
+	public List<FloodlightPort> getVMPorts(OvsSwitch sw, String prefix) throws IOException{
 		JSONObject obj = new JSONObject();
 		obj.put("switch-dpid", sw.dpid);
 		obj.put("port-name", "vnetx");
@@ -141,41 +187,10 @@ public class FloodlightController {
 	
 	public JSONArray getStaticFlows(String dpid) throws IOException{
 		JSONArray flows = new JSONArray();
-		/*JSONObject json = null;
-
-		HttpClient client = HttpClients.createDefault();
-		HttpGet getRequest = new HttpGet(
-				baseURL+"/wm/staticflowentrypusher/list/"+
-						dpid+"/json");
-
-		HttpResponse resp = client.execute(getRequest);
-		BufferedReader rd = new BufferedReader(new InputStreamReader(
-				resp.getEntity().getContent()));
-		String s = null;
-		StringBuilder sb = new StringBuilder();
-		while((s=rd.readLine())!= null)
-			sb.append(s);
-
-		json = new JSONObject(sb.toString());
-
-		rd.close();
+	
+		JSONObject notFormatted = (RestRequest.getJson(baseURL+"/wm/staticflowentrypusher/list/"+
+						dpid+"/json")).getJSONObject(dpid);
 		
-		return json.getJSONObject(dpid);*/
-		
-		HttpClient client = HttpClients.createDefault();
-		HttpGet getRequest = new HttpGet(
-				baseURL+"/wm/staticflowentrypusher/list/"+
-						dpid+"/json");
-
-		HttpResponse resp = client.execute(getRequest);
-		BufferedReader rd = new BufferedReader(new InputStreamReader(
-				resp.getEntity().getContent()));
-		String s = null;
-		StringBuilder sb = new StringBuilder();
-		while((s=rd.readLine())!= null)
-			sb.append(s);
-		
-		JSONObject notFormatted = (new JSONObject(sb.toString())).getJSONObject(dpid);
 		
 		for(Object flowName : notFormatted.keySet()){
 			JSONObject rawFlow = notFormatted.getJSONObject((String)flowName);
@@ -234,10 +249,17 @@ public class FloodlightController {
 		return flows;
 	}*/
 
+	/**
+	 * Adds a static flow to this floodlight controller
+	 * 
+	 * @param data a JSON object representing the data
+	 * @return
+	 * @throws IOException
+	 */
 	public JSONObject addStaticFlow(JSONObject data) throws IOException{
 		JSONObject result = null;
 
-		HttpClient client = HttpClients.createDefault();
+		/*HttpClient client = HttpClients.createDefault();
 		HttpPost postRequest = new HttpPost(baseURL+
 				"/wm/staticflowentrypusher/json");
 		postRequest.setHeader("Content-type", "application/json");
@@ -254,7 +276,8 @@ public class FloodlightController {
 
 		result= new JSONObject(sb.toString());
 
-		rd.close();
+		rd.close();*/
+		result = RestRequest.postJson(baseURL+"/wm/staticflowentrypusher/json", data);
 
 		return result;
 	}
@@ -277,6 +300,14 @@ public class FloodlightController {
 		}
 	}
 	
+	/**
+	 * Deletes a flow from this floodlight controller
+	 * 
+	 * @param dpid
+	 * @param flowName
+	 * @return
+	 * @throws IOException
+	 */
 	public JSONObject deleteFlow(String dpid,String flowName)throws IOException{
 		JSONObject result = null;
 		
@@ -284,6 +315,7 @@ public class FloodlightController {
 		.put("switch", dpid)
 		.put("name", flowName);
 		
+		/*
 		HttpClient client = HttpClients.createDefault();
 		HttpDeleteWithBody delRequest = new HttpDeleteWithBody(baseURL+
 				"/wm/staticflowentrypusher/json");
@@ -301,12 +333,16 @@ public class FloodlightController {
 
 		result= new JSONObject(sb.toString());
 
-		rd.close();
+		rd.close();*/
+		result = RestRequest.deleteJson(baseURL+ "/wm/staticflowentrypusher/json", data);
 
 		return result;
 	}
 	
-	
+	/**
+	 * Resets all application related flows
+	 * @throws IOException
+	 */
 	public void resetAllFlowsForAllSwitches() throws IOException{
 		HttpClient client = HttpClients.createDefault();
 		HttpGet getRequest = new HttpGet(
@@ -329,7 +365,7 @@ public class FloodlightController {
 				new Controller("192.168.1.181", 8080));
 		
 		JSONArray flows = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
-		System.out.println(((JSONObject)flows.get(2)).get("actions"));
+		System.out.println(((JSONObject)flows.get(0)).get("match"));
 		
 		/*JSONObject jos = f.getStaticFlows("00:00:72:5b:2d:c5:15:46");
 		for(Object s : jos.keySet()){
