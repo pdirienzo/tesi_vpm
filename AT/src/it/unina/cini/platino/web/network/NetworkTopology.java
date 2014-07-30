@@ -439,14 +439,20 @@ public class NetworkTopology extends HttpServlet {
 						l.setSourceP(new FloodlightPort(srcPortName,controller.getPortNumber(l.getSource(), srcPortName)));
 
 						//2. now the other one
-						currentDpid = l.getTarget().dpid;
-						client = new DefaultOvsdbClient(l.getTarget().ip, VPMContextServerListener.BR_PORT);
-						opts = new OvsdbOptions();
-						opts.put(OvsdbOptions.REMOTE_IP, l.getSource().ip);
-						String targetPortName = computePortName(l.getTarget().dpid,l.getSource().dpid);
-						client.addPort(ovs, VPMContextServerListener.BR_NAME, targetPortName, Interface.Type.gre.name(),0,trunks,opts);
+						try{
+							currentDpid = l.getTarget().dpid;
+							client = new DefaultOvsdbClient(l.getTarget().ip, VPMContextServerListener.BR_PORT);
+							opts = new OvsdbOptions();
+							opts.put(OvsdbOptions.REMOTE_IP, l.getSource().ip);
+							String targetPortName = computePortName(l.getTarget().dpid,l.getSource().dpid);
+							client.addPort(ovs, VPMContextServerListener.BR_NAME, targetPortName, Interface.Type.gre.name(),0,trunks,opts);
 
-						l.setTargetP(new FloodlightPort(targetPortName,controller.getPortNumber(l.getTarget(), targetPortName)));
+							l.setTargetP(new FloodlightPort(targetPortName,controller.getPortNumber(l.getTarget(), targetPortName)));
+						}catch(OvsdbException ex){
+							//doing a rollback for previous connection
+							client.deletePort(ovs, VPMContextServerListener.BR_NAME, srcPortName);
+							throw ex;
+						}
 						//System.out.println("Creating "+computePortName(l.getSource().dpid,l.getTarget().dpid)+" on "+l.getSource());
 						//System.out.println("Creating "+computePortName(l.getTarget().dpid,l.getSource().dpid)+" on "+l.getTarget());
 
