@@ -77,9 +77,13 @@
 		if(validateTextBoxes()){
 			console.log(JSON.stringify(dataToSend));
 			$.post("ChangeExtended", {"extended" : JSON.stringify(dataToSend)}, function(result) {
-				console.log("result: "+result);
-				showDialog2("Info <i class=\"fa fa-info fa-lg\"></i>",result.status);
+				if(result.status == "ok"){
+					showDialog2("Info <i class=\"fa fa-success fa-lg\"></i>",result.details);
+				}else{
+					showDialog2("Error <i class=\"fa fa-warning fa-lg\"></i>",result.details);
+				}
 			},"json");
+				
 		}
 	}
 	

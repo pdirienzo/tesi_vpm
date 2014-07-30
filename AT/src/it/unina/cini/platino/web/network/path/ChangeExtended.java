@@ -88,7 +88,7 @@ public class ChangeExtended extends HttpServlet {
 			pw.flush();
 			pw.close();
 			jRes.put("status", "ok");
-			throw new IOException("prova");
+			jRes.put("details", "Extended field successfully edited!");
 		}catch(IOException ex){
 			jRes.put("status", "error");
 			jRes.put("details", ex.getMessage());
