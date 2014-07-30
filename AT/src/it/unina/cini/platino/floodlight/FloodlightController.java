@@ -226,29 +226,6 @@ public class FloodlightController {
 		return InetAddress.getByAddress(unpack).getHostAddress();
 	}
 	
-	/*
-	public JSONArray getFlows(String dpid) throws IOException{
-
-		HttpClient client = HttpClients.createDefault();
-		HttpGet getRequest = new HttpGet(
-				baseURL+"/wm/core/switch/"+
-						dpid+"/flow/json");
-
-		HttpResponse resp = client.execute(getRequest);
-		BufferedReader rd = new BufferedReader(new InputStreamReader(
-				resp.getEntity().getContent()));
-		String s = null;
-		StringBuilder sb = new StringBuilder();
-		while((s=rd.readLine())!= null)
-			sb.append(s);
-
-		rd.close();
-		
-		JSONArray flows = (new JSONObject(sb.toString())).getJSONArray(dpid);
-		
-		return flows;
-	}*/
-
 	/**
 	 * Adds a static flow to this floodlight controller
 	 * 
@@ -286,7 +263,6 @@ public class FloodlightController {
 	 * This is a workaround: apache's HttpDelete class does not support a body, which
 	 * is required for floodlight rest api to work. So, as HttpDelete is a simple HttpPost,
 	 * we simply create our own class to do this.
-	 * @author pasquale
 	 *
 	 */
 	private class HttpDeleteWithBody extends HttpPost{
@@ -315,25 +291,6 @@ public class FloodlightController {
 		.put("switch", dpid)
 		.put("name", flowName);
 		
-		/*
-		HttpClient client = HttpClients.createDefault();
-		HttpDeleteWithBody delRequest = new HttpDeleteWithBody(baseURL+
-				"/wm/staticflowentrypusher/json");
-		delRequest.setHeader("Content-type", "application/json");
-		delRequest.setEntity(new StringEntity(data.toString()));
-		HttpResponse resp = client.execute(delRequest);
-
-		BufferedReader rd = new BufferedReader(new InputStreamReader(
-				resp.getEntity().getContent()));
-		
-		String s = null;
-		StringBuilder sb = new StringBuilder();
-		while((s=rd.readLine())!= null)
-			sb.append(s);
-
-		result= new JSONObject(sb.toString());
-
-		rd.close();*/
 		result = RestRequest.deleteJson(baseURL+ "/wm/staticflowentrypusher/json", data);
 
 		return result;

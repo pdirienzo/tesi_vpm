@@ -189,6 +189,7 @@ public class VPMHypervisorConnectionManager implements DatabaseListener{
 			//closing every active connection
 			Iterator<NetHypervisorConnection> iterator = activeConnections.iterator();
 			while(iterator.hasNext()){
+				iterator.next();
 				iterator.remove();//removeHypervisor(iterator.next().getHypervisor());
 			}
 		}
