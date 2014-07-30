@@ -313,7 +313,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 						.setMatch(my_match)
 						.setActions(list);
 						
-						staticFlowPusher.addFlow("ARP_RESPONSE("+np.get(i).getNodeId()+")", fm, HexString.toHexString(np.get(i).getNodeId()));
+						staticFlowPusher.addFlow("ARP_RESPONSE("+HexString.toHexString(my_match.getDataLayerDestination()).replace(":", "")+")", fm, HexString.toHexString(np.get(i).getNodeId()));
 					}
 				}
 			}
