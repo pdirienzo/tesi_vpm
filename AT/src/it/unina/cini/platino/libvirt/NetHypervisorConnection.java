@@ -36,6 +36,9 @@ public class NetHypervisorConnection extends HypervisorConnection{
 	private Network net;
 	private String prefix;
 	
+	private static int counter=0;
+	private static final int MODULE = 1000; // this is in order to assure that the interface name is not too big
+	
 	private boolean networkExists(String networkName) throws LibvirtException{
 		boolean result = false;
 		int i=0;
@@ -110,16 +113,27 @@ public class NetHypervisorConnection extends HypervisorConnection{
 			String descr = d.getXMLDesc(2); //2=VIR_DOMAIN_XML_INACTIVE, we are looking at an inactive domain
 			doc = (Document) builder.build(new ByteArrayInputStream(descr.getBytes()));
 			
-			String volID = doc.getRootElement().getChild("devices").getChild("disk")
+			/*String volID = doc.getRootElement().getChild("devices").getChild("disk")
 					.getChild("source").getAttribute("dev").getValue();
 			volID = volID.substring(volID.length()-1);
-			
+			*/
 			Element networkNode = doc.getRootElement().getChild("devices").getChild("interface");
 			networkNode.setAttribute("type","network");
-			networkNode.getChild("target").setAttribute("dev",prefix+volID);
+			
+			Element target = networkNode.getChild("target");
+			
+			if(target == null){
+				target = new Element("target");
+				networkNode.addContent(target);
+			}
+			target.setAttribute("dev",prefix+counter);
+			
 			networkNode.getChild("source").setAttribute("network",net.getName());
+			
 			d.free();
 			d = super.domainCreateXML(new XMLOutputter().outputString(doc), 0);
+			counter = (counter+1)%MODULE;
+			
 		}catch(IOException | JDOMException ex){
 			ex.printStackTrace();
 		}finally{

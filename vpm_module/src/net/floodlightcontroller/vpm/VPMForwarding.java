@@ -166,7 +166,7 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 		OFMatch match = new OFMatch();
 		match.loadFromPacket(pi.getPacketData(), pi.getInPort());
 
-		if(!sw.getPort(pi.getInPort()).getName().equals("patch1")){
+		if(!sw.getPort(pi.getInPort()).getName().equals("patch1")){ 
 
 			if(match.getNetworkProtocol() == IPv4.PROTOCOL_UDP){
 				
@@ -205,6 +205,8 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 					if (devSrc!=null && devDst!=null){
 						SwitchPort srcId = devSrc.getAttachmentPoints()[0];
 						SwitchPort dstId = devDst.getAttachmentPoints()[0];
+						
+						
 						List<NodePortTuple> np = router.getRoute(srcId.getSwitchDPID(),(short) srcId.getPort(), dstId.getSwitchDPID(), 
 								(short) dstId.getPort(), FORWARDING_APP_ID, true).getPath();
 						short firstPort = match.getInputPort();
@@ -236,7 +238,8 @@ public class VPMForwarding implements IFloodlightModule,IOFMessageListener,IOFSw
 							.setActions(list);
 							
 							//log.info("MATCH: "+fm);
-							staticFlowPusher.addFlow("DHCP_RESPONSE("+np.get(i).getNodeId()+")", fm, HexString.toHexString(np.get(i).getNodeId()));
+							staticFlowPusher.addFlow("DHCP_RESPONSE("+
+									HexString.toHexString(my_match.getDataLayerDestination()).replace(":", "")/*np.get(i).getNodeId()*/+")", fm, HexString.toHexString(np.get(i).getNodeId()));
 						}
 					}
 				}
